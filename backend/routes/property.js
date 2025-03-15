@@ -4,6 +4,9 @@ const { protect } = require('../middleware/authMiddleware');
 const { upload } = require('../middleware/uploadMiddleware'); // Changed from `upload` to `{ upload }`
 const { createPGProperty, createBhkProperty, createVacationSpot } = require('../controllers/propertyController');
 const { check, validationResult } = require('express-validator');
+const PGProperty = require('../models/PGProperty'); // Add this
+const BHKHouse = require('../models/BHKHouse');     // Add this
+const VacationSpot = require('../models/VacationSpot'); // Add this
 
 const validate = (req, res, next) => {
   const errors = validationResult(req);
@@ -101,4 +104,31 @@ router.post(
   createVacationSpot
 );
 
+
+router.get('/pg', async (req, res) => {
+  try {
+    const pgProperties = await PGProperty.find();
+    res.json(pgProperties);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+router.get('/bhk', async (req, res) => {
+  try {
+    const bhkProperties = await BHKHouse.find();
+    res.json(bhkProperties);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+router.get('/vacation', async (req, res) => {
+  try {
+    const vacationProperties = await VacationSpot.find();
+    res.json(vacationProperties);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
 module.exports = router;

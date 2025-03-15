@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Home as HomeIcon, Building2, Palmtree, Phone, MapPin, Mail, Instagram, Facebook, Twitter, Bed, Bath, Square, Wifi, Coffee, Utensils, Dumbbell, Car, Shield, Waves, Trees } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
@@ -17,7 +17,7 @@ L.Icon.Default.mergeOptions({
 type PropertyType = 'pg' | 'bhk' | 'vacation';
 
 interface Property {
-  id: number;
+  id: number | string;
   type: PropertyType;
   name: string;
   image: string;
@@ -31,138 +31,6 @@ interface Property {
   amenities: string[];
   description: string;
 }
-
-const properties: Property[] = [
-  {
-    id: 1,
-    type: 'pg',
-    name: 'Sunshine PG',
-    image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267',
-    rent: '₹8,000/month',
-    phone: '+91 9876543210',
-    area: 'Koramangala',
-    location: [12.9716, 77.6196],
-    beds: 1,
-    amenities: ['WiFi', 'Laundry', 'Meals Included', 'Power Backup'],
-    description: 'Modern PG accommodation with all essential amenities and daily meals.'
-  },
-  {
-    id: 2,
-    type: 'pg',
-    name: 'Student Haven',
-    image: 'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf',
-    rent: '₹7,500/month',
-    phone: '+91 9876543213',
-    area: 'BTM Layout',
-    location: [12.9165, 77.6101],
-    beds: 1,
-    amenities: ['WiFi', 'Study Room', 'Meals', 'Library'],
-    description: 'Perfect for students with dedicated study areas and library access.'
-  },
-  {
-    id: 3,
-    type: 'pg',
-    name: 'Working Pros PG',
-    image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688',
-    rent: '₹9,000/month',
-    phone: '+91 9876543214',
-    area: 'HSR Layout',
-    location: [12.9081, 77.6476],
-    beds: 1,
-    amenities: ['WiFi', 'AC', 'Gym', 'Workspace'],
-    description: 'Premium PG for working professionals with modern amenities.'
-  },
-  {
-    id: 4,
-    type: 'bhk',
-    name: 'Green Valley Apartments',
-    image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00',
-    rent: '₹25,000/month',
-    phone: '+91 9876543211',
-    area: 'Indiranagar',
-    location: [12.9784, 77.6408],
-    beds: 2,
-    baths: 2,
-    sqft: 1200,
-    amenities: ['Parking', 'Security', 'Gym', 'Swimming Pool'],
-    description: 'Luxurious 2BHK apartment in prime location with modern amenities.'
-  },
-  {
-    id: 5,
-    type: 'bhk',
-    name: 'Skyline Heights',
-    image: 'https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd',
-    rent: '₹35,000/month',
-    phone: '+91 9876543215',
-    area: 'Whitefield',
-    location: [12.9698, 77.7500],
-    beds: 3,
-    baths: 2,
-    sqft: 1600,
-    amenities: ['Parking', 'Security', 'Club House', 'Garden'],
-    description: 'Spacious 3BHK with stunning city views and premium amenities.'
-  },
-  {
-    id: 6,
-    type: 'bhk',
-    name: 'Palm Grove Residency',
-    image: 'https://images.unsplash.com/photo-1493809842364-78817add7ffb',
-    rent: '₹28,000/month',
-    phone: '+91 9876543216',
-    area: 'JP Nagar',
-    location: [12.9121, 77.5851],
-    beds: 2,
-    baths: 2,
-    sqft: 1300,
-    amenities: ['Parking', 'Security', 'Park', 'Power Backup'],
-    description: 'Contemporary 2BHK in a peaceful locality with family-friendly environment.'
-  },
-  {
-    id: 7,
-    type: 'vacation',
-    name: 'Beachfront Villa',
-    image: 'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2',
-    rent: '₹15,000/day',
-    phone: '+91 9876543212',
-    area: 'Goa',
-    location: [15.4989, 73.8567],
-    beds: 3,
-    baths: 3,
-    sqft: 2000,
-    amenities: ['Beach Access', 'Private Pool', 'Ocean View', 'BBQ'],
-    description: 'Luxury beachfront villa with private pool and stunning ocean views.'
-  },
-  {
-    id: 8,
-    type: 'vacation',
-    name: 'Mountain Retreat',
-    image: 'https://images.unsplash.com/photo-1470770841072-f978cf4d019e',
-    rent: '₹12,000/day',
-    phone: '+91 9876543217',
-    area: 'Manali',
-    location: [32.2396, 77.1887],
-    beds: 2,
-    baths: 2,
-    sqft: 1500,
-    amenities: ['Mountain View', 'Fireplace', 'Garden', 'Parking'],
-    description: 'Cozy mountain cabin with breathtaking Himalayan views.'
-  },
-  {
-    id: 9,
-    type: 'vacation',
-    name: 'Lakeside Cottage',
-    image: 'https://images.unsplash.com/photo-1464146072230-91cabc968266',
-    rent: '₹10,000/day',
-    phone: '+91 9876543218',
-    area: 'Udaipur',
-    location: [24.5854, 73.7125],
-    beds: 2,
-    baths: 1,
-    sqft: 1200,
-    amenities: ['Lake View', 'Terrace', 'Boat Access', 'Garden'],
-    description: 'Charming cottage overlooking the beautiful Lake Pichola.'
-  }
-];
 
 const categoryColors = {
   pg: 'from-purple-500 to-pink-500',
@@ -187,25 +55,72 @@ const getAmenityIcon = (amenity: string) => {
 
 function Home() {
   const [selectedType, setSelectedType] = useState<PropertyType>('pg');
-  const filteredProperties = properties.filter(p => p.type === selectedType);
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Calculate center position based on filtered properties
+  useEffect(() => {
+    const fetchProperties = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await fetch(`http://localhost:3000/api/properties/${selectedType}`, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        if (!response.ok) {
+          throw new Error(`Failed to fetch ${selectedType} properties: ${response.statusText}`);
+        }
+        const data = await response.json();
+
+        const mappedProperties: Property[] = data.map((item: any) => ({
+          id: item._id,
+          type: selectedType,
+          name: item.propertyName,
+          image: item.images && item.images.length > 0 ? item.images[0] : 'https://via.placeholder.com/300',
+          rent: selectedType === 'vacation' ? `₹${item.ratePerDay}/day` : `₹${item.monthlyRent}/month`,
+          phone: item.contactNumber,
+          area: item.address.split(',')[0],
+          location: [item.latitude || 20.5937, item.longitude || 78.9629],
+          beds: selectedType === 'bhk' ? item.bedrooms : item.maxGuests || undefined,
+          baths: selectedType === 'bhk' ? item.bathrooms : undefined,
+          sqft: item.squareFeet,
+          amenities: Object.entries(selectedType === 'pg' ? item.sharingOptions || item.amenities : item.amenities)
+            .filter(([_, value]) => value === true)
+            .map(([key]) => key),
+          description: item.description,
+        }));
+
+        setProperties(mappedProperties);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Something went wrong');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProperties();
+  }, [selectedType]);
+
+  const filteredProperties = properties;
+
   const center = filteredProperties.length > 0
     ? [
         filteredProperties.reduce((sum, p) => sum + p.location[0], 0) / filteredProperties.length,
         filteredProperties.reduce((sum, p) => sum + p.location[1], 0) / filteredProperties.length
       ] as [number, number]
-    : [20.5937, 78.9629] as [number, number]; // Default center of India
+    : [20.5937, 78.9629] as [number, number];
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* <Navbar isLoggedIn={false} setIsLoggedIn={() => {}} /> */}
+      <Navbar isLoggedIn={false} setIsLoggedIn={() => {}} />
       <div className="container mx-auto px-4 py-8">
         <div className="bg-white rounded-full shadow-md p-2 max-w-md mx-auto">
           <div className="relative flex justify-between">
             <button
               onClick={() => setSelectedType('pg')}
-              className={`flex-1 py-2 px-4 rounded-full z-10 relative ${
+              className={`flex-1 py-2 px-4 rounded-full z-10 koryelative ${
                 selectedType === 'pg' ? 'text-white' : 'text-gray-600'
               }`}
             >
@@ -245,94 +160,104 @@ function Home() {
         </div>
       </div>
 
-      <div className="w-full h-[400px] mb-8 relative">
-        <MapContainer
-          center={center}
-          zoom={5}
-          style={{ height: '100%', width: '100%' }}
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          {filteredProperties.map((property) => (
-            <Marker
-              key={property.id}
-              position={[property.location[0], property.location[1]]}
+      {loading ? (
+        <div className="text-center py-8">Loading properties...</div>
+      ) : error ? (
+        <div className="text-center py-8 text-red-500">{error}</div>
+      ) : (
+        <>
+          <div className="w-full h-[400px] mb-8 relative">
+            <MapContainer
+              center={center}
+              zoom={5}
+              style={{ height: '100%', width: '100%' }}
             >
-              <Popup>
-                <div className="p-2">
-                  <h3 className="font-semibold">{property.name}</h3>
-                  <p className="text-sm text-gray-600">{property.area}</p>
-                  <p className="text-sm font-semibold text-blue-600">{property.rent}</p>
-                </div>
-              </Popup>
-            </Marker>
-          ))}
-        </MapContainer>
-      </div>
-
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredProperties.map((property) => (
-            <div key={property.id} className="bg-white rounded-xl shadow-lg overflow-hidden transform transition-transform hover:scale-105">
-              <img
-                src={property.image}
-                alt={property.name}
-                className="w-full h-48 object-cover"
+              <TileLayer
+                attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
-              <div className="p-6">
-                <h3 className="text-xl font-semibold mb-2">{property.name}</h3>
-                <p className="text-gray-600 mb-2">{property.area}</p>
-                <p className="text-gray-600 mb-4 text-sm">{property.description}</p>
-                
-                <div className="flex items-center gap-4 mb-4 text-gray-600">
-                  {property.beds && (
-                    <div className="flex items-center">
-                      <Bed className="h-4 w-4 mr-1" />
-                      <span>{property.beds} {property.beds === 1 ? 'Bed' : 'Beds'}</span>
+              {filteredProperties.map((property) => (
+                <Marker
+                  key={property.id}
+                  position={[property.location[0], property.location[1]]}
+                >
+                  <Popup>
+                    <div className="p-2">
+                      <h3 className="font-semibold">{property.name}</h3>
+                      <p className="text-sm text-gray-600">{property.area}</p>
+                      <p className="text-sm font-semibold text-blue-600">{property.rent}</p>
                     </div>
-                  )}
-                  {property.baths && (
-                    <div className="flex items-center">
-                      <Bath className="h-4 w-4 mr-1" />
-                      <span>{property.baths} {property.baths === 1 ? 'Bath' : 'Baths'}</span>
-                    </div>
-                  )}
-                  {property.sqft && (
-                    <div className="flex items-center">
-                      <Square className="h-4 w-4 mr-1" />
-                      <span>{property.sqft} sq.ft</span>
-                    </div>
-                  )}
-                </div>
+                  </Popup>
+                </Marker>
+              ))}
+            </MapContainer>
+          </div>
 
-                <div className="mb-4">
-                  <div className="flex flex-wrap gap-2">
-                    {property.amenities.map((amenity, index) => (
-                      <span key={index} className="px-2 py-1 bg-gray-100 text-gray-600 text-sm rounded-full flex items-center gap-1">
-                        {getAmenityIcon(amenity)}
-                        {amenity}
-                      </span>
-                    ))}
+          <div className="container mx-auto px-4 py-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredProperties.map((property) => (
+                <div key={property.id} className="bg-white rounded-xl shadow-lg overflow-hidden transform transition-transform hover:scale-105">
+                  <img
+                    src={property.image}
+                    alt={property.name}
+                    className="w-full h-48 object-cover"
+                  />
+                  <div className="p-6 flex flex-col">
+                    <h3 className="text-xl font-semibold mb-2">{property.name}</h3>
+                    <p className="text-gray-600 mb-2">{property.area}</p>
+                    <p className="text-gray-600 mb-4 text-sm">{property.description}</p>
+                    
+                    <div className="flex items-center gap-4 mb-4 text-gray-600">
+                      {property.beds && (
+                        <div className="flex items-center">
+                          <Bed className="h-4 w-4 mr-1" />
+                          <span>{property.beds} {property.beds === 1 ? 'Bed' : 'Beds'}</span>
+                        </div>
+                      )}
+                      {property.baths && (
+                        <div className="flex items-center">
+                          <Bath className="h-4 w-4 mr-1" />
+                          <span>{property.baths} {property.baths === 1 ? 'Bath' : 'Baths'}</span>
+                        </div>
+                      )}
+                      {property.sqft && (
+                        <div className="flex items-center">
+                          <Square className="h-4 w-4 mr-1" />
+                          <span>{property.sqft} sq.ft</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-2xl font-bold text-blue-600">{property.rent}</span>
+                      <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        Contact
+                      </button>
+                    </div>
+                    <div className="flex items-center text-gray-600 mb-4">
+                      <Phone className="h-4 w-4 mr-2" />
+                      {property.phone}
+                    </div>
+
+                    {/* Amenities at the bottom, 3 per line */}
+                    <div className="grid grid-cols-3 gap-2">
+                      {property.amenities.map((amenity, index) => (
+                        <span
+                          key={index}
+                          className="bg-gradient-to-r from-blue-500 to-teal-500 text-white text-xs font-semibold px-2 py-1 rounded-full flex items-center justify-center gap-1 shadow-md"
+                        >
+                          {getAmenityIcon(amenity)}
+                          {amenity}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-blue-600">{property.rent}</span>
-                  <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                    Contact
-                  </button>
-                </div>
-                <div className="mt-4 flex items-center text-gray-600">
-                  <Phone className="h-4 w-4 mr-2" />
-                  {property.phone}
-                </div>
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </div>
+          </div>
+        </>
+      )}
 
       <footer className={`bg-gradient-to-r ${categoryColors[selectedType]} text-white mt-16`}>
         <div className="container mx-auto px-4 py-12">
