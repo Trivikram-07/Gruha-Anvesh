@@ -1,0 +1,152 @@
+/* Navbar Container */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  background-color: #333;
+  color: white;
+}
+
+/* Logo */
+.navbar-logo a {
+  font-size: 24px;
+  font-weight: bold;
+  color: white;
+  text-decoration: none;
+}
+
+/* Search Bar */
+.navbar-search input {
+  width: 300px;
+  padding: 8px;
+  border: none;
+  border-radius: 5px;
+  outline: none;
+}
+
+/* Navigation Links */
+.navbar-links {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.navbar-links a {
+  color: white;
+  text-decoration: none;
+  font-size: 16px;
+}
+
+.navbar-links a:hover {
+  text-decoration: underline;
+}
+
+/* Login/Signup Buttons for non-logged in state */
+.login-button, .signup-button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.login-button {
+  border: 1px solid white;
+}
+
+.signup-button {
+  background-color: #4CAF50;
+  color: white;
+  border: 1px solid #4CAF50;
+}
+
+.login-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.signup-button:hover {
+  background-color: #45a049;
+}
+
+/* Profile Dropdown */
+.navbar-profile {
+  position: relative;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 4px;
+}
+
+.navbar-profile:hover {
+  background-color: #444;
+}
+
+.profile-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: #444;
+  border-radius: 5px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 180px;
+  z-index: 100;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.profile-dropdown a {
+  color: white;
+  text-decoration: none;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.profile-dropdown a:hover {
+  background-color: #555;
+  text-decoration: none;
+}
+
+.profile-dropdown button {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  margin-top: 5px;
+  text-align: left;
+}
+
+.profile-dropdown button:hover {
+  background-color: #d32f2f;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .navbar-search {
+    width: 100%;
+    margin: 10px 0;
+  }
+
+  .navbar-search input {
+    width: 100%;
+  }
+
+  .navbar-links {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .profile-dropdown {
+    width: 100%;
+    position: relative;
+  }
+}
