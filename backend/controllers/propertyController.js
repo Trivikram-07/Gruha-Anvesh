@@ -11,14 +11,16 @@ const createPGProperty = async (req, res) => {
   }
 
   try {
-    console.log('req.body:', req.body);
-    console.log('req.files:', req.files);
-    console.log('req.user:', req.user);
+    console.log('Received req.body:', req.body);
+    console.log('Received req.files:', req.files);
+    console.log('Received req.user:', req.user);
 
     const {
       propertyName,
       contactNumber,
       address,
+      city,
+      state,
       monthlyRent,
       single,
       twoSharing,
@@ -35,6 +37,7 @@ const createPGProperty = async (req, res) => {
       airConditioning,
       latitude,
       longitude,
+      interiorTourLink, // New field
     } = req.body;
 
     const images = req.files && req.files['images'] ? req.files['images'].map(file => file.path) : [];
@@ -51,6 +54,8 @@ const createPGProperty = async (req, res) => {
       propertyName,
       contactNumber,
       address,
+      city,
+      state,
       monthlyRent: parseFloat(monthlyRent),
       sharingOptions: {
         single: single === 'true' || single === true,
@@ -73,6 +78,7 @@ const createPGProperty = async (req, res) => {
       longitude: longitude ? parseFloat(longitude) : null,
       images,
       threeDModel,
+      interiorTourLink, // New field
     });
 
     console.log('Saving PG property:', pgProperty);
@@ -101,13 +107,25 @@ const createBhkProperty = async (req, res) => {
       contactNumber,
       address,
       monthlyRent,
+      city,
+      state,
       bedrooms,
       bathrooms,
       squareFeet,
       description,
-      amenities,
+      carParking,
+      wifiSetup,
+      acUnits,
+      furnished,
+      securitySystem,
+      geysers,
+      ceilingFans,
+      tvSetup,
+      modularKitchen,
+      extraStorage,
       latitude,
       longitude,
+      interiorTourLink, // New field
     } = req.body;
 
     const images = req.files && req.files['images'] ? req.files['images'].map(file => file.path) : [];
@@ -124,27 +142,30 @@ const createBhkProperty = async (req, res) => {
       propertyName,
       contactNumber,
       address,
+      city,
+      state,
       monthlyRent: parseFloat(monthlyRent),
       bedrooms: parseInt(bedrooms, 10),
       bathrooms: parseInt(bathrooms, 10),
       squareFeet: parseFloat(squareFeet),
       description,
       amenities: {
-        carParking: amenities?.carParking === 'true' || amenities?.carParking === true,
-        wifiSetup: amenities?.wifiSetup === 'true' || amenities?.wifiSetup === true,
-        acUnits: amenities?.acUnits === 'true' || amenities?.acUnits === true,
-        furnished: amenities?.furnished === 'true' || amenities?.furnished === true,
-        securitySystem: amenities?.securitySystem === 'true' || amenities?.securitySystem === true,
-        geysers: amenities?.geysers === 'true' || amenities?.geysers === true,
-        ceilingFans: amenities?.ceilingFans === 'true' || amenities?.ceilingFans === true,
-        tvSetup: amenities?.tvSetup === 'true' || amenities?.tvSetup === true,
-        modularKitchen: amenities?.modularKitchen === 'true' || amenities?.modularKitchen === true,
-        extraStorage: amenities?.extraStorage === 'true' || amenities?.extraStorage === true,
+        carParking: carParking === 'true' || carParking === true,
+        wifiSetup: wifiSetup === 'true' || wifiSetup === true,
+        acUnits: acUnits === 'true' || acUnits === true,
+        furnished: furnished === 'true' || furnished === true,
+        securitySystem: securitySystem === 'true' || securitySystem === true,
+        geysers: geysers === 'true' || geysers === true,
+        ceilingFans: ceilingFans === 'true' || ceilingFans === true,
+        tvSetup: tvSetup === 'true' || tvSetup === true,
+        modularKitchen: modularKitchen === 'true' || modularKitchen === true,
+        extraStorage: extraStorage === 'true' || extraStorage === true,
       },
       latitude: latitude ? parseFloat(latitude) : null,
       longitude: longitude ? parseFloat(longitude) : null,
       images,
       threeDModel,
+      interiorTourLink, // New field
     });
 
     console.log('Saving BHK house:', bhkHouse);
@@ -172,12 +193,24 @@ const createVacationSpot = async (req, res) => {
       propertyName,
       contactNumber,
       address,
+      city,
+      state,
       ratePerDay,
       maxGuests,
       description,
-      amenities,
+      beachAccess,
+      highSpeedWifi,
+      parkingSpace,
+      airConditioning,
+      kingSizeBed,
+      roomService,
+      spaAccess,
+      fitnessCenter,
+      smartTV,
+      loungeAccess,
       latitude,
       longitude,
+      interiorTourLink, // New field
     } = req.body;
 
     const images = req.files && req.files['images'] ? req.files['images'].map(file => file.path) : [];
@@ -194,25 +227,28 @@ const createVacationSpot = async (req, res) => {
       propertyName,
       contactNumber,
       address,
+      city,
+      state,
       ratePerDay: parseFloat(ratePerDay),
       maxGuests: parseInt(maxGuests, 10),
       description,
       amenities: {
-        beachAccess: amenities?.beachAccess === 'true' || amenities?.beachAccess === true,
-        highSpeedWifi: amenities?.highSpeedWifi === 'true' || amenities?.highSpeedWifi === true,
-        parkingSpace: amenities?.parkingSpace === 'true' || amenities?.parkingSpace === true,
-        airConditioning: amenities?.airConditioning === 'true' || amenities?.airConditioning === true,
-        kingSizeBed: amenities?.kingSizeBed === 'true' || amenities?.kingSizeBed === true,
-        roomService: amenities?.roomService === 'true' || amenities?.roomService === true,
-        spaAccess: amenities?.spaAccess === 'true' || amenities?.spaAccess === true,
-        fitnessCenter: amenities?.fitnessCenter === 'true' || amenities?.fitnessCenter === true,
-        smartTV: amenities?.smartTV === 'true' || amenities?.smartTV === true,
-        loungeAccess: amenities?.loungeAccess === 'true' || amenities?.loungeAccess === true,
+        beachAccess: beachAccess === 'true' || beachAccess === true,
+        highSpeedWifi: highSpeedWifi === 'true' || highSpeedWifi === true,
+        parkingSpace: parkingSpace === 'true' || parkingSpace === true,
+        airConditioning: airConditioning === 'true' || airConditioning === true,
+        kingSizeBed: kingSizeBed === 'true' || kingSizeBed === true,
+        roomService: roomService === 'true' || roomService === true,
+        spaAccess: spaAccess === 'true' || spaAccess === true,
+        fitnessCenter: fitnessCenter === 'true' || fitnessCenter === true,
+        smartTV: smartTV === 'true' || smartTV === true,
+        loungeAccess: loungeAccess === 'true' || loungeAccess === true,
       },
       latitude: latitude ? parseFloat(latitude) : null,
       longitude: longitude ? parseFloat(longitude) : null,
       images,
       threeDModel,
+      interiorTourLink, // New field
     });
 
     console.log('Saving Vacation Spot:', vacationSpot);

@@ -20,37 +20,38 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
     error: string;
   }
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
-    setError(""); // Clear previous errors
+    setError('');
     try {
-      const response = await fetch("http://localhost:3000/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+      const response = await fetch('http://localhost:3000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-
+  
+      const data = await response.json();
+      console.log('Server response:', data);
+  
       if (!response.ok) {
-        const errorData: ErrorResponse = await response.json();
-        setError(errorData.error || "Invalid email or password");
+        setError(data.error || 'Invalid email or password');
         return;
       }
-
-      const data: LoginResponse = await response.json();
-      console.log("Login successful:", data);
-
-      // Save token to localStorage and update login state
-      localStorage.setItem("token", data.token);
+  
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('userId', data.user.id);
+      console.log('Token saved:', data.token);
       setIsLoggedIn(true);
-      navigate("/home"); // Redirect to home page
-    } catch (error: any) {
-      console.error("Error during login:", error.message);
-      setError("An error occurred. Please try again.");
+      navigate('/home');
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error('Fetch error:', error.message);
+      } else {
+        console.error('Fetch error:', error);
+      }
+      setError('An error occurred. Please try again.');
     }
   };
-
   return (
     <div className="auth-container">
       <div className="auth-form-container login-active">

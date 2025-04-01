@@ -5,6 +5,8 @@ const bhkHouseSchema = new mongoose.Schema({
   propertyName: { type: String, required: true },
   contactNumber: { type: String, required: true },
   address: { type: String, required: true },
+  city: { type: String, required: true },
+  state: { type: String, required: true },
   monthlyRent: { type: Number, required: true },
   bedrooms: { type: Number, required: true },
   bathrooms: { type: Number, required: true },
@@ -22,10 +24,11 @@ const bhkHouseSchema = new mongoose.Schema({
     modularKitchen: { type: Boolean, default: false },
     extraStorage: { type: Boolean, default: false },
   },
-  latitude: { type: Number, required: false },
-  longitude: { type: Number, required: false },
+  latitude: { type: Number },
+  longitude: { type: Number },
   images: [{ type: String }],
   threeDModel: { type: String },
-});
+  interiorTourLink: { type: String }, // New field
+}, { timestamps: true });
 
 module.exports = mongoose.model('BHKHouse', bhkHouseSchema);

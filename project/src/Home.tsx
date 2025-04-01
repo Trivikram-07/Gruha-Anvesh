@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Home as HomeIcon, Building2, Palmtree, Phone, MapPin, Mail, Instagram, Facebook, Twitter, Bed, Bath, Square, Wifi, Coffee, Utensils, Dumbbell, Car, Shield, Waves, Trees } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Home as HomeIcon, Building2, Palmtree, Phone, MapPin, Mail, Instagram, Facebook, Twitter, Bed, Bath, Square, Wifi, Utensils, Dumbbell, Car, Shield, Waves, Trees, Heart } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import Navbar from './Components/Navbar';
+import Recommendations from './Components/Recommendations'; // Adjust path as needed
+import axios from 'axios';
 
 // Fix for default marker icons in Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -30,6 +32,7 @@ interface Property {
   sqft?: number;
   amenities: string[];
   description: string;
+  isFavorited?: boolean;
 }
 
 const categoryColors = {
@@ -63,37 +66,48 @@ function Home() {
     const fetchProperties = async () => {
       setLoading(true);
       setError(null);
+      const token = localStorage.getItem('token');
+      console.log('Fetching properties with Token:', token);
       try {
-        const response = await fetch(`http://localhost:3000/api/properties/${selectedType}`, {
+        const response = await fetch(`http://localhost:3000/api/properties/management/${selectedType}`, {
           headers: {
             'Content-Type': 'application/json',
+            ...(token && { 'Authorization': `Bearer ${token}` }),
           },
         });
         if (!response.ok) {
-          throw new Error(`Failed to fetch ${selectedType} properties: ${response.statusText}`);
+          const errorData = await response.json();
+          console.error('Fetch error response:', errorData);
+          throw new Error(`Failed to fetch ${selectedType} properties: ${response.status} - ${errorData.message || response.statusText}`);
         }
         const data = await response.json();
+        console.log('Raw server response:', data);
 
-        const mappedProperties: Property[] = data.map((item: any) => ({
-          id: item._id,
-          type: selectedType,
-          name: item.propertyName,
-          image: item.images && item.images.length > 0 ? item.images[0] : 'https://via.placeholder.com/300',
-          rent: selectedType === 'vacation' ? `₹${item.ratePerDay}/day` : `₹${item.monthlyRent}/month`,
-          phone: item.contactNumber,
-          area: item.address.split(',')[0],
-          location: [item.latitude || 20.5937, item.longitude || 78.9629],
-          beds: selectedType === 'bhk' ? item.bedrooms : item.maxGuests || undefined,
-          baths: selectedType === 'bhk' ? item.bathrooms : undefined,
-          sqft: item.squareFeet,
-          amenities: Object.entries(selectedType === 'pg' ? item.sharingOptions || item.amenities : item.amenities)
-            .filter(([_, value]) => value === true)
-            .map(([key]) => key),
-          description: item.description,
-        }));
+        const mappedProperties: Property[] = data
+          .filter((item: any) => !item.deletedAt) // Only active properties
+          .map((item: any) => ({
+            id: item._id,
+            type: selectedType,
+            name: item.propertyName,
+            image: item.images && item.images.length > 0 ? item.images[0] : 'https://via.placeholder.com/300',
+            rent: selectedType === 'vacation' ? `₹${item.ratePerDay}/day` : `₹${item.monthlyRent}/month`,
+            phone: item.contactNumber,
+            area: item.address.split(',')[0],
+            location: [item.latitude || 20.5937, item.longitude || 78.9629],
+            beds: selectedType === 'bhk' ? item.bedrooms : item.maxGuests || undefined,
+            baths: selectedType === 'bhk' ? item.bathrooms : undefined,
+            sqft: item.squareFeet,
+            amenities: Object.entries(selectedType === 'pg' ? item.sharingOptions || item.amenities : item.amenities)
+              .filter(([_, value]) => value === true)
+              .map(([key]) => key),
+            description: item.description,
+            isFavorited: item.isFavorited || false,
+          }));
 
+        console.log('Mapped properties:', mappedProperties);
         setProperties(mappedProperties);
       } catch (err) {
+        console.error('Fetch error:', err);
         setError(err instanceof Error ? err.message : 'Something went wrong');
       } finally {
         setLoading(false);
@@ -102,6 +116,77 @@ function Home() {
 
     fetchProperties();
   }, [selectedType]);
+
+  const toggleFavorite = async (propertyId: number | string) => {
+    const property = properties.find(p => p.id === propertyId);
+    if (!property) return;
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.error('No token found - please log in');
+      setError('Please log in to favorite properties');
+      return;
+    }
+
+    const newFavoriteStatus = !property.isFavorited;
+    console.log('Toggling favorite:', { propertyId, newFavoriteStatus });
+
+    setProperties(prev =>
+      prev.map(p =>
+        p.id === propertyId ? { ...p, isFavorited: newFavoriteStatus } : p
+      )
+    );
+
+    try {
+      const response = await fetch(`http://localhost:3000/api/properties/favorites/${propertyId}/favorite`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ isFavorited: newFavoriteStatus, propertyType: property.type }),
+      });
+
+      const data = await response.json();
+      console.log('Server response:', { status: response.status, data });
+
+      if (!response.ok) {
+        throw new Error(`Failed to update favorite: ${response.status} - ${data.message || 'Unknown error'}`);
+      }
+    } catch (err) {
+      console.error('Favorite toggle error:', err);
+      setProperties(prev =>
+        prev.map(p =>
+          p.id === propertyId ? { ...p, isFavorited: !newFavoriteStatus } : p
+        )
+      );
+      setError(err instanceof Error ? err.message : 'Failed to update favorite');
+    }
+  };
+
+  const handleClick = async (propertyId: number | string, propertyType: PropertyType) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.log('No token - skipping click tracking');
+      return;
+    }
+
+    console.log('Sending click:', { propertyId, propertyType });
+    try {
+      const response = await axios.post(
+        `http://localhost:3000/api/properties/actions/click/${propertyId}`,
+        { propertyType },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      console.log('Property clicked:', propertyId, 'Response:', response.data);
+    } catch (err) {
+      console.error('Click tracking failed:', {
+        status: axios.isAxiosError(err) ? err.response?.status : undefined,
+        data: axios.isAxiosError(err) ? err.response?.data : null,
+        message: err instanceof Error ? err.message : 'Unknown error',
+      });
+    }
+  };
 
   const filteredProperties = properties;
 
@@ -114,19 +199,17 @@ function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar isLoggedIn={false} setIsLoggedIn={() => {}} />
+      {/* Header with Toggle */}
       <div className="container mx-auto px-4 py-8">
         <div className="bg-white rounded-full shadow-md p-2 max-w-md mx-auto">
           <div className="relative flex justify-between">
             <button
               onClick={() => setSelectedType('pg')}
-              className={`flex-1 py-2 px-4 rounded-full z-10 koryelative ${
+              className={`flex-1 py-2 px-4 rounded-full z-10 relative ${
                 selectedType === 'pg' ? 'text-white' : 'text-gray-600'
               }`}
             >
-              <div className="inline-block mr-2 h-5 w-5">
-                <HomeIcon />
-              </div>
+              <HomeIcon className="inline-block mr-2 h-5 w-5" />
               PG
             </button>
             <button
@@ -148,7 +231,7 @@ function Home() {
               Vacation
             </button>
             <motion.div
-              className={`absolute inset-y-0 rounded-full bg-gradient-to-r ${categoryColors[selectedType]}`}
+              className={`absolute inset-y-0 rounded-full bg-gradient-to-r ${categoryColors[selectedType] || 'from-gray-500 to-gray-700'}`}
               initial={false}
               animate={{
                 left: selectedType === 'pg' ? '0%' : selectedType === 'bhk' ? '33.33%' : '66.66%',
@@ -160,12 +243,14 @@ function Home() {
         </div>
       </div>
 
+      {/* Main Content */}
       {loading ? (
         <div className="text-center py-8">Loading properties...</div>
       ) : error ? (
         <div className="text-center py-8 text-red-500">{error}</div>
       ) : (
         <>
+          {/* Map */}
           <div className="w-full h-[400px] mb-8 relative">
             <MapContainer
               center={center}
@@ -193,15 +278,40 @@ function Home() {
             </MapContainer>
           </div>
 
+          {/* Properties and Recommendations */}
           <div className="container mx-auto px-4 py-8">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredProperties.map((property) => (
-                <div key={property.id} className="bg-white rounded-xl shadow-lg overflow-hidden transform transition-transform hover:scale-105">
-                  <img
-                    src={property.image}
-                    alt={property.name}
-                    className="w-full h-48 object-cover"
-                  />
+                <div
+                  key={property.id}
+                  className="bg-white rounded-xl shadow-lg overflow-hidden transform transition-transform hover:scale-105"
+                  onClick={() => handleClick(property.id, property.type)} // Track click
+                >
+                  <div className="relative">
+                    <img
+                      src={property.image}
+                      alt={property.name}
+                      className="w-full h-48 object-cover"
+                    />
+                    <motion.button
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent triggering card click
+                        toggleFavorite(property.id);
+                      }}
+                      className="absolute top-2 right-2 p-2 rounded-full bg-white/80 hover:bg-white transition-colors"
+                      whileTap={{ scale: 0.9 }}
+                    >
+                      <motion.div
+                        initial={false}
+                        animate={{ scale: property.isFavorited ? [1, 1.3, 1] : 1 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <Heart
+                          className={`h-5 w-5 ${property.isFavorited ? 'text-red-500 fill-red-500' : 'text-gray-600'}`}
+                        />
+                      </motion.div>
+                    </motion.button>
+                  </div>
                   <div className="p-6 flex flex-col">
                     <h3 className="text-xl font-semibold mb-2">{property.name}</h3>
                     <p className="text-gray-600 mb-2">{property.area}</p>
@@ -230,16 +340,22 @@ function Home() {
 
                     <div className="flex items-center justify-between mb-4">
                       <span className="text-2xl font-bold text-blue-600">{property.rent}</span>
-                      <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                        Contact
-                      </button>
+                      <Link
+                        to={`/booking/${property.type}/${property.id}`}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent double click trigger
+                          handleClick(property.id, property.type);
+                        }}
+                      >
+                        View Details
+                      </Link>
                     </div>
                     <div className="flex items-center text-gray-600 mb-4">
                       <Phone className="h-4 w-4 mr-2" />
                       {property.phone}
                     </div>
 
-                    {/* Amenities at the bottom, 3 per line */}
                     <div className="grid grid-cols-3 gap-2">
                       {property.amenities.map((amenity, index) => (
                         <span
@@ -255,11 +371,17 @@ function Home() {
                 </div>
               ))}
             </div>
+
+            {/* Recommendations Section */}
+            <div className="mt-12">
+              <Recommendations propertyType={selectedType} />
+            </div>
           </div>
         </>
       )}
 
-      <footer className={`bg-gradient-to-r ${categoryColors[selectedType]} text-white mt-16`}>
+      {/* Footer */}
+      <footer className={`bg-gradient-to-r ${categoryColors[selectedType] || 'from-gray-500 to-gray-700'} text-white mt-16`}>
         <div className="container mx-auto px-4 py-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>

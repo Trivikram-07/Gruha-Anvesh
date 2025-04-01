@@ -19,13 +19,13 @@ const categoryColors = {
 
 const pgAmenities = [
   { id: 'wifi', label: 'WiFi', icon: <Wifi className="h-4 w-4" /> },
-  { id: 'tiffin', label: 'Tiffin Service', icon: <Utensils className="h-4 w-4" /> },
-  { id: 'tv', label: 'TV Room', icon: <Tv className="h-4 w-4" /> },
+  { id: 'tiffinService', label: 'Tiffin Service', icon: <Utensils className="h-4 w-4" /> },
+  { id: 'tvRoom', label: 'TV Room', icon: <Tv className="h-4 w-4" /> },
   { id: 'laundry', label: 'Laundry', icon: <Shirt className="h-4 w-4" /> },
   { id: 'bikeParking', label: 'Bike Parking', icon: <Bike className="h-4 w-4" /> },
   { id: 'hotWater', label: 'Hot Water', icon: <Droplets className="h-4 w-4" /> },
-  { id: 'coffee', label: 'Coffee Machine', icon: <Coffee className="h-4 w-4" /> },
-  { id: 'ac', label: 'Air Conditioning', icon: <Wind className="h-4 w-4" /> },
+  { id: 'coffeeMachine', label: 'Coffee Machine', icon: <Coffee className="h-4 w-4" /> },
+  { id: 'airConditioning', label: 'Air Conditioning', icon: <Wind className="h-4 w-4" /> },
 ];
 
 const bhkAmenities = [
@@ -33,24 +33,24 @@ const bhkAmenities = [
   { id: 'wifiSetup', label: 'WiFi Setup', icon: <Wifi className="h-4 w-4" /> },
   { id: 'acUnits', label: 'AC Units', icon: <Wind className="h-4 w-4" /> },
   { id: 'furnished', label: 'Furnished', icon: <Sofa className="h-4 w-4" /> },
-  { id: 'security', label: 'Security System', icon: <Shield className="h-4 w-4" /> },
+  { id: 'securitySystem', label: 'Security System', icon: <Shield className="h-4 w-4" /> },
   { id: 'geysers', label: 'Geysers', icon: <Thermometer className="h-4 w-4" /> },
-  { id: 'fans', label: 'Ceiling Fans', icon: <Fan className="h-4 w-4" /> },
+  { id: 'ceilingFans', label: 'Ceiling Fans', icon: <Fan className="h-4 w-4" /> },
   { id: 'tvSetup', label: 'TV Setup', icon: <Tv className="h-4 w-4" /> },
-  { id: 'kitchen', label: 'Modular Kitchen', icon: <UtensilsCrossed className="h-4 w-4" /> },
-  { id: 'storage', label: 'Extra Storage', icon: <Package className="h-4 w-4" /> },
+  { id: 'modularKitchen', label: 'Modular Kitchen', icon: <UtensilsCrossed className="h-4 w-4" /> },
+  { id: 'extraStorage', label: 'Extra Storage', icon: <Package className="h-4 w-4" /> },
 ];
 
 const vacationAmenities = [
-  { id: 'beach', label: 'Beach Access', icon: <Waves className="h-4 w-4" /> },
+  { id: 'beachAccess', label: 'Beach Access', icon: <Waves className="h-4 w-4" /> },
   { id: 'highSpeedWifi', label: 'High-Speed WiFi', icon: <Wifi className="h-4 w-4" /> },
-  { id: 'vacationParking', label: 'Parking Space', icon: <Car className="h-4 w-4" /> },
-  { id: 'vacationAc', label: 'Air Conditioning', icon: <Wind className="h-4 w-4" /> },
+  { id: 'parkingSpace', label: 'Parking Space', icon: <Car className="h-4 w-4" /> },
+  { id: 'airConditioning', label: 'Air Conditioning', icon: <Wind className="h-4 w-4" /> },
   { id: 'kingSizeBed', label: 'King Size Bed', icon: <Crown className="h-4 w-4" /> },
   { id: 'roomService', label: 'Room Service', icon: <Bell className="h-4 w-4" /> },
   { id: 'spaAccess', label: 'Spa Access', icon: <Spa className="h-4 w-4" /> },
   { id: 'fitnessCenter', label: 'Fitness Center', icon: <Dumbbell className="h-4 w-4" /> },
-  { id: 'smartTv', label: 'Smart TV', icon: <MonitorPlay className="h-4 w-4" /> },
+  { id: 'smartTV', label: 'Smart TV', icon: <MonitorPlay className="h-4 w-4" /> },
   { id: 'loungeAccess', label: 'Lounge Access', icon: <Armchair className="h-4 w-4" /> },
 ];
 
@@ -60,10 +60,13 @@ interface FormData {
   name: string;
   phone: string;
   address: string;
+  city: string;
+  state: string;
   rent: string;
   description: string;
   images: File[];
   model3d: File | null;
+  interiorTourLink: string; // New field
   pgAmenities: Record<string, boolean>;
   sharingOptions: Record<number, boolean>;
   bhkAmenities: Record<string, boolean>;
@@ -80,10 +83,13 @@ function Upload() {
     name: '',
     phone: '',
     address: '',
+    city: '',
+    state: '',
     rent: '',
     description: '',
     images: [],
     model3d: null,
+    interiorTourLink: '', // New field
     pgAmenities: Object.fromEntries(pgAmenities.map(a => [a.id, false])),
     sharingOptions: Object.fromEntries(sharingOptions.map(o => [o, false])),
     bhkAmenities: Object.fromEntries(bhkAmenities.map(a => [a.id, false])),
@@ -183,11 +189,14 @@ function Upload() {
     e.preventDefault();
     const formDataToSend = new FormData();
 
-    formDataToSend.append('propertyName', formData.name);
-    formDataToSend.append('contactNumber', formData.phone);
-    formDataToSend.append('address', formData.address);
-    formDataToSend.append(selectedType === 'vacation' ? 'ratePerDay' : 'monthlyRent', formData.rent);
-    formDataToSend.append('description', formData.description);
+    formDataToSend.append('propertyName', formData.name || '');
+    formDataToSend.append('contactNumber', formData.phone || '');
+    formDataToSend.append('address', formData.address || '');
+    formDataToSend.append('city', formData.city || '');
+    formDataToSend.append('state', formData.state || '');
+    formDataToSend.append(selectedType === 'vacation' ? 'ratePerDay' : 'monthlyRent', formData.rent || '0');
+    formDataToSend.append('description', formData.description || '');
+    formDataToSend.append('interiorTourLink', formData.interiorTourLink || ''); // New field
 
     if (location.latitude && location.longitude) {
       formDataToSend.append('latitude', location.latitude.toString());
@@ -200,87 +209,99 @@ function Upload() {
       formDataToSend.append('threeSharing', formData.sharingOptions[3].toString());
       formDataToSend.append('fourSharing', formData.sharingOptions[4].toString());
       formDataToSend.append('wifi', formData.pgAmenities.wifi.toString());
-      formDataToSend.append('tiffinService', formData.pgAmenities.tiffin.toString());
-      formDataToSend.append('tvRoom', formData.pgAmenities.tv.toString());
+      formDataToSend.append('tiffinService', formData.pgAmenities.tiffinService.toString());
+      formDataToSend.append('tvRoom', formData.pgAmenities.tvRoom.toString());
       formDataToSend.append('laundry', formData.pgAmenities.laundry.toString());
       formDataToSend.append('bikeParking', formData.pgAmenities.bikeParking.toString());
       formDataToSend.append('hotWater', formData.pgAmenities.hotWater.toString());
-      formDataToSend.append('coffeeMachine', formData.pgAmenities.coffee.toString());
-      formDataToSend.append('airConditioning', formData.pgAmenities.ac.toString());
+      formDataToSend.append('coffeeMachine', formData.pgAmenities.coffeeMachine.toString());
+      formDataToSend.append('airConditioning', formData.pgAmenities.airConditioning.toString());
     } else if (selectedType === 'bhk') {
       formDataToSend.append('bedrooms', formData.bedrooms.toString());
       formDataToSend.append('bathrooms', formData.bathrooms.toString());
-      formDataToSend.append('squareFeet', formData.sqft);
-      formDataToSend.append('amenities[carParking]', formData.bhkAmenities.carParking.toString());
-      formDataToSend.append('amenities[wifiSetup]', formData.bhkAmenities.wifiSetup.toString());
-      formDataToSend.append('amenities[acUnits]', formData.bhkAmenities.acUnits.toString());
-      formDataToSend.append('amenities[furnished]', formData.bhkAmenities.furnished.toString());
-      formDataToSend.append('amenities[securitySystem]', formData.bhkAmenities.security.toString());
-      formDataToSend.append('amenities[geysers]', formData.bhkAmenities.geysers.toString());
-      formDataToSend.append('amenities[ceilingFans]', formData.bhkAmenities.fans.toString());
-      formDataToSend.append('amenities[tvSetup]', formData.bhkAmenities.tvSetup.toString());
-      formDataToSend.append('amenities[modularKitchen]', formData.bhkAmenities.kitchen.toString());
-      formDataToSend.append('amenities[extraStorage]', formData.bhkAmenities.storage.toString());
+      formDataToSend.append('squareFeet', formData.sqft || '0');
+      formDataToSend.append('carParking', formData.bhkAmenities.carParking.toString());
+      formDataToSend.append('wifiSetup', formData.bhkAmenities.wifiSetup.toString());
+      formDataToSend.append('acUnits', formData.bhkAmenities.acUnits.toString());
+      formDataToSend.append('furnished', formData.bhkAmenities.furnished.toString());
+      formDataToSend.append('securitySystem', formData.bhkAmenities.securitySystem.toString());
+      formDataToSend.append('geysers', formData.bhkAmenities.geysers.toString());
+      formDataToSend.append('ceilingFans', formData.bhkAmenities.ceilingFans.toString());
+      formDataToSend.append('tvSetup', formData.bhkAmenities.tvSetup.toString());
+      formDataToSend.append('modularKitchen', formData.bhkAmenities.modularKitchen.toString());
+      formDataToSend.append('extraStorage', formData.bhkAmenities.extraStorage.toString());
     } else if (selectedType === 'vacation') {
       formDataToSend.append('maxGuests', formData.maxGuests.toString());
-      formDataToSend.append('amenities[beachAccess]', formData.vacationAmenities.beach.toString());
-      formDataToSend.append('amenities[highSpeedWifi]', formData.vacationAmenities.highSpeedWifi.toString());
-      formDataToSend.append('amenities[parkingSpace]', formData.vacationAmenities.vacationParking.toString());
-      formDataToSend.append('amenities[airConditioning]', formData.vacationAmenities.vacationAc.toString());
-      formDataToSend.append('amenities[kingSizeBed]', formData.vacationAmenities.kingSizeBed.toString());
-      formDataToSend.append('amenities[roomService]', formData.vacationAmenities.roomService.toString());
-      formDataToSend.append('amenities[spaAccess]', formData.vacationAmenities.spaAccess.toString());
-      formDataToSend.append('amenities[fitnessCenter]', formData.vacationAmenities.fitnessCenter.toString());
-      formDataToSend.append('amenities[smartTV]', formData.vacationAmenities.smartTv.toString());
-      formDataToSend.append('amenities[loungeAccess]', formData.vacationAmenities.loungeAccess.toString());
+      formDataToSend.append('beachAccess', formData.vacationAmenities.beachAccess.toString());
+      formDataToSend.append('highSpeedWifi', formData.vacationAmenities.highSpeedWifi.toString());
+      formDataToSend.append('parkingSpace', formData.vacationAmenities.parkingSpace.toString());
+      formDataToSend.append('airConditioning', formData.vacationAmenities.airConditioning.toString());
+      formDataToSend.append('kingSizeBed', formData.vacationAmenities.kingSizeBed.toString());
+      formDataToSend.append('roomService', formData.vacationAmenities.roomService.toString());
+      formDataToSend.append('spaAccess', formData.vacationAmenities.spaAccess.toString());
+      formDataToSend.append('fitnessCenter', formData.vacationAmenities.fitnessCenter.toString());
+      formDataToSend.append('smartTV', formData.vacationAmenities.smartTV.toString());
+      formDataToSend.append('loungeAccess', formData.vacationAmenities.loungeAccess.toString());
     }
 
-    formData.images.forEach((image) => {
-      formDataToSend.append('images', image);
-    });
-    if (formData.model3d) {
-      formDataToSend.append('threeDModel', formData.model3d);
-    }
+    formData.images.forEach((image) => formDataToSend.append('images', image));
+    if (formData.model3d) formDataToSend.append('threeDModel', formData.model3d);
 
-    console.log('FormData being sent:', Array.from(formDataToSend.entries()));
+    console.log('FormData being sent:');
+    for (const [key, value] of formDataToSend.entries()) {
+      console.log(`${key}: ${value instanceof File ? value.name : value}`);
+    }
 
     try {
       const token = localStorage.getItem('token');
-      if (!token) throw new Error('No authentication token found');
+      if (!token) throw new Error('No authentication token found. Please log in.');
 
-      const endpoint = `http://localhost:3000/api/properties/${selectedType === 'pg' ? 'pg' : selectedType === 'bhk' ? 'bhk' : 'vacation'}`;
+      const endpoint = `http://localhost:3000/api/properties/management/${selectedType}`;
+      console.log('Submitting to endpoint:', endpoint, 'with Token:', token);
       const response = await fetch(endpoint, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { 'Authorization': `Bearer ${token}` },
         body: formDataToSend,
       });
 
       if (!response.ok) {
-        const contentType = response.headers.get('content-type');
-        let errorMessage = 'Failed to submit property';
-        if (contentType && contentType.includes('application/json')) {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorMessage;
-        } else {
-          const text = await response.text();
-          console.error('Non-JSON response:', text);
-          errorMessage = `Server returned ${response.status}: ${text.slice(0, 100)}...`;
-        }
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.errors
+          ? errorData.errors.map((err: any) => err.msg).join(', ')
+          : errorData.message || `Server returned ${response.status}`;
         throw new Error(errorMessage);
       }
 
       const result = await response.json();
-      console.log('Property submitted:', result);
+      console.log('Property submitted successfully:', result);
       alert('Property listed successfully!');
+      setFormData({
+        name: '',
+        phone: '',
+        address: '',
+        city: '',
+        state: '',
+        rent: '',
+        description: '',
+        images: [],
+        model3d: null,
+        interiorTourLink: '', // Reset new field
+        pgAmenities: Object.fromEntries(pgAmenities.map(a => [a.id, false])),
+        sharingOptions: Object.fromEntries(sharingOptions.map(o => [o, false])),
+        bhkAmenities: Object.fromEntries(bhkAmenities.map(a => [a.id, false])),
+        bedrooms: 1,
+        bathrooms: 1,
+        sqft: '',
+        vacationAmenities: Object.fromEntries(vacationAmenities.map(a => [a.id, false])),
+        maxGuests: 2,
+      });
+      setLocation({ latitude: null, longitude: null });
     } catch (error) {
-      console.error('Error submitting form:', error);
-      if (error instanceof Error) {
-        alert(`Failed to list property: ${error.message}`);
-      } else {
-        alert('Failed to list property: An unknown error occurred');
-      }
+      console.error('Error submitting form:', {
+        message: (error as Error).message,
+        stack: (error as Error).stack,
+      });
+      alert(`Failed to list property: ${(error as Error).message}`);
     }
   };
 
@@ -396,6 +417,38 @@ function Upload() {
               />
             </div>
 
+            <div>
+              <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
+                City
+              </label>
+              <input
+                type="text"
+                id="city"
+                name="city"
+                value={formData.city}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="e.g., Bangalore"
+                required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1">
+                State
+              </label>
+              <input
+                type="text"
+                id="state"
+                name="state"
+                value={formData.state}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="e.g., Karnataka"
+                required
+              />
+            </div>
+
             <div className="md:col-span-2 mt-6">
               <h3 className={`text-xl font-semibold mb-4 bg-gradient-to-r ${categoryColors[selectedType]} bg-clip-text text-transparent`}>
                 Property Location
@@ -495,29 +548,29 @@ function Upload() {
                     onChange={handleInputChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="1200"
+                    required
                   />
                 </div>
               </>
             )}
 
             {selectedType === 'vacation' && (
-              <>
-                <div>
-                  <label htmlFor="maxGuests" className="block text-sm font-medium text-gray-700 mb-1">
-                    Maximum Guests
-                  </label>
-                  <input
-                    type="number"
-                    id="maxGuests"
-                    name="maxGuests"
-                    min="1"
-                    max="20"
-                    value={formData.maxGuests}
-                    onChange={handleNumberChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-              </>
+              <div>
+                <label htmlFor="maxGuests" className="block text-sm font-medium text-gray-700 mb-1">
+                  Maximum Guests
+                </label>
+                <input
+                  type="number"
+                  id="maxGuests"
+                  name="maxGuests"
+                  min="1"
+                  max="20"
+                  value={formData.maxGuests}
+                  onChange={handleNumberChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
+              </div>
             )}
 
             {selectedType === 'pg' && (
@@ -557,6 +610,21 @@ function Upload() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Describe your property in detail..."
                 required
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label htmlFor="interiorTourLink" className="block text-sm font-medium text-gray-700 mb-1">
+                Interior Tour Link (Optional)
+              </label>
+              <input
+                type="url"
+                id="interiorTourLink"
+                name="interiorTourLink"
+                value={formData.interiorTourLink}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="https://example.com/interior-tour"
               />
             </div>
 

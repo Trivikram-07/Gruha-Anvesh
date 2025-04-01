@@ -1,6 +1,7 @@
 const User = require('../models/userModel');
 const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
+const bcrypt = require('bcryptjs'); // Import bcrypt
 
 const signup = async (req, res) => {
   try {
@@ -17,8 +18,13 @@ const signup = async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // Create a new user
-    const user = await User.create({ username, email, password, phone_no });
+    // Hash the password before storing
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create a new user with the hashed password
+    const user = await User.create({ username, email, password: hashedPassword, phone_no });
+
     const token = createToken(user._id);
 
     res.status(201).json({ 
@@ -30,7 +36,6 @@ const signup = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
-
 
 
 const login = async (req, res) => {
