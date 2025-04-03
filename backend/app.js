@@ -128,7 +128,7 @@ mongoose.connect(process.env.MONGO_URI, {
 
 const __dirname1 = path.resolve(); // This gives the root of your backend directory
 
-const path = require('path');
+
 
 if (process.env.NODE_ENV === 'production') {
   // Serve static files from the dist folder (ensure this path is correct)
