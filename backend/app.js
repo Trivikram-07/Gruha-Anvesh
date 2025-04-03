@@ -134,7 +134,7 @@ if (process.env.NODE_ENV === 'production') {
 
   // Handle any route with index.html (for SPA)
   app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname1, '../dist/index.html'), (err) => {
+    res.sendFile(path.join(__dirname1, '/dist/index.html'), (err) => {
       if (err) {
         res.status(500).send(err);
       }
