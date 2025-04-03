@@ -97,27 +97,27 @@ io.on('connection', (socket) => {
 
 //-----------------------deployment
 
-const __dirname1 = path.resolve(); // This gives the root of your backend directory
-
-const frontendPath = path.join(__dirname1, '..', 'project', 'dist'); // Move out of backend
+const __dirname1 = path.resolve();
 
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(frontendPath));
+  // Serve static files from the correct 'dist' location
+  app.use(express.static(path.join(__dirname1, 'dist')));
 
+  // Handle SPA routing correctly
   app.get('*', (req, res) => {
-    res.sendFile(path.join(frontendPath, 'index.html'), (err) => {
+    res.sendFile(path.join(__dirname1, 'dist', 'index.html'), (err) => {
       if (err) {
         console.error('Error serving index.html:', err);
         res.status(500).send('Frontend could not be loaded.');
       }
     });
   });
+
 } else {
   app.get('/*', (req, res) => {
     res.send('API is running fine');
   });
 }
-
 
 app.use(cors({
   origin: ['http://localhost:5173', 'http://localhost:3000'],
