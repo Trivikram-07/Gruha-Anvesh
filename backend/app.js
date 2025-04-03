@@ -103,18 +103,18 @@ const __dirname1 = path.resolve(); // This gives the root of your backend direct
 
 if (process.env.NODE_ENV === 'production') {
   // Serve static files from the dist folder (ensure this path is correct)
-  app.use(express.static(path.join(__dirname1, '../project/dist')));
+  app.use(express.static(path.join(__dirname1, 'project', 'dist')));
 
   // Handle any route with index.html (for SPA)
   app.get('*', (req, res) => {
-  res.sendFile(path.resolve(__dirname1, 'dist', 'index.html'), (err) => {
-    if (err) {
-      console.error('Error serving index.html:', err);
-      res.status(500).send('Frontend could not be loaded.');
-    }
+    res.sendFile(path.join(__dirname1, 'project', 'dist', 'index.html'), (err) => {
+      if (err) {
+        console.error('Error serving index.html:', err);
+        res.status(500).send('Frontend could not be loaded.');
+      }
+    });
   });
-});
-
+  
 } else {
   app.get('/*', (req, res) => {
     res.send('API is running fine');
