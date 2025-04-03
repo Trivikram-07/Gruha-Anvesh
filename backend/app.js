@@ -11,7 +11,7 @@ const Notification = require('./models/Notification');
 const Message = require('./models/Message');
 const PGProperty = require('./models/PGProperty');
 const BHKHouse = require('./models/BHKHouse');
-
+const path = require('path');
 dotenv.config();
 
 const app = express();
@@ -114,6 +114,7 @@ mongoose.connect(process.env.MONGO_URI, {
 
 
   app.use('/api/auth', require('./routes/authRoutes'));
+  
   app.use('/api/properties/actions', require('./routes/propertyActionsRoutes'));
   app.use('/api/properties/favorites', require('./routes/propertyFavoritesRoutes'));
   app.use('/api/properties/bookings', require('./routes/propertyBookingsRoutes'));
@@ -121,8 +122,30 @@ mongoose.connect(process.env.MONGO_URI, {
   app.use('/api/properties/recommendations', require('./routes/propertyRecommendationsRoutes'));
   app.use('/api/properties/messages', require('./routes/propertyMessagesRoutes'));
   app.use('/api/properties/management', require('./routes/propertyManagementRoutes'));
-  app.use('/api/users', require('./routes/userRoutes'));
 
+  app.use('/api/users', require('./routes/userRoutes'));
+//-----------------------deployment
+
+const __dirname1 = path.resolve(); // This gives the root of your backend directory
+
+if (process.env.NODE_ENV === 'production') {
+  // Serve static files from the dist folder in the project directory
+  app.use(express.static(path.join(__dirname1, '../project/dist')));
+
+  // Handle any route with index.html (for SPA)
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname1, '../project/dist/index.html'), (err) => {
+      if (err) {
+        res.status(500).send(err);
+      }
+    });
+  });
+} else {
+  // In development, you might want to proxy to your frontend or just confirm the API is running
+  app.get('/*', (req, res) => {
+    res.send('API is running fine');
+  });
+}
 // Cron Job for Review Prompts
 cron.schedule('0 0 * * *', async () => {
   try {
