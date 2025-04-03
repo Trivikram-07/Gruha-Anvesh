@@ -128,20 +128,21 @@ mongoose.connect(process.env.MONGO_URI, {
 
 const __dirname1 = path.resolve(); // This gives the root of your backend directory
 
+const path = require('path');
+
 if (process.env.NODE_ENV === 'production') {
-  // Serve static files from the dist folder in the project directory
-  app.use(express.static(path.join(__dirname1, '../project/dist')));
+  // Serve static files from the dist folder (ensure this path is correct)
+  app.use(express.static(path.join(__dirname, '../project/dist')));
 
   // Handle any route with index.html (for SPA)
   app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname1, 'dist/index.html'), (err) => {
+    res.sendFile(path.join(__dirname, '../project/dist/index.html'), (err) => {
       if (err) {
-        res.status(500).send(err);
+        res.status(500).send('Unable to load the frontend application.');
       }
     });
   });
 } else {
-  // In development, you might want to proxy to your frontend or just confirm the API is running
   app.get('/*', (req, res) => {
     res.send('API is running fine');
   });
