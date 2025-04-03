@@ -24,29 +24,6 @@ const io = new Server(server, {
   },
 });
 
-//-----------------------deployment
-
-const __dirname1 = path.resolve(); // This gives the root of your backend directory
-
-
-
-if (process.env.NODE_ENV === 'production') {
-  // Serve static files from the dist folder (ensure this path is correct)
-  app.use(express.static(path.join(__dirname, '../project/dist')));
-
-  // Handle any route with index.html (for SPA)
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../project/dist/index.html'), (err) => {
-      if (err) {
-        res.status(500).send('Unable to load the frontend application.');
-      }
-    });
-  });
-} else {
-  app.get('/*', (req, res) => {
-    res.send('API is running fine');
-  });
-}
 
 // Socket.IO Middleware
 io.use((socket, next) => {
@@ -117,6 +94,30 @@ io.on('connection', (socket) => {
     console.log('User disconnected:', socket.id);
   });
 });
+
+//-----------------------deployment
+
+const __dirname1 = path.resolve(); // This gives the root of your backend directory
+
+
+
+if (process.env.NODE_ENV === 'production') {
+  // Serve static files from the dist folder (ensure this path is correct)
+  app.use(express.static(path.join(__dirname, '../project/dist')));
+
+  // Handle any route with index.html (for SPA)
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../project/dist/index.html'), (err) => {
+      if (err) {
+        res.status(500).send('Unable to load the frontend application.');
+      }
+    });
+  });
+} else {
+  app.get('/*', (req, res) => {
+    res.send('API is running fine');
+  });
+}
 
 app.use(cors({
   origin: ['http://localhost:5173', 'http://localhost:3000'],
