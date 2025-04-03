@@ -6,7 +6,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node app.js",
     "dev": "nodemon app.js",
-    "build": "npm install && npm install --prefix project && npm run build --prefix project"
+    "build": " npm install && npm run build"
   },
   "keywords": [],
   "author": "",
