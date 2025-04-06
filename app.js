@@ -27,7 +27,7 @@ const io = new Server(server, {
   },
 });
 
-// Socket.IO Middleware
+// Socket.IO Middleware and Events (unchanged)
 io.use((socket, next) => {
   const token = socket.handshake.auth.token;
   if (!token) return next(new Error('Authentication error: No token provided'));
@@ -41,7 +41,6 @@ io.use((socket, next) => {
   }
 });
 
-// Handle Socket.IO Events
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id, 'User ID:', socket.userId);
 
@@ -92,22 +91,6 @@ io.on('connection', (socket) => {
   });
 });
 
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, 'project/dist')));
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'project/dist', 'index.html'), (err) => {
-      if (err) {
-        console.error('Error serving index.html:', err);
-        res.status(500).send('Frontend could not be loaded.');
-      }
-    });
-  });
-} else {
-  app.get('/*', (req, res) => {
-    res.send('API is running fine');
-  });
-}
-
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
     ? ['https://mini-homepage.onrender.com']
@@ -120,12 +103,7 @@ app.use((req, res, next) => {
   next();
 });
 
-mongoose.connect(process.env.MONGO_URI, {
-  serverSelectionTimeoutMS: 5000,
-})
-  .then(() => console.log('✅ Connected to MongoDB'))
-  .catch(err => console.error('❌ MongoDB connection error:', err));
-
+// Define API routes BEFORE static file serving
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/properties/actions', require('./routes/propertyActionsRoutes'));
 app.use('/api/properties/favorites', require('./routes/propertyFavoritesRoutes'));
@@ -136,6 +114,31 @@ app.use('/api/properties/messages', require('./routes/propertyMessagesRoutes'));
 app.use('/api/properties/management', require('./routes/propertyManagementRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 
+// Serve static files and catch-all route only AFTER API routes
+if (process.env.NODE_ENV === 'production') {
+  // Adjust path to match where dist is located (mini-homepage/dist)
+  app.use(express.static(path.join(__dirname, 'dist')));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'), (err) => {
+      if (err) {
+        console.error('Error serving index.html:', err);
+        res.status(500).send('Frontend could not be loaded.');
+      }
+    });
+  });
+} else {
+  app.get('/*', (req, res) => {
+    res.send('API is running fine');
+  });
+}
+
+mongoose.connect(process.env.MONGO_URI, {
+  serverSelectionTimeoutMS: 5000,
+})
+  .then(() => console.log('✅ Connected to MongoDB'))
+  .catch(err => console.error('❌ MongoDB connection error:', err));
+
+// Cron job and startup review check (unchanged)
 cron.schedule('0 0 * * *', async () => {
   try {
     const now = new Date();
