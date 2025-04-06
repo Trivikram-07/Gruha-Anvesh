@@ -71,7 +71,7 @@ router.post(
     body('email', 'Please include a valid email').isEmail(),
     body('password', 'Password must be at least 6 characters and include an uppercase letter, a lowercase letter, a number, and a special character')
       .isLength({ min: 6 })
-      .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/),
+      .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]+$/), // Added # to allowed characters
     body('confirmPassword', 'Confirm Password is required').not().isEmpty(),
     body('confirmPassword').custom((value, { req }) => {
       if (value !== req.body.password) {
@@ -84,7 +84,6 @@ router.post(
   ],
   signup
 );
-
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   console.log('Login attempt:', { email });

@@ -1,7 +1,6 @@
 import React, { useState, Dispatch, SetStateAction } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-// Define the props interface for Signup
 interface SignupProps {
   setIsLoggedIn: Dispatch<SetStateAction<boolean>>;
 }
@@ -30,16 +29,23 @@ const Signup: React.FC<SignupProps> = ({ setIsLoggedIn }) => {
       });
 
       if (!response.ok) {
-        const text = await response.text();
-        console.error('Server error response:', text);
-        throw new Error('Signup failed: ' + (response.statusText || 'Unknown error'));
+        const errorData = await response.json(); // Parse JSON response
+        console.error('Server error response:', errorData);
+        // Extract and format validation errors
+        if (errorData.errors && Array.isArray(errorData.errors)) {
+          const errorMessages = errorData.errors.map((err: { msg: string }) => err.msg).join(', ');
+          throw new Error(errorMessages);
+        }
+        throw new Error('Signup failed: ' + (errorData.message || response.statusText || 'Unknown error'));
       }
 
       const data = await response.json();
       console.log('Signup success:', data);
       alert('Signup successful!');
-      // After successful signup, update the login state
-      setIsLoggedIn(true); // This will update the App component's isLoggedIn state
+      localStorage.setItem('token', data.token); // Store token
+      localStorage.setItem('userId', data.user.id); // Store user ID
+      setIsLoggedIn(true);
+      navigate('/home'); // Redirect to home after signup
     } catch (error) {
       console.error('Signup error:', error);
       if (error instanceof Error) {
