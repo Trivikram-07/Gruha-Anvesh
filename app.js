@@ -117,9 +117,9 @@ app.use('/api/users', require('./routes/userRoutes'));
 // Serve static files and catch-all route only AFTER API routes
 if (process.env.NODE_ENV === 'production') {
   // Adjust path to match where dist is located (mini-homepage/dist)
-  app.use(express.static(path.join(__dirname, 'dist')));
+  app.use(express.static(path.join(__dirname,'project', 'dist')));
   app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'dist', 'index.html'), (err) => {
+    res.sendFile(path.join(__dirname, 'project','dist', 'index.html'), (err) => {
       if (err) {
         console.error('Error serving index.html:', err);
         res.status(500).send('Frontend could not be loaded.');
