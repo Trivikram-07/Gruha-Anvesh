@@ -13,7 +13,7 @@ const PGProperty = require('./models/PGProperty');
 const BHKHouse = require('./models/BHKHouse');
 const path = require('path');
 
-dotenv.config({ path: './Config/.env' }); // Load .env from Config folder
+dotenv.config({ path: './Config/.env' });
 
 const app = express();
 const server = http.createServer(app);
@@ -33,7 +33,7 @@ io.use((socket, next) => {
   if (!token) return next(new Error('Authentication error: No token provided'));
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    socket.handshake.auth.userId = decoded.id;
+    socket.userId = decoded.id;
     socket.join(decoded.id);
     next();
   } catch (err) {
@@ -43,7 +43,7 @@ io.use((socket, next) => {
 
 // Handle Socket.IO Events
 io.on('connection', (socket) => {
-  console.log('User connected:', socket.id, 'User ID:', socket.handshake.auth.userId);
+  console.log('User connected:', socket.id, 'User ID:', socket.userId);
 
   socket.on('joinChat', ({ userId, otherUserId, propertyId }) => {
     const chatRoom = `${propertyId}-${[userId, otherUserId].sort().join('-')}`;
@@ -83,8 +83,8 @@ io.on('connection', (socket) => {
   });
 
   socket.on('chatRead', async ({ propertyId, otherUserId }) => {
-    const chatRoom = `${propertyId}-${[socket.handshake.auth.userId, otherUserId].sort().join('-')}`;
-    socket.to(chatRoom).emit('chatRead', { propertyId, userId: socket.handshake.auth.userId });
+    const chatRoom = `${propertyId}-${[socket.userId, otherUserId].sort().join('-')}`;
+    socket.to(chatRoom).emit('chatRead', { propertyId, userId: socket.userId });
   });
 
   socket.on('disconnect', () => {
@@ -92,7 +92,6 @@ io.on('connection', (socket) => {
   });
 });
 
-// Deployment: Serve static files and SPA fallback
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, 'project/dist')));
   app.get('*', (req, res) => {
@@ -109,7 +108,6 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-// Middleware
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
     ? ['https://mini-homepage.onrender.com']
@@ -122,14 +120,12 @@ app.use((req, res, next) => {
   next();
 });
 
-// MongoDB Connection
 mongoose.connect(process.env.MONGO_URI, {
   serverSelectionTimeoutMS: 5000,
 })
   .then(() => console.log('✅ Connected to MongoDB'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
-// Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/properties/actions', require('./routes/propertyActionsRoutes'));
 app.use('/api/properties/favorites', require('./routes/propertyFavoritesRoutes'));
@@ -140,7 +136,6 @@ app.use('/api/properties/messages', require('./routes/propertyMessagesRoutes'));
 app.use('/api/properties/management', require('./routes/propertyManagementRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 
-// Cron Job for Review Prompts
 cron.schedule('0 0 * * *', async () => {
   try {
     const now = new Date();
@@ -176,7 +171,6 @@ cron.schedule('0 0 * * *', async () => {
   }
 });
 
-// Startup Review Check
 (async () => {
   try {
     const now = new Date();
@@ -212,7 +206,6 @@ cron.schedule('0 0 * * *', async () => {
   }
 })();
 
-// Error Handling
 app.use((err, req, res, next) => {
   console.error('Server error:', err.stack);
   res.status(500).json({ message: 'Something went wrong!', error: err.message });

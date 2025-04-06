@@ -4,13 +4,14 @@ import { io, Socket } from 'socket.io-client';
 import { MessageSquare, Loader2, Send, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-// ✅ Works in both dev and production
 const socket = io('/', {
   auth: {
-    token: localStorage.getItem('token') || '',
+    token: localStorage.getItem('token'), // or however you're storing it
   },
+  transports: ['websocket'],
   withCredentials: true,
 });
+
 
 
 interface ChatSummary {

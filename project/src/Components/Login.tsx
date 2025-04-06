@@ -29,6 +29,12 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
+    
+      if (!response.ok) {
+        const text = await response.text();
+        console.error('Server returned:', text);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
   
       const data = await response.json();
       console.log('Server response:', data);

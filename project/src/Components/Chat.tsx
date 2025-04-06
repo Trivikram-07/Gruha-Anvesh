@@ -32,20 +32,24 @@ const Chat: React.FC = () => {
     if (!socket) {
       socket = io({
         auth: { token: localStorage.getItem('token') },
+        transports: ['websocket'], // 👈 important to avoid 400 polling error
         reconnection: true,
         reconnectionAttempts: 5,
         reconnectionDelay: 1000,
+        withCredentials: true, // optional, based on backend CORS
       });
   
-      socket.on('connect', () => console.log('Socket connected:', socket?.id));
+      socket.on('connect', () => {
+        console.log('✅ Socket connected:', socket?.id);
+      });
   
       socket.on('connect_error', (err) => {
-        console.error('Socket connection error:', err.message);
+        console.error('❌ Socket connection error:', err.message);
         setError(`Connection error: ${err.message}`);
       });
   
       socket.on('disconnect', (reason) => {
-        console.log('Socket disconnected:', reason);
+        console.log('⚠️ Socket disconnected:', reason);
       });
     }
   
@@ -53,10 +57,11 @@ const Chat: React.FC = () => {
       socket?.off('connect');
       socket?.off('connect_error');
       socket?.off('disconnect');
-      socket?.disconnect(); // Clean disconnect on unmount
+      socket?.disconnect(); // Clean disconnect
       socket = null;
     };
   }, []);
+  
   
 
   useEffect(() => {

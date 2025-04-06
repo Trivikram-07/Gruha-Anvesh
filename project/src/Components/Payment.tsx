@@ -5,9 +5,14 @@ import { Calendar as CalendarIcon, CreditCard, Wallet, Ban as Bank, Loader2, Che
 import { format, differenceInDays, parseISO, startOfDay, isBefore, subMonths, addMonths } from 'date-fns';
 import { io, Socket } from 'socket.io-client';
 
-const socket: Socket = io({
-  auth: { token: localStorage.getItem('token') },
+const socket = io('/', {
+  auth: {
+    token: localStorage.getItem('token'), // or however you're storing it
+  },
+  transports: ['websocket'],
+  withCredentials: true,
 });
+
 
 
 const Payment: React.FC = () => {

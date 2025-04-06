@@ -3,9 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { io, Socket } from 'socket.io-client';
 import { CheckCircle, AlertCircle } from 'lucide-react';
 
-const socket: Socket = io({
-  auth: { token: localStorage.getItem('token') },
+const socket = io('/', {
+  auth: {
+    token: localStorage.getItem('token'), // or however you're storing it
+  },
+  transports: ['websocket'],
+  withCredentials: true,
 });
+
 
 
 interface Notification {
