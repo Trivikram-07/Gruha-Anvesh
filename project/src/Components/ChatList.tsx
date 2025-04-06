@@ -4,9 +4,14 @@ import { io, Socket } from 'socket.io-client';
 import { MessageSquare, Loader2, Send, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const socket: Socket = io('http://localhost:3000', {
-  auth: { token: localStorage.getItem('token') },
+// ✅ Works in both dev and production
+const socket = io('/', {
+  auth: {
+    token: localStorage.getItem('token') || '',
+  },
+  withCredentials: true,
 });
+
 
 interface ChatSummary {
   userId: string;
