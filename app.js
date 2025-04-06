@@ -6,11 +6,11 @@ const http = require('http');
 const jwt = require('jsonwebtoken');
 const cron = require('node-cron');
 const { Server } = require('socket.io');
-const VacationSpot = require('./Models/VacationSpot');
-const Notification = require('./Models/Notification');
-const Message = require('./Models/Message');
-const PGProperty = require('./Models/PGProperty');
-const BHKHouse = require('./Models/BHKHouse');
+const VacationSpot = require('./models/VacationSpot');
+const Notification = require('./models/Notification');
+const Message = require('./models/Message');
+const PGProperty = require('.models/PGProperty');
+const BHKHouse = require('./models/BHKHouse');
 const path = require('path');
 
 dotenv.config({ path: './Config/.env' }); // Load .env from Config folder
