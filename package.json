@@ -6,7 +6,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node app.js",
     "dev": "nodemon app.js",
-    "build": "echo 'No build step needed for backend'"
+    "build": "echo 'No build step needed for backend'",
+    "postinstall": "cd project && npm install"
+
   },
   "keywords": [],
   "author": "",
