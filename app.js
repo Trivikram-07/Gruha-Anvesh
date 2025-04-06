@@ -130,15 +130,15 @@ mongoose.connect(process.env.MONGO_URI, {
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
 // Routes
-app.use('/api/auth', require('./Routes/authRoutes'));
-app.use('/api/properties/actions', require('./Routes/propertyActionsRoutes'));
-app.use('/api/properties/favorites', require('./Routes/propertyFavoritesRoutes'));
-app.use('/api/properties/bookings', require('./Routes/propertyBookingsRoutes'));
-app.use('/api/properties/notifications', require('./Routes/propertyNotificationsRoutes'));
-app.use('/api/properties/recommendations', require('./Routes/propertyRecommendationsRoutes'));
-app.use('/api/properties/messages', require('./Routes/propertyMessagesRoutes'));
-app.use('/api/properties/management', require('./Routes/propertyManagementRoutes'));
-app.use('/api/users', require('./Routes/userRoutes'));
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/properties/actions', require('./routes/propertyActionsRoutes'));
+app.use('/api/properties/favorites', require('./routes/propertyFavoritesRoutes'));
+app.use('/api/properties/bookings', require('./routes/propertyBookingsRoutes'));
+app.use('/api/properties/notifications', require('./routes/propertyNotificationsRoutes'));
+app.use('/api/properties/recommendations', require('./routes/propertyRecommendationsRoutes'));
+app.use('/api/properties/messages', require('./routes/propertyMessagesRoutes'));
+app.use('/api/properties/management', require('./routes/propertyManagementRoutes'));
+app.use('/api/users', require('./routes/userRoutes'));
 
 // Cron Job for Review Prompts
 cron.schedule('0 0 * * *', async () => {
