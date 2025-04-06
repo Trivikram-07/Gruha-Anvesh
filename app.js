@@ -9,7 +9,7 @@ const { Server } = require('socket.io');
 const VacationSpot = require('./models/VacationSpot');
 const Notification = require('./models/Notification');
 const Message = require('./models/Message');
-const PGProperty = require('.models/PGProperty');
+const PGProperty = require('./models/PGProperty');
 const BHKHouse = require('./models/BHKHouse');
 const path = require('path');
 
