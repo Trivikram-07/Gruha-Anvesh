@@ -256,7 +256,7 @@ function Upload() {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('No authentication token found. Please log in.');
 
-      const endpoint = `http://localhost:3000/api/properties/management/${selectedType}`;
+      const endpoint = `/api/properties/management/${selectedType}`;
       console.log('Submitting to endpoint:', endpoint, 'with Token:', token);
       const response = await fetch(endpoint, {
         method: 'POST',

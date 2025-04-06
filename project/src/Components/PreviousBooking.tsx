@@ -22,7 +22,7 @@ const PreviousBookings: React.FC = () => {
       const token = localStorage.getItem('token');
       console.log('Fetching previous bookings with Token:', token);
       try {
-        const response = await fetch('http://localhost:3000/api/properties/bookings/my-bookings/vacation', {
+        const response = await fetch('/api/properties/bookings/my-bookings/vacation', {
           headers: { 'Authorization': `Bearer ${token}` },
         });
         if (!response.ok) {

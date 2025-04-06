@@ -39,8 +39,8 @@ const History: React.FC = () => {
       console.log('Fetching properties with Token:', token);
       try {
         const [activeRes, deletedRes] = await Promise.all([
-          fetch('http://localhost:3000/api/properties/management/my-properties', { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch('http://localhost:3000/api/properties/management/my-properties/deleted', { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch('/api/properties/management/my-properties', { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch('/api/properties/management/my-properties/deleted', { headers: { 'Authorization': `Bearer ${token}` } }),
         ]);
 
         if (!activeRes.ok) {
@@ -97,7 +97,7 @@ const History: React.FC = () => {
     const token = localStorage.getItem('token');
     console.log('Saving edit for property:', editingProperty._id, 'with Token:', token);
     try {
-      const response = await fetch(`http://localhost:3000/api/properties/management/${editingProperty.type}/${editingProperty._id}`, {
+      const response = await fetch(`/api/properties/management/${editingProperty.type}/${editingProperty._id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -126,7 +126,7 @@ const History: React.FC = () => {
     const token = localStorage.getItem('token');
     console.log('Deleting property:', propertyId, 'with Token:', token);
     try {
-      const response = await fetch(`http://localhost:3000/api/properties/management/${type}/${propertyId}`, {
+      const response = await fetch(`/api/properties/management/${type}/${propertyId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       });

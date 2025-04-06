@@ -3,9 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { io, Socket } from 'socket.io-client';
 import { CheckCircle, AlertCircle } from 'lucide-react';
 
-const socket: Socket = io('http://localhost:3000', {
+const socket: Socket = io({
   auth: { token: localStorage.getItem('token') },
 });
+
 
 interface Notification {
   _id: string;
@@ -25,7 +26,7 @@ const Notifications: React.FC = () => {
     const token = localStorage.getItem('token');
     console.log('Fetching notifications with Token:', token);
     try {
-      const response = await fetch('http://localhost:3000/api/properties/notifications/notifications', {
+      const response = await fetch('/api/properties/notifications/notifications', {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (!response.ok) {
@@ -81,7 +82,7 @@ const Notifications: React.FC = () => {
     const token = localStorage.getItem('token');
     console.log('Marking notification as read:', notificationId, 'with Token:', token);
     try {
-      const response = await fetch(`http://localhost:3000/api/properties/notifications/notifications/${notificationId}/read`, {
+      const response = await fetch(`/api/properties/notifications/notifications/${notificationId}/read`, {
         method: 'PATCH',
         headers: { 'Authorization': `Bearer ${token}` },
       });

@@ -17,7 +17,7 @@ const EditProfile: React.FC = () => {
     const fetchUserDetails = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:3000/api/users/me', {
+        const response = await fetch('/api/users/me', {
           headers: { 'Authorization': `Bearer ${token}` },
         });
         if (!response.ok) throw new Error('Failed to fetch user details');
@@ -45,7 +45,7 @@ const EditProfile: React.FC = () => {
       if (phone_no) updateData.phone_no = phone_no;
       if (password) updateData.password = password;
 
-      const response = await fetch('http://localhost:3000/api/users/me', {
+      const response = await fetch('/api/users/me', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

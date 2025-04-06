@@ -4,9 +4,10 @@ import "./Navbar.css";
 import { io, Socket } from 'socket.io-client';
 import { Bell, CheckCircle, AlertCircle } from 'lucide-react';
 
-const socket: Socket = io('http://localhost:3000', {
+const socket: Socket = io({
   auth: { token: localStorage.getItem('token') },
 });
+
 
 interface NavbarProps {
   isLoggedIn: boolean;
@@ -37,7 +38,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
       const token = localStorage.getItem('token');
       console.log('Fetching unread messages with Token:', token);
       try {
-        const response = await fetch('http://localhost:3000/api/properties/messages/chats/unread', {
+        const response = await fetch('/api/properties/messages/chats/unread', {
           headers: { 'Authorization': `Bearer ${token}` },
         });
         if (!response.ok) {
@@ -56,7 +57,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
       const token = localStorage.getItem('token');
       console.log('Fetching user details with Token:', token);
       try {
-        const response = await fetch('http://localhost:3000/api/users/me', {
+        const response = await fetch('/api/users/me', {
           headers: { 'Authorization': `Bearer ${token}` },
         });
         if (!response.ok) {

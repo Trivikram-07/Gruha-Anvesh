@@ -30,27 +30,34 @@ const Chat: React.FC = () => {
 
   useEffect(() => {
     if (!socket) {
-      socket = io('http://localhost:3000', {
+      socket = io({
         auth: { token: localStorage.getItem('token') },
         reconnection: true,
         reconnectionAttempts: 5,
         reconnectionDelay: 1000,
       });
-
+  
       socket.on('connect', () => console.log('Socket connected:', socket?.id));
+  
       socket.on('connect_error', (err) => {
         console.error('Socket connection error:', err.message);
         setError(`Connection error: ${err.message}`);
       });
-      socket.on('disconnect', (reason) => console.log('Socket disconnected:', reason));
+  
+      socket.on('disconnect', (reason) => {
+        console.log('Socket disconnected:', reason);
+      });
     }
-
+  
     return () => {
       socket?.off('connect');
       socket?.off('connect_error');
       socket?.off('disconnect');
+      socket?.disconnect(); // Clean disconnect on unmount
+      socket = null;
     };
   }, []);
+  
 
   useEffect(() => {
     if (!propertyId) {
@@ -67,7 +74,7 @@ const Chat: React.FC = () => {
         const types = ['pg', 'bhk', 'vacation'];
         let foundProperty = null;
         for (const type of types) {
-          const response = await fetch(`http://localhost:3000/api/properties/${type}/${propertyId}`, {
+          const response = await fetch(`/api/properties/${type}/${propertyId}`, {
             headers: { 'Authorization': `Bearer ${token}` },
           });
           if (response.ok) {
@@ -84,7 +91,7 @@ const Chat: React.FC = () => {
 
         console.log('Fetching messages for:', propertyId);
         const messagesResponse = await fetch(
-          `http://localhost:3000/api/properties/${propertyId}/messages`,
+          `/api/properties/${propertyId}/messages`,
           { headers: { 'Authorization': `Bearer ${token}` } }
         );
         if (!messagesResponse.ok) throw new Error(`Failed to fetch messages: ${await messagesResponse.text()}`);

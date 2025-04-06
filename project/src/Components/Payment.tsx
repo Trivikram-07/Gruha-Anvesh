@@ -5,9 +5,10 @@ import { Calendar as CalendarIcon, CreditCard, Wallet, Ban as Bank, Loader2, Che
 import { format, differenceInDays, parseISO, startOfDay, isBefore, subMonths, addMonths } from 'date-fns';
 import { io, Socket } from 'socket.io-client';
 
-const socket: Socket = io('http://localhost:3000', {
+const socket: Socket = io({
   auth: { token: localStorage.getItem('token') },
 });
+
 
 const Payment: React.FC = () => {
   const { propertyId } = useParams<{ propertyId: string }>();
@@ -33,7 +34,7 @@ const Payment: React.FC = () => {
       try {
         // Fetch property details (placeholder - replace with actual endpoint)
         console.log('Fetching property details for:', propertyId);
-        const propertyResponse = await fetch(`http://localhost:3000/api/properties/management/vacation/${propertyId}`, {
+        const propertyResponse = await fetch(`/api/properties/management/vacation/${propertyId}`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
           credentials: 'include',
         });
@@ -46,7 +47,7 @@ const Payment: React.FC = () => {
 
         // Fetch bookings from /api/properties/bookings/:propertyId/bookings
         console.log('Fetching bookings for:', propertyId);
-        const bookingsResponse = await fetch(`http://localhost:3000/api/properties/bookings/${propertyId}/bookings`, {
+        const bookingsResponse = await fetch(`/api/properties/bookings/${propertyId}/bookings`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
           credentials: 'include',
         });
@@ -173,7 +174,7 @@ const Payment: React.FC = () => {
     try {
       // Book the property using POST /api/properties/bookings/:propertyId/book
       console.log('Booking property:', { propertyId, startDate: start, endDate: end, numGuests });
-      const response = await fetch(`http://localhost:3000/api/properties/bookings/${propertyId}/book`, {
+      const response = await fetch(`/api/properties/bookings/${propertyId}/book`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

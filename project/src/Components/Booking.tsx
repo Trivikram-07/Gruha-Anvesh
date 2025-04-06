@@ -22,9 +22,10 @@ L.Icon.Default.mergeOptions({
 });
 
 // Socket.IO connection
-const socket: Socket = io('http://localhost:3000', {
+const socket: Socket = io({
   auth: { token: localStorage.getItem('token') },
 });
+
 
 type PropertyType = 'pg' | 'bhk' | 'vacation';
 
@@ -156,7 +157,7 @@ const Booking: React.FC = () => {
       console.log('Fetching property details with Token:', token);
       try {
         if (!propertyId || !propertyType) throw new Error('Invalid property ID or type');
-        const response = await fetch(`http://localhost:3000/api/properties/management/${propertyType}/${propertyId}`, {
+        const response = await fetch(`/api/properties/management/${propertyType}/${propertyId}`, {
           headers: {
             'Content-Type': 'application/json',
             ...(token && { 'Authorization': `Bearer ${token}` }),
@@ -187,7 +188,7 @@ const Booking: React.FC = () => {
       const token = localStorage.getItem('token');
       console.log('Fetching messages with Token:', token);
       try {
-        const response = await fetch(`http://localhost:3000/api/properties/messages/${propertyId}/messages`, {
+        const response = await fetch(`/api/properties/messages/${propertyId}/messages`, {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,

@@ -69,7 +69,7 @@ function Home() {
       const token = localStorage.getItem('token');
       console.log('Fetching properties with Token:', token);
       try {
-        const response = await fetch(`http://localhost:3000/api/properties/management/${selectedType}`, {
+        const response = await fetch(`/api/properties/management/${selectedType}`, {
           headers: {
             'Content-Type': 'application/json',
             ...(token && { 'Authorization': `Bearer ${token}` }),
@@ -138,7 +138,7 @@ function Home() {
     );
 
     try {
-      const response = await fetch(`http://localhost:3000/api/properties/favorites/${propertyId}/favorite`, {
+      const response = await fetch(`/api/properties/favorites/${propertyId}/favorite`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -174,7 +174,7 @@ function Home() {
     console.log('Sending click:', { propertyId, propertyType });
     try {
       const response = await axios.post(
-        `http://localhost:3000/api/properties/actions/click/${propertyId}`,
+        `/api/properties/actions/click/${propertyId}`,
         { propertyType },
         { headers: { Authorization: `Bearer ${token}` } }
       );

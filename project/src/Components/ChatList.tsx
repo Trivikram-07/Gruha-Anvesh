@@ -53,7 +53,7 @@ const ChatList: React.FC = () => {
       const token = localStorage.getItem('token');
       console.log('Fetching chats with Token:', token);
       try {
-        const response = await fetch('http://localhost:3000/api/properties/messages/chats', {
+        const response = await fetch('/api/properties/messages/chats', {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!response.ok) {
@@ -114,7 +114,7 @@ const ChatList: React.FC = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(
-        `http://localhost:3000/api/properties/messages/${message.propertyId}/messages/mark-read`,
+        `/api/properties/messages/${message.propertyId}/messages/mark-read`,
         {
           method: 'PATCH',
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -146,7 +146,7 @@ const ChatList: React.FC = () => {
       console.log('Fetching messages for chat:', selectedChat.propertyId, 'with Token:', token);
       try {
         const response = await fetch(
-          `http://localhost:3000/api/properties/messages/${selectedChat.propertyId}/messages`,
+          `/api/properties/messages/${selectedChat.propertyId}/messages`,
           { headers: { 'Authorization': `Bearer ${token}` } }
         );
         if (!response.ok) {
@@ -161,7 +161,7 @@ const ChatList: React.FC = () => {
         setMessages(sortedMessages);
 
         const markReadResponse = await fetch(
-          `http://localhost:3000/api/properties/messages/${selectedChat.propertyId}/messages/mark-read`,
+          `/api/properties/messages/${selectedChat.propertyId}/messages/mark-read`,
           {
             method: 'PATCH',
             headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },

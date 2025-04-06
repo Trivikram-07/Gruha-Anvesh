@@ -32,7 +32,7 @@ const Recommendations: React.FC<RecommendationsProps> = ({ propertyType }) => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     console.log('Fetching recommendations with Token:', token);
-    axios.get('http://localhost:3000/api/properties/recommendations/recommendations', {
+    axios.get('/api/properties/recommendations/recommendations', {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then((res) => {
@@ -55,12 +55,12 @@ const Recommendations: React.FC<RecommendationsProps> = ({ propertyType }) => {
   const handleLike = (propertyId: string, propertyType: PropertyType) => {
     const token = localStorage.getItem('token');
     console.log('Liking property:', propertyId, 'with Token:', token);
-    axios.post(`http://localhost:3000/api/properties/actions/like/${propertyId}`, { propertyType }, {
+    axios.post(`/api/properties/actions/like/${propertyId}`, { propertyType }, {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(() => {
         console.log('Property liked:', propertyId);
-        axios.get('http://localhost:3000/api/properties/recommendations/recommendations', {
+        axios.get('/api/properties/recommendations/recommendations', {
           headers: { Authorization: `Bearer ${token}` }
         })
           .then((res) => {

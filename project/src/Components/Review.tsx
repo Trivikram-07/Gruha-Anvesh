@@ -17,7 +17,7 @@ const Review: React.FC = () => {
       const token = localStorage.getItem('token');
       console.log('Fetching property with Token:', token);
       try {
-        const response = await fetch(`http://localhost:3000/api/properties/management/vacation/${propertyId}`, {
+        const response = await fetch(`/api/properties/management/vacation/${propertyId}`, {
           headers: { 'Authorization': `Bearer ${token}` },
         });
         if (!response.ok) {
@@ -54,7 +54,7 @@ const Review: React.FC = () => {
     console.log('Submitting review with Token:', token);
 
     try {
-      const response = await fetch(`http://localhost:3000/api/properties/management/vacation/${propertyId}/review`, {
+      const response = await fetch(`/api/properties/management/vacation/${propertyId}/review`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
