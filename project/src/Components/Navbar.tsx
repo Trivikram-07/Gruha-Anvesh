@@ -147,7 +147,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
           <img 
             src={logo} 
             alt="Gruha Anvesh Logo" 
-            className="h-13 w-auto mr-2" 
+            className="h-11 w-auto mr-2" 
           />
           <span></span>
         </Link>
