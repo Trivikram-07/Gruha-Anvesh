@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import "./Navbar.css";
 import { io } from 'socket.io-client';
 import { Bell, CheckCircle, AlertCircle } from 'lucide-react';
-import logo from '../image.png'; // Adjust the path if needed
+import logo from "/image1.png"; // Adjust the path if needed
 
 const socket = io('/', {
   auth: {
