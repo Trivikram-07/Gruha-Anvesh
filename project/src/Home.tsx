@@ -157,6 +157,7 @@ function Home() {
   const [filters, setFilters] = useState<Filters>({});
   const [cities, setCities] = useState<string[]>([]);
   const [states, setStates] = useState<string[]>([]);
+  const [filterError, setFilterError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -167,8 +168,12 @@ function Home() {
 
       // Build query string from filters
       const queryParams = new URLSearchParams();
-      if (filters.rentMin) queryParams.append('rentMin', filters.rentMin.toString());
-      if (filters.rentMax) queryParams.append('rentMax', filters.rentMax.toString());
+      if (filters.rentMin && filters.rentMin > 0) {
+        queryParams.append('rentMin', filters.rentMin.toString());
+      }
+      if (filters.rentMax && filters.rentMax > 0) {
+        queryParams.append('rentMax', filters.rentMax.toString());
+      }
       if (filters.city) queryParams.append('city', filters.city);
       if (filters.state) queryParams.append('state', filters.state);
 
@@ -327,10 +332,36 @@ function Home() {
   };
 
   const handleFilterChange = (key: keyof Filters, value: any) => {
-    setFilters((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
+    setFilterError(null);
+    setFilters((prev) => {
+      let newFilters = { ...prev, [key]: value };
+
+      // Validate price filters
+      if (key === 'rentMin' || key === 'rentMax') {
+        const rentMin = key === 'rentMin' ? value : prev.rentMin;
+        const rentMax = key === 'rentMax' ? value : prev.rentMax;
+
+        // Convert to numbers and ensure positive
+        const min = rentMin ? Number(rentMin) : undefined;
+        const max = rentMax ? Number(rentMax) : undefined;
+
+        if (min && (min <= 0 || isNaN(min))) {
+          setFilterError('Minimum rent must be a positive number');
+          newFilters.rentMin = undefined;
+        }
+        if (max && (max <= 0 || isNaN(max))) {
+          setFilterError('Maximum rent must be a positive number');
+          newFilters.rentMax = undefined;
+        }
+        if (min && max && min > max) {
+          setFilterError('Minimum rent cannot be greater than maximum rent');
+          newFilters.rentMin = undefined;
+          newFilters.rentMax = undefined;
+        }
+      }
+
+      return newFilters;
+    });
   };
 
   const toggleAmenity = (amenity: string) => {
@@ -357,7 +388,10 @@ function Home() {
 
   const clearFilters = () => {
     setFilters({});
+    setFilterError(null);
   };
+
+  const isApplyDisabled = !!filterError;
 
   const center = properties.length > 0
     ? [
@@ -429,25 +463,38 @@ function Home() {
       {showFilters && (
         <div className="container mx-auto px-4 mb-8 bg-white rounded-lg shadow-md p-6">
           <h3 className="text-xl font-semibold mb-4">Filter Properties</h3>
+          {filterError && (
+            <div className="mb-4 text-red-500 text-sm">{filterError}</div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Common Filters */}
             <div>
-              <label className="block text-sm font-medium text-gray-700">Min Rent (₹)</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Min Rent (₹)
+              </label>
               <input
                 type="number"
+                min="1"
                 value={filters.rentMin || ''}
-                onChange={(e) => handleFilterChange('rentMin', parseInt(e.target.value) || undefined)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                onChange={(e) =>
+                  handleFilterChange('rentMin', parseInt(e.target.value) || undefined)
+                }
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
                 placeholder="Min rent"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Max Rent (₹)</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Max Rent (₹)
+              </label>
               <input
                 type="number"
+                min="1"
                 value={filters.rentMax || ''}
-                onChange={(e) => handleFilterChange('rentMax', parseInt(e.target.value) || undefined)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                onChange={(e) =>
+                  handleFilterChange('rentMax', parseInt(e.target.value) || undefined)
+                }
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
                 placeholder="Max rent"
               />
             </div>
@@ -456,7 +503,7 @@ function Home() {
               <select
                 value={filters.city || ''}
                 onChange={(e) => handleFilterChange('city', e.target.value || undefined)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
               >
                 <option value="">All Cities</option>
                 {cities.map((city) => (
@@ -471,7 +518,7 @@ function Home() {
               <select
                 value={filters.state || ''}
                 onChange={(e) => handleFilterChange('state', e.target.value || undefined)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
               >
                 <option value="">All States</option>
                 {states.map((state) => (
@@ -486,7 +533,9 @@ function Home() {
             {selectedType === 'pg' && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Sharing Options</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Sharing Options
+                  </label>
                   <div className="mt-2 space-y-2">
                     {sharingOptions.map((option) => (
                       <div key={option} className="flex items-center">
@@ -494,17 +543,20 @@ function Home() {
                           type="checkbox"
                           checked={filters.sharingOptions?.includes(option) || false}
                           onChange={() => toggleSharingOption(option)}
-                          className="h-4 w-4 text-blue-600 rounded"
+                          className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
                         />
                         <label className="ml-2 text-sm text-gray-600">
-                          {option.charAt(0).toUpperCase() + option.slice(1).replace('Sharing', ' Sharing')}
+                          {option.charAt(0).toUpperCase() +
+                            option.slice(1).replace('Sharing', ' Sharing')}
                         </label>
                       </div>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Amenities</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Amenities
+                  </label>
                   <div className="mt-2 space-y-2">
                     {amenityLabels.pg.map((amenity) => (
                       <div key={amenity} className="flex items-center">
@@ -512,7 +564,7 @@ function Home() {
                           type="checkbox"
                           checked={filters.amenities?.includes(amenity) || false}
                           onChange={() => toggleAmenity(amenity)}
-                          className="h-4 w-4 text-blue-600 rounded"
+                          className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
                         />
                         <label className="ml-2 text-sm text-gray-600">
                           {amenity
@@ -530,11 +582,15 @@ function Home() {
             {selectedType === 'bhk' && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Bedrooms</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Bedrooms
+                  </label>
                   <select
                     value={filters.bedrooms || ''}
-                    onChange={(e) => handleFilterChange('bedrooms', parseInt(e.target.value) || undefined)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                    onChange={(e) =>
+                      handleFilterChange('bedrooms', parseInt(e.target.value) || undefined)
+                    }
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
                   >
                     <option value="">Any</option>
                     {[1, 2, 3, 4, 5].map((num) => (
@@ -545,11 +601,15 @@ function Home() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Bathrooms</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Bathrooms
+                  </label>
                   <select
                     value={filters.bathrooms || ''}
-                    onChange={(e) => handleFilterChange('bathrooms', parseInt(e.target.value) || undefined)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                    onChange={(e) =>
+                      handleFilterChange('bathrooms', parseInt(e.target.value) || undefined)
+                    }
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
                   >
                     <option value="">Any</option>
                     {[1, 2, 3, 4].map((num) => (
@@ -560,17 +620,24 @@ function Home() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Min Sq.Ft</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Min Sq.Ft
+                  </label>
                   <input
                     type="number"
+                    min="1"
                     value={filters.sqftMin || ''}
-                    onChange={(e) => handleFilterChange('sqftMin', parseInt(e.target.value) || undefined)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                    onChange={(e) =>
+                      handleFilterChange('sqftMin', parseInt(e.target.value) || undefined)
+                    }
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
                     placeholder="Min sq.ft"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Amenities</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Amenities
+                  </label>
                   <div className="mt-2 space-y-2">
                     {amenityLabels.bhk.map((amenity) => (
                       <div key={amenity} className="flex items-center">
@@ -578,7 +645,7 @@ function Home() {
                           type="checkbox"
                           checked={filters.amenities?.includes(amenity) || false}
                           onChange={() => toggleAmenity(amenity)}
-                          className="h-4 w-4 text-blue-600 rounded"
+                          className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
                         />
                         <label className="ml-2 text-sm text-gray-600">
                           {amenity
@@ -596,11 +663,15 @@ function Home() {
             {selectedType === 'vacation' && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Max Guests</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Max Guests
+                  </label>
                   <select
                     value={filters.maxGuests || ''}
-                    onChange={(e) => handleFilterChange('maxGuests', parseInt(e.target.value) || undefined)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                    onChange={(e) =>
+                      handleFilterChange('maxGuests', parseInt(e.target.value) || undefined)
+                    }
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
                   >
                     <option value="">Any</option>
                     {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
@@ -611,7 +682,9 @@ function Home() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Amenities</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Amenities
+                  </label>
                   <div className="mt-2 space-y-2">
                     {amenityLabels.vacation.map((amenity) => (
                       <div key={amenity} className="flex items-center">
@@ -619,7 +692,7 @@ function Home() {
                           type="checkbox"
                           checked={filters.amenities?.includes(amenity) || false}
                           onChange={() => toggleAmenity(amenity)}
-                          className="h-4 w-4 text-blue-600 rounded"
+                          className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
                         />
                         <label className="ml-2 text-sm text-gray-600">
                           {amenity
@@ -636,13 +709,18 @@ function Home() {
           <div className="mt-6 flex justify-end space-x-4">
             <button
               onClick={clearFilters}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
             >
               Clear Filters
             </button>
             <button
               onClick={() => setShowFilters(false)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              disabled={isApplyDisabled}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                isApplyDisabled
+                  ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                  : 'bg-blue-600 text-white hover:bg-blue-700'
+              }`}
             >
               Apply Filters
             </button>
@@ -707,7 +785,9 @@ function Home() {
                         transition={{ duration: 0.3 }}
                       >
                         <Heart
-                          className={`h-5 w-5 ${property.isFavorited ? 'text-red-500 fill-red-500' : 'text-gray-600'}`}
+                          className={`h-5 w-5 ${
+                            property.isFavorited ? 'text-red-500 fill-red-500' : 'text-gray-600'
+                          }`}
                         />
                       </motion.div>
                     </motion.button>

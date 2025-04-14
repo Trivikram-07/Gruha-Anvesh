@@ -145,10 +145,18 @@ router.get('/pg', optionalAuth, async (req, res) => {
     const query = { deletedAt: null };
 
     // Common filters
-    if (rentMin || rentMax) query.monthlyRent = {};
-    if (rentMin) query.monthlyRent.$gte = Number(rentMin);
-    if (rentMax) query.monthlyRent.$lte = Number(rentMax);
-    if (city) query.city = { $regex: city, $options: 'i' }; // Case-insensitive
+    const minRent = Number(rentMin);
+    const maxRent = Number(rentMax);
+    if (!isNaN(minRent) && minRent > 0) {
+      query.monthlyRent = { ...query.monthlyRent, $gte: minRent };
+    }
+    if (!isNaN(maxRent) && maxRent > 0) {
+      query.monthlyRent = { ...query.monthlyRent, $lte: maxRent };
+    }
+    if (minRent > maxRent && !isNaN(minRent) && !isNaN(maxRent)) {
+      return res.status(400).json({ message: 'Minimum rent cannot be greater than maximum rent' });
+    }
+    if (city) query.city = { $regex: city, $options: 'i' };
     if (state) query.state = { $regex: state, $options: 'i' };
 
     // PG-specific filters
@@ -193,9 +201,17 @@ router.get('/bhk', optionalAuth, async (req, res) => {
     const query = { deletedAt: null };
 
     // Common filters
-    if (rentMin || rentMax) query.monthlyRent = {};
-    if (rentMin) query.monthlyRent.$gte = Number(rentMin);
-    if (rentMax) query.monthlyRent.$lte = Number(rentMax);
+    const minRent = Number(rentMin);
+    const maxRent = Number(rentMax);
+    if (!isNaN(minRent) && minRent > 0) {
+      query.monthlyRent = { ...query.monthlyRent, $gte: minRent };
+    }
+    if (!isNaN(maxRent) && maxRent > 0) {
+      query.monthlyRent = { ...query.monthlyRent, $lte: maxRent };
+    }
+    if (minRent > maxRent && !isNaN(minRent) && !isNaN(maxRent)) {
+      return res.status(400).json({ message: 'Minimum rent cannot be greater than maximum rent' });
+    }
     if (city) query.city = { $regex: city, $options: 'i' };
     if (state) query.state = { $regex: state, $options: 'i' };
 
@@ -238,9 +254,17 @@ router.get('/vacation', optionalAuth, async (req, res) => {
     const query = { deletedAt: null };
 
     // Common filters
-    if (rentMin || rentMax) query.ratePerDay = {};
-    if (rentMin) query.ratePerDay.$gte = Number(rentMin);
-    if (rentMax) query.ratePerDay.$lte = Number(rentMax);
+    const minRent = Number(rentMin);
+    const maxRent = Number(rentMax);
+    if (!isNaN(minRent) && minRent > 0) {
+      query.ratePerDay = { ...query.ratePerDay, $gte: minRent };
+    }
+    if (!isNaN(maxRent) && maxRent > 0) {
+      query.ratePerDay = { ...query.ratePerDay, $lte: maxRent };
+    }
+    if (minRent > maxRent && !isNaN(minRent) && !isNaN(maxRent)) {
+      return res.status(400).json({ message: 'Minimum rate cannot be greater than maximum rate' });
+    }
     if (city) query.city = { $regex: city, $options: 'i' };
     if (state) query.state = { $regex: state, $options: 'i' };
 
