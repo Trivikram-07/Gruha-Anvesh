@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Navbar.css";
-import { io, Socket } from 'socket.io-client';
+import { io } from 'socket.io-client';
 import { Bell, CheckCircle, AlertCircle } from 'lucide-react';
+import logo from '../image.png'; // Adjust the path if needed
 
 const socket = io('/', {
   auth: {
-    token: localStorage.getItem('token'), // or however you're storing it
+    token: localStorage.getItem('token'),
   },
   transports: ['websocket'],
   withCredentials: true,
 });
-
 
 interface NavbarProps {
   isLoggedIn: boolean;
@@ -143,7 +143,14 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
   return (
     <nav className="navbar">
       <div className="navbar-logo">
-        <Link to={isLoggedIn ? "/home" : "/"}>Gruha Anvesh</Link>
+        <Link to={isLoggedIn ? "/home" : "/"} className="flex items-center">
+          <img 
+            src={logo} 
+            alt="Gruha Anvesh Logo" 
+            className="h-8 w-auto mr-2" 
+          />
+          <span>Gruha Anvesh</span>
+        </Link>
       </div>
       <div className="navbar-links">
         {isLoggedIn ? (
