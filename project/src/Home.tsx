@@ -264,6 +264,15 @@ function Home() {
     fetchProperties();
   }, [selectedType, filters]);
 
+  // Reset filters when switching to bhk or vacation
+  useEffect(() => {
+    if (selectedType !== 'pg') {
+      setFilters({});
+      setFilterError(null);
+      setShowFilters(false); // Optionally hide filter panel
+    }
+  }, [selectedType]);
+
   const toggleFavorite = async (propertyId: number | string) => {
     const property = properties.find((p) => p.id === propertyId);
     if (!property) return;
@@ -440,7 +449,7 @@ function Home() {
               initial={false}
               animate={{
                 left: selectedType === 'pg' ? '0%' : selectedType === 'bhk' ? '33.33%' : '66.66%',
-                width: '33.33%',
+                width: '/analytics/33.33%',
               }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             />
@@ -595,7 +604,7 @@ function Home() {
                     <option value="">Any</option>
                     {[1, 2, 3, 4, 5].map((num) => (
                       <option key={num} value={num}>
-                        {num}
+                        {nom}
                       </option>
                     ))}
                   </select>
