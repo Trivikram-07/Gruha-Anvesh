@@ -27,7 +27,7 @@ import {
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import Recommendations from './Components/Recommendations'; // Adjust path as needed
+import Recommendations from './Components/Recommendations';
 import axios from 'axios';
 
 // Fix for default marker icons in Leaflet
@@ -269,7 +269,7 @@ function Home() {
     if (selectedType !== 'pg') {
       setFilters({});
       setFilterError(null);
-      setShowFilters(false); // Optionally hide filter panel
+      setShowFilters(false);
     }
   }, [selectedType]);
 
@@ -413,47 +413,31 @@ function Home() {
     <div className="min-h-screen bg-gray-50">
       {/* Header with Toggle */}
       <div className="container mx-auto px-4 py-8">
-        <div className="bg-white rounded-full shadow-md p-2 max-w-md mx-auto">
-          <div className="relative flex justify-between">
-            <button
-              onClick={() => setSelectedType('pg')}
-              className={`flex-1 py-2 px-4 rounded-full z-10 relative ${
-                selectedType === 'pg' ? 'text-white' : 'text-gray-600'
-              }`}
-            >
-              <HomeIcon className="inline-block mr-2 h-5 w-5" />
-              PG
-            </button>
-            <button
-              onClick={() => setSelectedType('bhk')}
-              className={`flex-1 py-2 px-4 rounded-full z-10 relative ${
-                selectedType === 'bhk' ? 'text-white' : 'text-gray-600'
-              }`}
-            >
-              <Building2 className="inline-block mr-2 h-5 w-5" />
-              BHK
-            </button>
-            <button
-              onClick={() => setSelectedType('vacation')}
-              className={`flex-1 py-2 px-4 rounded-full z-10 relative ${
-                selectedType === 'vacation' ? 'text-white' : 'text-gray-600'
-              }`}
-            >
-              <Palmtree className="inline-block mr-2 h-5 w-5" />
-              Vacation
-            </button>
-            <motion.div
-              className={`absolute inset-y-0 rounded-full bg-gradient-to-r ${
-                categoryColors[selectedType] || 'from-gray-500 to-gray-700'
-              }`}
-              initial={false}
-              animate={{
-                left: selectedType === 'pg' ? '0%' : selectedType === 'bhk' ? '33.33%' : '66.66%',
-                width: '/analytics/33.33%',
-              }}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            />
-          </div>
+        <div className="bg-white rounded-full shadow-md p-2 max-w-md mx-auto flex justify-between gap-1">
+          <button
+            onClick={() => setSelectedType('pg')}
+            className={`flex-1 py-2 px-4 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white
+              ${selectedType === 'pg' ? 'ring-2 ring-purple-300 brightness-110' : 'opacity-80'}`}
+          >
+            <HomeIcon className="inline-block mr-2 h-5 w-5" />
+            PG
+          </button>
+          <button
+            onClick={() => setSelectedType('bhk')}
+            className={`flex-1 py-2 px-4 rounded-full bg-gradient-to-r from-blue-500 to-teal-500 text-white
+              ${selectedType === 'bhk' ? 'ring-2 ring-blue-300 brightness-110' : 'opacity-80'}`}
+          >
+            <Building2 className="inline-block mr-2 h-5 w-5" />
+            BHK
+          </button>
+          <button
+            onClick={() => setSelectedType('vacation')}
+            className={`flex-1 py-2 px-4 rounded-full bg-gradient-to-r from-orange-500 to-yellow-500 text-white
+              ${selectedType === 'vacation' ? 'ring-2 ring-orange-300 brightness-110' : 'opacity-80'}`}
+          >
+            <Palmtree className="inline-block mr-2 h-5 w-5" />
+            Vacation
+          </button>
         </div>
       </div>
 
@@ -604,7 +588,7 @@ function Home() {
                     <option value="">Any</option>
                     {[1, 2, 3, 4, 5].map((num) => (
                       <option key={num} value={num}>
-                        {nom}
+                        {num}
                       </option>
                     ))}
                   </select>
@@ -884,7 +868,7 @@ function Home() {
         <div className="container mx-auto px-4 py-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-              <h3 className="text-2xl font-bold mb-4">Nivas Anvesh</h3>
+              <h3 className="text-2xl font-bold mb-4">Gruha Anvesh</h3>
               <p className="text-white/80">Find your perfect living space with ease.</p>
             </div>
             <div>
@@ -921,7 +905,7 @@ function Home() {
                 </li>
                 <li className="flex items-center">
                   <Mail className="h-4 w-4 mr-2" />
-                  contact@Nivas Anvesh.com
+                  contact@GruhaAnvesh.com
                 </li>
               </ul>
             </div>
@@ -941,7 +925,7 @@ function Home() {
             </div>
           </div>
           <div className="border-t border-white/20 mt-8 pt-8 text-center text-white/60">
-            © 2024 Nivas Anvesh. All rights reserved.
+            © 2024 Gruha Anvesh. All rights reserved.
           </div>
         </div>
       </footer>
