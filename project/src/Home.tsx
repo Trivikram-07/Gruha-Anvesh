@@ -1,7 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Home as HomeIcon, Building2, Palmtree, Phone, MapPin, Mail, Instagram, Facebook, Twitter, Bed, Bath, Square, Wifi, Utensils, Dumbbell, Car, Shield, Waves, Trees, Heart } from 'lucide-react';
+import {
+  Home as HomeIcon,
+  Building2,
+  Palmtree,
+  Phone,
+  MapPin,
+  Mail,
+  Instagram,
+  Facebook,
+  Twitter,
+  Bed,
+  Bath,
+  Square,
+  Wifi,
+  Utensils,
+  Dumbbell,
+  Car,
+  Shield,
+  Waves,
+  Trees,
+  Heart,
+  Sliders,
+} from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -33,6 +55,21 @@ interface Property {
   amenities: string[];
   description: string;
   isFavorited?: boolean;
+  city?: string;
+  state?: string;
+}
+
+interface Filters {
+  rentMin?: number;
+  rentMax?: number;
+  city?: string;
+  state?: string;
+  bedrooms?: number;
+  bathrooms?: number;
+  sqftMin?: number;
+  maxGuests?: number;
+  sharingOptions?: string[];
+  amenities?: string[];
 }
 
 const categoryColors = {
@@ -43,24 +80,83 @@ const categoryColors = {
 
 const getAmenityIcon = (amenity: string) => {
   switch (amenity.toLowerCase()) {
-    case 'wifi': return <Wifi className="h-4 w-4" />;
+    case 'wifi':
+    case 'highspeedwifi':
+    case 'wifisetup':
+      return <Wifi className="h-4 w-4" />;
+    case 'tiffinservice':
     case 'meals included':
-    case 'meals': return <Utensils className="h-4 w-4" />;
-    case 'gym': return <Dumbbell className="h-4 w-4" />;
-    case 'parking': return <Car className="h-4 w-4" />;
-    case 'security': return <Shield className="h-4 w-4" />;
-    case 'beach access':
-    case 'ocean view': return <Waves className="h-4 w-4" />;
-    case 'garden': return <Trees className="h-4 w-4" />;
-    default: return null;
+    case 'meals':
+      return <Utensils className="h-4 w-4" />;
+    case 'gym':
+    case 'fitnesscenter':
+      return <Dumbbell className="h-4 w-4" />;
+    case 'parking':
+    case 'parkingspace':
+    case 'bikeparking':
+    case 'carparking':
+      return <Car className="h-4 w-4" />;
+    case 'security':
+    case 'securitysystem':
+      return <Shield className="h-4 w-4" />;
+    case 'beachaccess':
+    case 'ocean view':
+      return <Waves className="h-4 w-4" />;
+    case 'garden':
+      return <Trees className="h-4 w-4" />;
+    default:
+      return null;
   }
 };
+
+const amenityLabels: Record<PropertyType, string[]> = {
+  pg: [
+    'wifi',
+    'tiffinService',
+    'tvRoom',
+    'laundry',
+    'bikeParking',
+    'hotWater',
+    'coffeeMachine',
+    'airConditioning',
+  ],
+  bhk: [
+    'carParking',
+    'wifiSetup',
+    'acUnits',
+    'furnished',
+    'securitySystem',
+    'geysers',
+    'ceilingFans',
+    'tvSetup',
+    'modularKitchen',
+    'extraStorage',
+  ],
+  vacation: [
+    'beachAccess',
+    'highSpeedWifi',
+    'parkingSpace',
+    'airConditioning',
+    'kingSizeBed',
+    'roomService',
+    'spaAccess',
+    'fitnessCenter',
+    'smartTV',
+    'loungeAccess',
+  ],
+};
+
+const sharingOptions = ['single', 'twoSharing', 'threeSharing', 'fourSharing'];
 
 function Home() {
   const [selectedType, setSelectedType] = useState<PropertyType>('pg');
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<Filters>({});
+  const [cities, setCities] = useState<string[]>([]);
+  const [states, setStates] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -68,44 +164,90 @@ function Home() {
       setError(null);
       const token = localStorage.getItem('token');
       console.log('Fetching properties with Token:', token);
+
+      // Build query string from filters
+      const queryParams = new URLSearchParams();
+      if (filters.rentMin) queryParams.append('rentMin', filters.rentMin.toString());
+      if (filters.rentMax) queryParams.append('rentMax', filters.rentMax.toString());
+      if (filters.city) queryParams.append('city', filters.city);
+      if (filters.state) queryParams.append('state', filters.state);
+
+      if (selectedType === 'pg') {
+        if (filters.sharingOptions?.length) {
+          queryParams.append('sharingOptions', filters.sharingOptions.join(','));
+        }
+        if (filters.amenities?.length) {
+          queryParams.append('amenities', filters.amenities.join(','));
+        }
+      } else if (selectedType === 'bhk') {
+        if (filters.bedrooms) queryParams.append('bedrooms', filters.bedrooms.toString());
+        if (filters.bathrooms) queryParams.append('bathrooms', filters.bathrooms.toString());
+        if (filters.sqftMin) queryParams.append('sqftMin', filters.sqftMin.toString());
+        if (filters.amenities?.length) {
+          queryParams.append('amenities', filters.amenities.join(','));
+        }
+      } else if (selectedType === 'vacation') {
+        if (filters.maxGuests) queryParams.append('maxGuests', filters.maxGuests.toString());
+        if (filters.amenities?.length) {
+          queryParams.append('amenities', filters.amenities.join(','));
+        }
+      }
+
       try {
-        const response = await fetch(`/api/properties/management/${selectedType}`, {
+        const response = await fetch(`/api/properties/${selectedType}?${queryParams.toString()}`, {
           headers: {
             'Content-Type': 'application/json',
-            ...(token && { 'Authorization': `Bearer ${token}` }),
+            ...(token && { Authorization: `Bearer ${token}` }),
           },
         });
         if (!response.ok) {
           const errorData = await response.json();
           console.error('Fetch error response:', errorData);
-          throw new Error(`Failed to fetch ${selectedType} properties: ${response.status} - ${errorData.message || response.statusText}`);
+          throw new Error(
+            `Failed to fetch ${selectedType} properties: ${response.status} - ${
+              errorData.message || response.statusText
+            }`
+          );
         }
         const data = await response.json();
         console.log('Raw server response:', data);
 
         const mappedProperties: Property[] = data
-          .filter((item: any) => !item.deletedAt) // Only active properties
+          .filter((item: any) => !item.deletedAt)
           .map((item: any) => ({
             id: item._id,
             type: selectedType,
             name: item.propertyName,
             image: item.images && item.images.length > 0 ? item.images[0] : 'https://via.placeholder.com/300',
-            rent: selectedType === 'vacation' ? `₹${item.ratePerDay}/day` : `₹${item.monthlyRent}/month`,
+            rent:
+              selectedType === 'vacation'
+                ? `₹${item.ratePerDay}/day`
+                : `₹${item.monthlyRent}/month`,
             phone: item.contactNumber,
             area: item.address.split(',')[0],
             location: [item.latitude || 20.5937, item.longitude || 78.9629],
             beds: selectedType === 'bhk' ? item.bedrooms : item.maxGuests || undefined,
             baths: selectedType === 'bhk' ? item.bathrooms : undefined,
             sqft: item.squareFeet,
-            amenities: Object.entries(selectedType === 'pg' ? item.sharingOptions || item.amenities : item.amenities)
+            amenities: Object.entries(
+              selectedType === 'pg' ? { ...item.sharingOptions, ...item.amenities } : item.amenities
+            )
               .filter(([_, value]) => value === true)
               .map(([key]) => key),
             description: item.description,
             isFavorited: item.isFavorited || false,
+            city: item.city,
+            state: item.state,
           }));
 
         console.log('Mapped properties:', mappedProperties);
         setProperties(mappedProperties);
+
+        // Extract unique cities and states for filter dropdowns
+        const uniqueCities = [...new Set(mappedProperties.map((p) => p.city).filter(Boolean))] as string[];
+        const uniqueStates = [...new Set(mappedProperties.map((p) => p.state).filter(Boolean))] as string[];
+        setCities(uniqueCities);
+        setStates(uniqueStates);
       } catch (err) {
         console.error('Fetch error:', err);
         setError(err instanceof Error ? err.message : 'Something went wrong');
@@ -115,10 +257,10 @@ function Home() {
     };
 
     fetchProperties();
-  }, [selectedType]);
+  }, [selectedType, filters]);
 
   const toggleFavorite = async (propertyId: number | string) => {
-    const property = properties.find(p => p.id === propertyId);
+    const property = properties.find((p) => p.id === propertyId);
     if (!property) return;
 
     const token = localStorage.getItem('token');
@@ -131,10 +273,8 @@ function Home() {
     const newFavoriteStatus = !property.isFavorited;
     console.log('Toggling favorite:', { propertyId, newFavoriteStatus });
 
-    setProperties(prev =>
-      prev.map(p =>
-        p.id === propertyId ? { ...p, isFavorited: newFavoriteStatus } : p
-      )
+    setProperties((prev) =>
+      prev.map((p) => (p.id === propertyId ? { ...p, isFavorited: newFavoriteStatus } : p))
     );
 
     try {
@@ -142,7 +282,7 @@ function Home() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ isFavorited: newFavoriteStatus, propertyType: property.type }),
       });
@@ -155,10 +295,8 @@ function Home() {
       }
     } catch (err) {
       console.error('Favorite toggle error:', err);
-      setProperties(prev =>
-        prev.map(p =>
-          p.id === propertyId ? { ...p, isFavorited: !newFavoriteStatus } : p
-        )
+      setProperties((prev) =>
+        prev.map((p) => (p.id === propertyId ? { ...p, isFavorited: !newFavoriteStatus } : p))
       );
       setError(err instanceof Error ? err.message : 'Failed to update favorite');
     }
@@ -188,12 +326,43 @@ function Home() {
     }
   };
 
-  const filteredProperties = properties;
+  const handleFilterChange = (key: keyof Filters, value: any) => {
+    setFilters((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
 
-  const center = filteredProperties.length > 0
+  const toggleAmenity = (amenity: string) => {
+    setFilters((prev) => {
+      const currentAmenities = prev.amenities || [];
+      if (currentAmenities.includes(amenity)) {
+        return { ...prev, amenities: currentAmenities.filter((a) => a !== amenity) };
+      } else {
+        return { ...prev, amenities: [...currentAmenities, amenity] };
+      }
+    });
+  };
+
+  const toggleSharingOption = (option: string) => {
+    setFilters((prev) => {
+      const currentOptions = prev.sharingOptions || [];
+      if (currentOptions.includes(option)) {
+        return { ...prev, sharingOptions: currentOptions.filter((o) => o !== option) };
+      } else {
+        return { ...prev, sharingOptions: [...currentOptions, option] };
+      }
+    });
+  };
+
+  const clearFilters = () => {
+    setFilters({});
+  };
+
+  const center = properties.length > 0
     ? [
-        filteredProperties.reduce((sum, p) => sum + p.location[0], 0) / filteredProperties.length,
-        filteredProperties.reduce((sum, p) => sum + p.location[1], 0) / filteredProperties.length
+        properties.reduce((sum, p) => sum + p.location[0], 0) / properties.length,
+        properties.reduce((sum, p) => sum + p.location[1], 0) / properties.length,
       ] as [number, number]
     : [20.5937, 78.9629] as [number, number];
 
@@ -231,17 +400,255 @@ function Home() {
               Vacation
             </button>
             <motion.div
-              className={`absolute inset-y-0 rounded-full bg-gradient-to-r ${categoryColors[selectedType] || 'from-gray-500 to-gray-700'}`}
+              className={`absolute inset-y-0 rounded-full bg-gradient-to-r ${
+                categoryColors[selectedType] || 'from-gray-500 to-gray-700'
+              }`}
               initial={false}
               animate={{
                 left: selectedType === 'pg' ? '0%' : selectedType === 'bhk' ? '33.33%' : '66.66%',
-                width: '33.33%'
+                width: '33.33%',
               }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             />
           </div>
         </div>
       </div>
+
+      {/* Filter Button */}
+      <div className="container mx-auto px-4 mb-4">
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          <Sliders className="h-5 w-5 mr-2" />
+          {showFilters ? 'Hide Filters' : 'Show Filters'}
+        </button>
+      </div>
+
+      {/* Filter Panel */}
+      {showFilters && (
+        <div className="container mx-auto px-4 mb-8 bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-xl font-semibold mb-4">Filter Properties</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Common Filters */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Min Rent (₹)</label>
+              <input
+                type="number"
+                value={filters.rentMin || ''}
+                onChange={(e) => handleFilterChange('rentMin', parseInt(e.target.value) || undefined)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                placeholder="Min rent"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Max Rent (₹)</label>
+              <input
+                type="number"
+                value={filters.rentMax || ''}
+                onChange={(e) => handleFilterChange('rentMax', parseInt(e.target.value) || undefined)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                placeholder="Max rent"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">City</label>
+              <select
+                value={filters.city || ''}
+                onChange={(e) => handleFilterChange('city', e.target.value || undefined)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+              >
+                <option value="">All Cities</option>
+                {cities.map((city) => (
+                  <option key={city} value={city}>
+                    {city}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">State</label>
+              <select
+                value={filters.state || ''}
+                onChange={(e) => handleFilterChange('state', e.target.value || undefined)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+              >
+                <option value="">All States</option>
+                {states.map((state) => (
+                  <option key={state} value={state}>
+                    {state}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* PG Filters */}
+            {selectedType === 'pg' && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Sharing Options</label>
+                  <div className="mt-2 space-y-2">
+                    {sharingOptions.map((option) => (
+                      <div key={option} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={filters.sharingOptions?.includes(option) || false}
+                          onChange={() => toggleSharingOption(option)}
+                          className="h-4 w-4 text-blue-600 rounded"
+                        />
+                        <label className="ml-2 text-sm text-gray-600">
+                          {option.charAt(0).toUpperCase() + option.slice(1).replace('Sharing', ' Sharing')}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Amenities</label>
+                  <div className="mt-2 space-y-2">
+                    {amenityLabels.pg.map((amenity) => (
+                      <div key={amenity} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={filters.amenities?.includes(amenity) || false}
+                          onChange={() => toggleAmenity(amenity)}
+                          className="h-4 w-4 text-blue-600 rounded"
+                        />
+                        <label className="ml-2 text-sm text-gray-600">
+                          {amenity
+                            .replace(/([A-Z])/g, ' $1')
+                            .replace(/^./, (str) => str.toUpperCase())}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* BHK Filters */}
+            {selectedType === 'bhk' && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Bedrooms</label>
+                  <select
+                    value={filters.bedrooms || ''}
+                    onChange={(e) => handleFilterChange('bedrooms', parseInt(e.target.value) || undefined)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                  >
+                    <option value="">Any</option>
+                    {[1, 2, 3, 4, 5].map((num) => (
+                      <option key={num} value={num}>
+                        {num}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Bathrooms</label>
+                  <select
+                    value={filters.bathrooms || ''}
+                    onChange={(e) => handleFilterChange('bathrooms', parseInt(e.target.value) || undefined)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                  >
+                    <option value="">Any</option>
+                    {[1, 2, 3, 4].map((num) => (
+                      <option key={num} value={num}>
+                        {num}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Min Sq.Ft</label>
+                  <input
+                    type="number"
+                    value={filters.sqftMin || ''}
+                    onChange={(e) => handleFilterChange('sqftMin', parseInt(e.target.value) || undefined)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                    placeholder="Min sq.ft"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Amenities</label>
+                  <div className="mt-2 space-y-2">
+                    {amenityLabels.bhk.map((amenity) => (
+                      <div key={amenity} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={filters.amenities?.includes(amenity) || false}
+                          onChange={() => toggleAmenity(amenity)}
+                          className="h-4 w-4 text-blue-600 rounded"
+                        />
+                        <label className="ml-2 text-sm text-gray-600">
+                          {amenity
+                            .replace(/([A-Z])/g, ' $1')
+                            .replace(/^./, (str) => str.toUpperCase())}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Vacation Filters */}
+            {selectedType === 'vacation' && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Max Guests</label>
+                  <select
+                    value={filters.maxGuests || ''}
+                    onChange={(e) => handleFilterChange('maxGuests', parseInt(e.target.value) || undefined)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                  >
+                    <option value="">Any</option>
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
+                      <option key={num} value={num}>
+                        {num}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Amenities</label>
+                  <div className="mt-2 space-y-2">
+                    {amenityLabels.vacation.map((amenity) => (
+                      <div key={amenity} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={filters.amenities?.includes(amenity) || false}
+                          onChange={() => toggleAmenity(amenity)}
+                          className="h-4 w-4 text-blue-600 rounded"
+                        />
+                        <label className="ml-2 text-sm text-gray-600">
+                          {amenity
+                            .replace(/([A-Z])/g, ' $1')
+                            .replace(/^./, (str) => str.toUpperCase())}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+          <div className="mt-6 flex justify-end space-x-4">
+            <button
+              onClick={clearFilters}
+              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+            >
+              Clear Filters
+            </button>
+            <button
+              onClick={() => setShowFilters(false)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Apply Filters
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       {loading ? (
@@ -252,20 +659,13 @@ function Home() {
         <>
           {/* Map */}
           <div className="w-full h-[400px] mb-8 relative">
-            <MapContainer
-              center={center}
-              zoom={5}
-              style={{ height: '100%', width: '100%' }}
-            >
+            <MapContainer center={center} zoom={5} style={{ height: '100%', width: '100%' }}>
               <TileLayer
                 attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
-              {filteredProperties.map((property) => (
-                <Marker
-                  key={property.id}
-                  position={[property.location[0], property.location[1]]}
-                >
+              {properties.map((property) => (
+                <Marker key={property.id} position={[property.location[0], property.location[1]]}>
                   <Popup>
                     <div className="p-2">
                       <h3 className="font-semibold">{property.name}</h3>
@@ -281,11 +681,11 @@ function Home() {
           {/* Properties and Recommendations */}
           <div className="container mx-auto px-4 py-8">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredProperties.map((property) => (
+              {properties.map((property) => (
                 <div
                   key={property.id}
                   className="bg-white rounded-xl shadow-lg overflow-hidden transform transition-transform hover:scale-105"
-                  onClick={() => handleClick(property.id, property.type)} // Track click
+                  onClick={() => handleClick(property.id, property.type)}
                 >
                   <div className="relative">
                     <img
@@ -295,7 +695,7 @@ function Home() {
                     />
                     <motion.button
                       onClick={(e) => {
-                        e.stopPropagation(); // Prevent triggering card click
+                        e.stopPropagation();
                         toggleFavorite(property.id);
                       }}
                       className="absolute top-2 right-2 p-2 rounded-full bg-white/80 hover:bg-white transition-colors"
@@ -316,18 +716,22 @@ function Home() {
                     <h3 className="text-xl font-semibold mb-2">{property.name}</h3>
                     <p className="text-gray-600 mb-2">{property.area}</p>
                     <p className="text-gray-600 mb-4 text-sm">{property.description}</p>
-                    
+
                     <div className="flex items-center gap-4 mb-4 text-gray-600">
                       {property.beds && (
                         <div className="flex items-center">
                           <Bed className="h-4 w-4 mr-1" />
-                          <span>{property.beds} {property.beds === 1 ? 'Bed' : 'Beds'}</span>
+                          <span>
+                            {property.beds} {property.beds === 1 ? 'Bed' : 'Beds'}
+                          </span>
                         </div>
                       )}
                       {property.baths && (
                         <div className="flex items-center">
                           <Bath className="h-4 w-4 mr-1" />
-                          <span>{property.baths} {property.baths === 1 ? 'Bath' : 'Baths'}</span>
+                          <span>
+                            {property.baths} {property.baths === 1 ? 'Bath' : 'Baths'}
+                          </span>
                         </div>
                       )}
                       {property.sqft && (
@@ -344,7 +748,7 @@ function Home() {
                         to={`/booking/${property.type}/${property.id}`}
                         className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                         onClick={(e) => {
-                          e.stopPropagation(); // Prevent double click trigger
+                          e.stopPropagation();
                           handleClick(property.id, property.type);
                         }}
                       >
@@ -363,7 +767,9 @@ function Home() {
                           className="bg-gradient-to-r from-blue-500 to-teal-500 text-white text-xs font-semibold px-2 py-1 rounded-full flex items-center justify-center gap-1 shadow-md"
                         >
                           {getAmenityIcon(amenity)}
-                          {amenity}
+                          {amenity
+                            .replace(/([A-Z])/g, ' $1')
+                            .replace(/^./, (str) => str.toUpperCase())}
                         </span>
                       ))}
                     </div>
@@ -381,22 +787,40 @@ function Home() {
       )}
 
       {/* Footer */}
-      <footer className={`bg-gradient-to-r ${categoryColors[selectedType] || 'from-gray-500 to-gray-700'} text-white mt-16`}>
+      <footer
+        className={`bg-gradient-to-r ${
+          categoryColors[selectedType] || 'from-gray-500 to-gray-700'
+        } text-white mt-16`}
+      >
         <div className="container mx-auto px-4 py-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <h3 className="text-2xl font-bold mb-4">EasyNest</h3>
-              <p className="text-white/80">
-                Find your perfect living space with ease.
-              </p>
+              <p className="text-white/80">Find your perfect living space with ease.</p>
             </div>
             <div>
               <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="hover:text-white/80">About Us</a></li>
-                <li><a href="#" className="hover:text-white/80">Properties</a></li>
-                <li><a href="#" className="hover:text-white/80">List Property</a></li>
-                <li><a href="#" className="hover:text-white/80">Contact</a></li>
+                <li>
+                  <a href="#" className="hover:text-white/80">
+                    About Us
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white/80">
+                    Properties
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white/80">
+                    List Property
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white/80">
+                    Contact
+                  </a>
+                </li>
               </ul>
             </div>
             <div>

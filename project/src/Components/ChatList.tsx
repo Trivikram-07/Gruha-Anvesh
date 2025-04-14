@@ -1,18 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { io, Socket } from 'socket.io-client';
+import { io } from 'socket.io-client';
 import { MessageSquare, Loader2, Send, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const socket = io('/', {
-  auth: {
-    token: localStorage.getItem('token'), // or however you're storing it
-  },
+const socket = io(process.env.NODE_ENV === 'production' ? '/' : 'http://localhost:3000', {
+  auth: { token: localStorage.getItem('token') },
   transports: ['websocket'],
   withCredentials: true,
 });
-
-
 
 interface ChatSummary {
   userId: string;
@@ -46,13 +42,17 @@ const ChatList: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const messageContainerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const token = localStorage.getItem('token');
   const userId = localStorage.getItem('userId') || '';
+
+  if (!token || !userId) {
+    navigate('/login');
+    return null;
+  }
 
   useEffect(() => {
     const fetchChats = async () => {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      console.log('Fetching chats with Token:', token);
       try {
         const response = await fetch('/api/properties/messages/chats', {
           headers: { Authorization: `Bearer ${token}` },
@@ -93,6 +93,9 @@ const ChatList: React.FC = () => {
           );
           if (!exists) {
             const newMessages = [...prev, { ...message, isRead: true }];
+            if (messageContainerRef.current) {
+              messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
+            }
             return newMessages.sort((a, b) =>
               new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
             );
@@ -109,11 +112,10 @@ const ChatList: React.FC = () => {
     return () => {
       socket.off('receiveMessage');
     };
-  }, [selectedChat, userId]);
+  }, [selectedChat, userId, token]);
 
   const markMessageAsRead = async (message: Message) => {
     try {
-      const token = localStorage.getItem('token');
       const response = await fetch(
         `/api/properties/messages/${message.propertyId}/messages/mark-read`,
         {
@@ -143,8 +145,6 @@ const ChatList: React.FC = () => {
     if (!selectedChat) return;
 
     const fetchMessages = async () => {
-      const token = localStorage.getItem('token');
-      console.log('Fetching messages for chat:', selectedChat.propertyId, 'with Token:', token);
       try {
         const response = await fetch(
           `/api/properties/messages/${selectedChat.propertyId}/messages`,
@@ -187,9 +187,9 @@ const ChatList: React.FC = () => {
     socket.emit('joinChat', { userId, otherUserId: selectedChat.userId, propertyId: selectedChat.propertyId });
 
     if (messageContainerRef.current) {
-      messageContainerRef.current.scrollTop = 0;
+      messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
     }
-  }, [selectedChat, userId]);
+  }, [selectedChat, userId, token]);
 
   const updateChatList = (message: Message, isNew: boolean) => {
     const otherUserId = message.sender._id === userId ? message.recipient._id : message.sender._id;
@@ -234,8 +234,8 @@ const ChatList: React.FC = () => {
       propertyType: selectedChat.propertyType || 'PGProperty',
       content: newMessage,
     };
-    console.log('Sending message:', messageData);
 
+    const tempId = `temp-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     const tempMessage = {
       sender: { _id: userId, username: 'You' },
       recipient: { _id: selectedChat.userId, username: selectedChat.username },
@@ -244,21 +244,24 @@ const ChatList: React.FC = () => {
       timestamp: new Date(),
       property: { propertyName: selectedChat.propertyName, images: [selectedChat.imageUrl] },
       isRead: false,
-      _id: `temp-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+      _id: tempId,
     };
 
-    setMessages(prev => {
-      const newMessages = [...prev, tempMessage];
-      return newMessages.sort((a, b) =>
-        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    setMessages((prev) => [...prev, tempMessage].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()));
+    setNewMessage('');
+
+    socket.emit('sendMessage', messageData);
+
+    socket.once('receiveMessage', (serverMessage: Message) => {
+      setMessages((prev) =>
+        prev
+          .map((msg) => (msg._id === tempId ? serverMessage : msg))
+          .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
       );
     });
 
-    socket.emit('sendMessage', messageData);
-    setNewMessage('');
-
     if (messageContainerRef.current) {
-      messageContainerRef.current.scrollTop = 0;
+      messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
     }
   };
 

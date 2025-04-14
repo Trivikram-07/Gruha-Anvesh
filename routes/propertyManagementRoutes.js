@@ -43,93 +43,149 @@ router.get('/user-actions', protect, async (req, res) => {
 });
 
 // Property Creation Routes
-router.post('/pg', protect, upload, [
-  check('propertyName', 'Property name is required').not().isEmpty(),
-  check('contactNumber', 'Contact number is required').not().isEmpty(),
-  check('address', 'Address is required').not().isEmpty(),
-  check('city', 'City is required').not().isEmpty(),
-  check('state', 'State is required').not().isEmpty(),
-  check('monthlyRent', 'Monthly rent is required').not().isEmpty(),
-  check('description', 'Description is required').not().isEmpty(),
-  check('latitude', 'Latitude must be a number').isFloat().optional(),
-  check('longitude', 'Longitude must be a number').isFloat().optional(),
-  check('single', 'Single sharing must be a boolean').isBoolean().optional(),
-  check('twoSharing', 'Two sharing must be a boolean').isBoolean().optional(),
-  check('threeSharing', 'Three sharing must be a boolean').isBoolean().optional(),
-  check('fourSharing', 'Four sharing must be a boolean').isBoolean().optional(),
-  check('wifi', 'WiFi must be a boolean').isBoolean().optional(),
-  check('tiffinService', 'Tiffin service must be a boolean').isBoolean().optional(),
-  check('tvRoom', 'TV room must be a boolean').isBoolean().optional(),
-  check('laundry', 'Laundry must be a boolean').isBoolean().optional(),
-  check('bikeParking', 'Bike parking must be a boolean').isBoolean().optional(),
-  check('hotWater', 'Hot water must be a boolean').isBoolean().optional(),
-  check('coffeeMachine', 'Coffee machine must be a boolean').isBoolean().optional(),
-  check('airConditioning', 'Air conditioning must be a boolean').isBoolean().optional(),
-], validate, createPGProperty);
+router.post(
+  '/pg',
+  protect,
+  upload,
+  [
+    check('propertyName', 'Property name is required').not().isEmpty(),
+    check('contactNumber', 'Contact number is required').not().isEmpty(),
+    check('address', 'Address is required').not().isEmpty(),
+    check('city', 'City is required').not().isEmpty(),
+    check('state', 'State is required').not().isEmpty(),
+    check('monthlyRent', 'Monthly rent is required').not().isEmpty(),
+    check('description', 'Description is required').not().isEmpty(),
+    check('latitude', 'Latitude must be a number').isFloat().optional(),
+    check('longitude', 'Longitude must be a number').isFloat().optional(),
+    check('single', 'Single sharing must be a boolean').isBoolean().optional(),
+    check('twoSharing', 'Two sharing must be a boolean').isBoolean().optional(),
+    check('threeSharing', 'Three sharing must be a boolean').isBoolean().optional(),
+    check('fourSharing', 'Four sharing must be a boolean').isBoolean().optional(),
+    check('wifi', 'WiFi must be a boolean').isBoolean().optional(),
+    check('tiffinService', 'Tiffin service must be a boolean').isBoolean().optional(),
+    check('tvRoom', 'TV room must be a boolean').isBoolean().optional(),
+    check('laundry', 'Laundry must be a boolean').isBoolean().optional(),
+    check('bikeParking', 'Bike parking must be a boolean').isBoolean().optional(),
+    check('hotWater', 'Hot water must be a boolean').isBoolean().optional(),
+    check('coffeeMachine', 'Coffee machine must be a boolean').isBoolean().optional(),
+    check('airConditioning', 'Air conditioning must be a boolean').isBoolean().optional(),
+  ],
+  validate,
+  createPGProperty
+);
 
-router.post('/bhk', protect, upload, [
-  check('propertyName', 'Property name is required').not().isEmpty(),
-  check('contactNumber', 'Contact number is required').not().isEmpty(),
-  check('address', 'Address is required').not().isEmpty(),
-  check('city', 'City is required').not().isEmpty(),
-  check('state', 'State is required').not().isEmpty(),
-  check('monthlyRent', 'Monthly rent is required').not().isEmpty(),
-  check('bedrooms', 'Number of bedrooms is required').toInt().isInt({ min: 1 }),
-  check('bathrooms', 'Number of bathrooms is required').toInt().isInt({ min: 1 }),
-  check('squareFeet', 'Square footage is required').not().isEmpty(),
-  check('description', 'Description is required').not().isEmpty(),
-  check('latitude', 'Latitude must be a number').isFloat().optional(),
-  check('longitude', 'Longitude must be a number').isFloat().optional(),
-  check('carParking', 'Car parking must be a boolean').isBoolean().optional(),
-  check('wifiSetup', 'WiFi setup must be a boolean').isBoolean().optional(),
-  check('acUnits', 'AC units must be a boolean').isBoolean().optional(),
-  check('furnished', 'Furnished must be a boolean').isBoolean().optional(),
-  check('securitySystem', 'Security system must be a boolean').isBoolean().optional(),
-  check('geysers', 'Geysers must be a boolean').isBoolean().optional(),
-  check('ceilingFans', 'Ceiling fans must be a boolean').isBoolean().optional(),
-  check('tvSetup', 'TV setup must be a boolean').isBoolean().optional(),
-  check('modularKitchen', 'Modular kitchen must be a boolean').isBoolean().optional(),
-  check('extraStorage', 'Extra storage must be a boolean').isBoolean().optional(),
-], validate, createBhkProperty);
+router.post(
+  '/bhk',
+  protect,
+  upload,
+  [
+    check('propertyName', 'Property name is required').not().isEmpty(),
+    check('contactNumber', 'Contact number is required').not().isEmpty(),
+    check('address', 'Address is required').not().isEmpty(),
+    check('city', 'City is required').not().isEmpty(),
+    check('state', 'State is required').not().isEmpty(),
+    check('monthlyRent', 'Monthly rent is required').not().isEmpty(),
+    check('bedrooms', 'Number of bedrooms is required').toInt().isInt({ min: 1 }),
+    check('bathrooms', 'Number of bathrooms is required').toInt().isInt({ min: 1 }),
+    check('squareFeet', 'Square footage is required').not().isEmpty(),
+    check('description', 'Description is required').not().isEmpty(),
+    check('latitude', 'Latitude must be a number').isFloat().optional(),
+    check('longitude', 'Longitude must be a number').isFloat().optional(),
+    check('carParking', 'Car parking must be a boolean').isBoolean().optional(),
+    check('wifiSetup', 'WiFi setup must be a boolean').isBoolean().optional(),
+    check('acUnits', 'AC units must be a boolean').isBoolean().optional(),
+    check('furnished', 'Furnished must be a boolean').isBoolean().optional(),
+    check('securitySystem', 'Security system must be a boolean').isBoolean().optional(),
+    check('geysers', 'Geysers must be a boolean').isBoolean().optional(),
+    check('ceilingFans', 'Ceiling fans must be a boolean').isBoolean().optional(),
+    check('tvSetup', 'TV setup must be a boolean').isBoolean().optional(),
+    check('modularKitchen', 'Modular kitchen must be a boolean').isBoolean().optional(),
+    check('extraStorage', 'Extra storage must be a boolean').isBoolean().optional(),
+  ],
+  validate,
+  createBhkProperty
+);
 
-router.post('/vacation', protect, upload, [
-  check('propertyName', 'Property name is required').not().isEmpty(),
-  check('contactNumber', 'Contact number is required').not().isEmpty(),
-  check('address', 'Address is required').not().isEmpty(),
-  check('city', 'City is required').not().isEmpty(),
-  check('state', 'State is required').not().isEmpty(),
-  check('ratePerDay', 'Rate per day is required').not().isEmpty(),
-  check('maxGuests', 'Maximum guests is required').toInt().isInt({ min: 1 }),
-  check('description', 'Description is required').not().isEmpty(),
-  check('latitude', 'Latitude must be a number').isFloat().optional(),
-  check('longitude', 'Longitude must be a number').isFloat().optional(),
-  check('beachAccess', 'Beach access must be a boolean').isBoolean().optional(),
-  check('highSpeedWifi', 'High-speed WiFi must be a boolean').isBoolean().optional(),
-  check('parkingSpace', 'Parking space must be a boolean').isBoolean().optional(),
-  check('airConditioning', 'Air conditioning must be a boolean').isBoolean().optional(),
-  check('kingSizeBed', 'King size bed must be a boolean').isBoolean().optional(),
-  check('roomService', 'Room service must be a boolean').isBoolean().optional(),
-  check('spaAccess', 'Spa access must be a boolean').isBoolean().optional(),
-  check('fitnessCenter', 'Fitness center must be a boolean').isBoolean().optional(),
-  check('smartTV', 'Smart TV must be a boolean').isBoolean().optional(),
-  check('loungeAccess', 'Lounge access must be a boolean').isBoolean().optional(),
-], validate, createVacationSpot);
+router.post(
+  '/vacation',
+  protect,
+  upload,
+  [
+    check('propertyName', 'Property name is required').not().isEmpty(),
+    check('contactNumber', 'Contact number is required').not().isEmpty(),
+    check('address', 'Address is required').not().isEmpty(),
+    check('city', 'City is required').not().isEmpty(),
+    check('state', 'State is required').not().isEmpty(),
+    check('ratePerDay', 'Rate per day is required').not().isEmpty(),
+    check('maxGuests', 'Maximum guests is required').toInt().isInt({ min: 1 }),
+    check('description', 'Description is required').not().isEmpty(),
+    check('latitude', 'Latitude must be a number').isFloat().optional(),
+    check('longitude', 'Longitude must be a number').isFloat().optional(),
+    check('beachAccess', 'Beach access must be a boolean').isBoolean().optional(),
+    check('highSpeedWifi', 'High-speed WiFi must be a boolean').isBoolean().optional(),
+    check('parkingSpace', 'Parking space must be a boolean').isBoolean().optional(),
+    check('airConditioning', 'Air conditioning must be a boolean').isBoolean().optional(),
+    check('kingSizeBed', 'King size bed must be a boolean').isBoolean().optional(),
+    check('roomService', 'Room service must be a boolean').isBoolean().optional(),
+    check('spaAccess', 'Spa access must be a boolean').isBoolean().optional(),
+    check('fitnessCenter', 'Fitness center must be a boolean').isBoolean().optional(),
+    check('smartTV', 'Smart TV must be a boolean').isBoolean().optional(),
+    check('loungeAccess', 'Lounge access must be a boolean').isBoolean().optional(),
+  ],
+  validate,
+  createVacationSpot
+);
 
-// Property Listing Routes
+// Property Listing Routes with Filters
 router.get('/pg', optionalAuth, async (req, res) => {
   try {
-    console.log('Fetching PG properties...');
-    const pgProperties = await PGProperty.find({ deletedAt: null });
+    console.log('Fetching PG properties with query:', req.query);
+    const {
+      rentMin,
+      rentMax,
+      city,
+      state,
+      sharingOptions,
+      amenities,
+    } = req.query;
+
+    const query = { deletedAt: null };
+
+    // Common filters
+    if (rentMin) query.monthlyRent = { $gte: Number(rentMin) };
+    if (rentMax) query.monthlyRent = query.monthlyRent
+      ? { ...query.monthlyRent, $lte: Number(rentMax) }
+      : { $lte: Number(rentMax) };
+    if (city) query.city = city;
+    if (state) query.state = state;
+
+    // PG-specific filters
+    if (sharingOptions) {
+      const optionsArray = Array.isArray(sharingOptions) ? sharingOptions : sharingOptions.split(',');
+      query.$or = optionsArray.map((option) => ({
+        [`sharingOptions.${option}`]: true,
+      }));
+    }
+    if (amenities) {
+      const amenitiesArray = Array.isArray(amenities) ? amenities : amenities.split(',');
+      amenitiesArray.forEach((amenity) => {
+        query[`amenities.${amenity}`] = true;
+      });
+    }
+
+    const pgProperties = await PGProperty.find(query).lean();
     console.log('PG properties fetched:', pgProperties.length);
+
     if (req.user) {
       console.log('User authenticated, fetching favorites for:', req.user._id);
       const favorites = await Favorite.find({ user: req.user._id, propertyType: 'pg' });
       console.log('Favorites fetched:', favorites.length);
-      const favoriteIds = new Set(favorites.map(fav => fav.propertyId.toString()));
-      pgProperties.forEach(prop => {
-        prop._doc.isFavorited = favoriteIds.has(prop._id.toString());
+      const favoriteIds = new Set(favorites.map((fav) => fav.propertyId.toString()));
+      pgProperties.forEach((prop) => {
+        prop.isFavorited = favoriteIds.has(prop._id.toString());
       });
     }
+
     res.json(pgProperties);
   } catch (error) {
     console.error('Error in /pg route:', error.message, error.stack);
@@ -139,18 +195,52 @@ router.get('/pg', optionalAuth, async (req, res) => {
 
 router.get('/bhk', optionalAuth, async (req, res) => {
   try {
-    console.log('Fetching BHK properties...');
-    const bhkProperties = await BHKHouse.find({ deletedAt: null });
+    console.log('Fetching BHK properties with query:', req.query);
+    const {
+      rentMin,
+      rentMax,
+      city,
+      state,
+      bedrooms,
+      bathrooms,
+      sqftMin,
+      amenities,
+    } = req.query;
+
+    const query = { deletedAt: null };
+
+    // Common filters
+    if (rentMin) query.monthlyRent = { $gte: Number(rentMin) };
+    if (rentMax) query.monthlyRent = query.monthlyRent
+      ? { ...query.monthlyRent, $lte: Number(rentMax) }
+      : { $lte: Number(rentMax) };
+    if (city) query.city = city;
+    if (state) query.state = state;
+
+    // BHK-specific filters
+    if (bedrooms) query.bedrooms = Number(bedrooms);
+    if (bathrooms) query.bathrooms = Number(bathrooms);
+    if (sqftMin) query.squareFeet = { $gte: Number(sqftMin) };
+    if (amenities) {
+      const amenitiesArray = Array.isArray(amenities) ? amenities : amenities.split(',');
+      amenitiesArray.forEach((amenity) => {
+        query[`amenities.${amenity}`] = true;
+      });
+    }
+
+    const bhkProperties = await BHKHouse.find(query).lean();
     console.log('BHK properties fetched:', bhkProperties.length);
+
     if (req.user) {
       console.log('User authenticated, fetching favorites for:', req.user._id);
       const favorites = await Favorite.find({ user: req.user._id, propertyType: 'bhk' });
       console.log('Favorites fetched:', favorites.length);
-      const favoriteIds = new Set(favorites.map(fav => fav.propertyId.toString()));
-      bhkProperties.forEach(prop => {
-        prop._doc.isFavorited = favoriteIds.has(prop._id.toString());
+      const favoriteIds = new Set(favorites.map((fav) => fav.propertyId.toString()));
+      bhkProperties.forEach((prop) => {
+        prop.isFavorited = favoriteIds.has(prop._id.toString());
       });
     }
+
     res.json(bhkProperties);
   } catch (error) {
     console.error('Error in /bhk route:', error.message, error.stack);
@@ -160,18 +250,48 @@ router.get('/bhk', optionalAuth, async (req, res) => {
 
 router.get('/vacation', optionalAuth, async (req, res) => {
   try {
-    console.log('Fetching vacation properties...');
-    const vacationProperties = await VacationSpot.find({ deletedAt: null });
+    console.log('Fetching vacation properties with query:', req.query);
+    const {
+      rentMin,
+      rentMax,
+      city,
+      state,
+      maxGuests,
+      amenities,
+    } = req.query;
+
+    const query = { deletedAt: null };
+
+    // Common filters
+    if (rentMin) query.ratePerDay = { $gte: Number(rentMin) };
+    if (rentMax) query.ratePerDay = query.ratePerDay
+      ? { ...query.ratePerDay, $lte: Number(rentMax) }
+      : { $lte: Number(rentMax) };
+    if (city) query.city = city;
+    if (state) query.state = state;
+
+    // Vacation-specific filters
+    if (maxGuests) query.maxGuests = { $gte: Number(maxGuests) };
+    if (amenities) {
+      const amenitiesArray = Array.isArray(amenities) ? amenities : amenities.split(',');
+      amenitiesArray.forEach((amenity) => {
+        query[`amenities.${amenity}`] = true;
+      });
+    }
+
+    const vacationProperties = await VacationSpot.find(query).lean();
     console.log('Vacation properties fetched:', vacationProperties.length);
+
     if (req.user) {
       console.log('User authenticated, fetching favorites for:', req.user._id);
       const favorites = await Favorite.find({ user: req.user._id, propertyType: 'vacation' });
       console.log('Favorites fetched:', favorites.length);
-      const favoriteIds = new Set(favorites.map(fav => fav.propertyId.toString()));
-      vacationProperties.forEach(prop => {
-        prop._doc.isFavorited = favoriteIds.has(prop._id.toString());
+      const favoriteIds = new Set(favorites.map((fav) => fav.propertyId.toString()));
+      vacationProperties.forEach((prop) => {
+        prop.isFavorited = favoriteIds.has(prop._id.toString());
       });
     }
+
     res.json(vacationProperties);
   } catch (error) {
     console.error('Error in /vacation route:', error.message, error.stack);
@@ -189,9 +309,9 @@ router.get('/my-properties', protect, async (req, res) => {
     const vacationProperties = await VacationSpot.find({ user: userId, deletedAt: null });
 
     const properties = [
-      ...pgProperties.map(p => ({ ...p.toObject(), type: 'pg' })),
-      ...bhkProperties.map(p => ({ ...p.toObject(), type: 'bhk' })),
-      ...vacationProperties.map(p => ({ ...p.toObject(), type: 'vacation' })),
+      ...pgProperties.map((p) => ({ ...p.toObject(), type: 'pg' })),
+      ...bhkProperties.map((p) => ({ ...p.toObject(), type: 'bhk' })),
+      ...vacationProperties.map((p) => ({ ...p.toObject(), type: 'vacation' })),
     ];
 
     console.log('Active user properties fetched:', properties.length);
@@ -212,9 +332,9 @@ router.get('/my-properties/deleted', protect, async (req, res) => {
     const vacationProperties = await VacationSpot.find({ user: userId, deletedAt: { $ne: null } });
 
     const properties = [
-      ...pgProperties.map(p => ({ ...p.toObject(), type: 'pg' })),
-      ...bhkProperties.map(p => ({ ...p.toObject(), type: 'bhk' })),
-      ...vacationProperties.map(p => ({ ...p.toObject(), type: 'vacation' })),
+      ...pgProperties.map((p) => ({ ...p.toObject(), type: 'pg' })),
+      ...bhkProperties.map((p) => ({ ...p.toObject(), type: 'bhk' })),
+      ...vacationProperties.map((p) => ({ ...p.toObject(), type: 'vacation' })),
     ];
 
     console.log('Deleted user properties fetched:', properties.length);
