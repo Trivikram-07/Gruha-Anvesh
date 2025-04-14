@@ -194,7 +194,7 @@ function Home() {
       }
 
       try {
-        const response = await fetch(`/api/properties/${selectedType}?${queryParams.toString()}`, {
+        const response = await fetch(`/api/properties/management/${selectedType}?${queryParams.toString()}`, {
           headers: {
             'Content-Type': 'application/json',
             ...(token && { Authorization: `Bearer ${token}` }),

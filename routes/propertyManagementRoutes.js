@@ -140,24 +140,16 @@ router.post(
 router.get('/pg', optionalAuth, async (req, res) => {
   try {
     console.log('Fetching PG properties with query:', req.query);
-    const {
-      rentMin,
-      rentMax,
-      city,
-      state,
-      sharingOptions,
-      amenities,
-    } = req.query;
+    const { rentMin, rentMax, city, state, sharingOptions, amenities } = req.query;
 
     const query = { deletedAt: null };
 
     // Common filters
-    if (rentMin) query.monthlyRent = { $gte: Number(rentMin) };
-    if (rentMax) query.monthlyRent = query.monthlyRent
-      ? { ...query.monthlyRent, $lte: Number(rentMax) }
-      : { $lte: Number(rentMax) };
-    if (city) query.city = city;
-    if (state) query.state = state;
+    if (rentMin || rentMax) query.monthlyRent = {};
+    if (rentMin) query.monthlyRent.$gte = Number(rentMin);
+    if (rentMax) query.monthlyRent.$lte = Number(rentMax);
+    if (city) query.city = { $regex: city, $options: 'i' }; // Case-insensitive
+    if (state) query.state = { $regex: state, $options: 'i' };
 
     // PG-specific filters
     if (sharingOptions) {
@@ -196,26 +188,16 @@ router.get('/pg', optionalAuth, async (req, res) => {
 router.get('/bhk', optionalAuth, async (req, res) => {
   try {
     console.log('Fetching BHK properties with query:', req.query);
-    const {
-      rentMin,
-      rentMax,
-      city,
-      state,
-      bedrooms,
-      bathrooms,
-      sqftMin,
-      amenities,
-    } = req.query;
+    const { rentMin, rentMax, city, state, bedrooms, bathrooms, sqftMin, amenities } = req.query;
 
     const query = { deletedAt: null };
 
     // Common filters
-    if (rentMin) query.monthlyRent = { $gte: Number(rentMin) };
-    if (rentMax) query.monthlyRent = query.monthlyRent
-      ? { ...query.monthlyRent, $lte: Number(rentMax) }
-      : { $lte: Number(rentMax) };
-    if (city) query.city = city;
-    if (state) query.state = state;
+    if (rentMin || rentMax) query.monthlyRent = {};
+    if (rentMin) query.monthlyRent.$gte = Number(rentMin);
+    if (rentMax) query.monthlyRent.$lte = Number(rentMax);
+    if (city) query.city = { $regex: city, $options: 'i' };
+    if (state) query.state = { $regex: state, $options: 'i' };
 
     // BHK-specific filters
     if (bedrooms) query.bedrooms = Number(bedrooms);
@@ -251,24 +233,16 @@ router.get('/bhk', optionalAuth, async (req, res) => {
 router.get('/vacation', optionalAuth, async (req, res) => {
   try {
     console.log('Fetching vacation properties with query:', req.query);
-    const {
-      rentMin,
-      rentMax,
-      city,
-      state,
-      maxGuests,
-      amenities,
-    } = req.query;
+    const { rentMin, rentMax, city, state, maxGuests, amenities } = req.query;
 
     const query = { deletedAt: null };
 
     // Common filters
-    if (rentMin) query.ratePerDay = { $gte: Number(rentMin) };
-    if (rentMax) query.ratePerDay = query.ratePerDay
-      ? { ...query.ratePerDay, $lte: Number(rentMax) }
-      : { $lte: Number(rentMax) };
-    if (city) query.city = city;
-    if (state) query.state = state;
+    if (rentMin || rentMax) query.ratePerDay = {};
+    if (rentMin) query.ratePerDay.$gte = Number(rentMin);
+    if (rentMax) query.ratePerDay.$lte = Number(rentMax);
+    if (city) query.city = { $regex: city, $options: 'i' };
+    if (state) query.state = { $regex: state, $options: 'i' };
 
     // Vacation-specific filters
     if (maxGuests) query.maxGuests = { $gte: Number(maxGuests) };
