@@ -4,7 +4,8 @@ import {
   Home, Building2, Palmtree, Upload as UploadIcon, Wifi, Utensils, Tv, Shirt, Bike,
   Droplets, Coffee, Wind, Users, Car, Shield, Sofa, Lock, Thermometer,
   Fan, Package, UtensilsCrossed, Waves, Crown, Bell, Phone, Mail,
-  Space as Spa, Dumbbell, MonitorPlay, Armchair, Instagram, Facebook, Twitter
+  Space as Spa, Dumbbell, MonitorPlay, Armchair, Instagram, Facebook, Twitter,
+  Loader2 // Add Loader2 for loading effect
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -66,7 +67,7 @@ interface FormData {
   description: string;
   images: File[];
   model3d: File | null;
-  interiorTourLink: string; // New field
+  interiorTourLink: string;
   pgAmenities: Record<string, boolean>;
   sharingOptions: Record<number, boolean>;
   bhkAmenities: Record<string, boolean>;
@@ -89,7 +90,7 @@ function Upload() {
     description: '',
     images: [],
     model3d: null,
-    interiorTourLink: '', // New field
+    interiorTourLink: '',
     pgAmenities: Object.fromEntries(pgAmenities.map(a => [a.id, false])),
     sharingOptions: Object.fromEntries(sharingOptions.map(o => [o, false])),
     bhkAmenities: Object.fromEntries(bhkAmenities.map(a => [a.id, false])),
@@ -103,6 +104,7 @@ function Upload() {
     latitude: null,
     longitude: null,
   });
+  const [isLoading, setIsLoading] = useState(false); // Add loading state
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -187,6 +189,7 @@ function Upload() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsLoading(true); // Start loading
     const formDataToSend = new FormData();
 
     formDataToSend.append('propertyName', formData.name || '');
@@ -196,7 +199,7 @@ function Upload() {
     formDataToSend.append('state', formData.state || '');
     formDataToSend.append(selectedType === 'vacation' ? 'ratePerDay' : 'monthlyRent', formData.rent || '0');
     formDataToSend.append('description', formData.description || '');
-    formDataToSend.append('interiorTourLink', formData.interiorTourLink || ''); // New field
+    formDataToSend.append('interiorTourLink', formData.interiorTourLink || '');
 
     if (location.latitude && location.longitude) {
       formDataToSend.append('latitude', location.latitude.toString());
@@ -285,7 +288,7 @@ function Upload() {
         description: '',
         images: [],
         model3d: null,
-        interiorTourLink: '', // Reset new field
+        interiorTourLink: '',
         pgAmenities: Object.fromEntries(pgAmenities.map(a => [a.id, false])),
         sharingOptions: Object.fromEntries(sharingOptions.map(o => [o, false])),
         bhkAmenities: Object.fromEntries(bhkAmenities.map(a => [a.id, false])),
@@ -302,6 +305,8 @@ function Upload() {
         stack: (error as Error).stack,
       });
       alert(`Failed to list property: ${(error as Error).message}`);
+    } finally {
+      setIsLoading(false); // Stop loading
     }
   };
 
@@ -317,7 +322,7 @@ function Upload() {
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-10">
           <h2 className="text-3xl font-bold mb-2">List Your Property</h2>
-          <p className="text-gray-600">Fill in the details below to list your property on EasyNest</p>
+          <p className="text-gray-600">Fill in the details below to list your property on GruhaAnvesh</p> {/* Updated to GruhaAnvesh */}
         </div>
 
         <div className="bg-white rounded-full shadow-md p-2 max-w-md mx-auto mb-10">
@@ -418,7 +423,7 @@ function Upload() {
             </div>
 
             <div>
-              <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1 CLEAR
                 City
               </label>
               <input
@@ -765,9 +770,21 @@ function Upload() {
           <div className="mt-10 flex justify-center">
             <button
               type="submit"
-              className={`px-8 py-3 rounded-lg text-white font-medium text-lg bg-gradient-to-r ${categoryColors[selectedType]} hover:opacity-90 transition-opacity`}
+              disabled={isLoading} // Disable button during loading
+              className={`px-8 py-3 rounded-lg text-white font-medium text-lg flex items-center justify-center ${
+                isLoading
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : `bg-gradient-to-r ${categoryColors[selectedType]} hover:opacity-90`
+              } transition-opacity`}
             >
-              List My Property
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                  Listing...
+                </>
+              ) : (
+                'List My Property'
+              )}
             </button>
           </div>
         </form>
@@ -777,7 +794,7 @@ function Upload() {
         <div className="container mx-auto px-4 py-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-              <h3 className="text-2xl font-bold mb-4">EasyNest</h3>
+              <h3 className="text-2xl font-bold mb-4">GruhaAnvesh</h3> {/* Updated to GruhaAnvesh */}
               <p className="text-white/80">Find your perfect living space with ease.</p>
             </div>
             <div>
@@ -798,7 +815,7 @@ function Upload() {
                 </li>
                 <li className="flex items-center">
                   <Mail className="h-4 w-4 mr-2" />
-                  contact@easynest.com
+                  contact@gruhaanvesh.com {/* Updated to GruhaAnvesh */}
                 </li>
               </ul>
             </div>
@@ -818,7 +835,7 @@ function Upload() {
             </div>
           </div>
           <div className="border-t border-white/20 mt-8 pt-8 text-center text-white/60">
-            © 2025 EasyNest. All rights reserved.
+            © 2025 GruhaAnvesh. All rights reserved. {/* Updated to GruhaAnvesh */}
           </div>
         </div>
       </footer>
