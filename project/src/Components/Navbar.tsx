@@ -143,7 +143,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
   return (
     <nav className="navbar">
       <div className="navbar-logo">
-        <Link to={isLoggedIn ? "/home" : "/"}>EasyNest</Link>
+        <Link to={isLoggedIn ? "/home" : "/"}>Nivas Anvesh</Link>
       </div>
       <div className="navbar-links">
         {isLoggedIn ? (

@@ -884,7 +884,7 @@ function Home() {
         <div className="container mx-auto px-4 py-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-              <h3 className="text-2xl font-bold mb-4">EasyNest</h3>
+              <h3 className="text-2xl font-bold mb-4">Nivas Anvesh</h3>
               <p className="text-white/80">Find your perfect living space with ease.</p>
             </div>
             <div>
@@ -921,7 +921,7 @@ function Home() {
                 </li>
                 <li className="flex items-center">
                   <Mail className="h-4 w-4 mr-2" />
-                  contact@easynest.com
+                  contact@Nivas Anvesh.com
                 </li>
               </ul>
             </div>
@@ -941,7 +941,7 @@ function Home() {
             </div>
           </div>
           <div className="border-t border-white/20 mt-8 pt-8 text-center text-white/60">
-            © 2024 EasyNest. All rights reserved.
+            © 2024 Nivas Anvesh. All rights reserved.
           </div>
         </div>
       </footer>
