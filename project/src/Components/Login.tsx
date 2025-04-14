@@ -62,7 +62,7 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
     <div className="auth-container">
       <div className="auth-form-container login-active">
         <form className="auth-form" onSubmit={handleSubmit}>
-          <h2>Welcome to EasyNest</h2>
+          <h2>Welcome to Gruha Anvesh</h2>
           <h3>Login to Your Account</h3>
           {error && <p className="error-message">{error}</p>}
           <div className="form-group">

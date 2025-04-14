@@ -409,35 +409,71 @@ function Home() {
       ] as [number, number]
     : [20.5937, 78.9629] as [number, number];
 
+  // Define button configurations for sliding effect
+  const buttons = [
+    {
+      type: 'pg' as PropertyType,
+      label: 'PG',
+      icon: <HomeIcon className="inline-block mr-2 h-5 w-5" />,
+      gradient: 'from-purple-500 to-pink-500',
+    },
+    {
+      type: 'bhk' as PropertyType,
+      label: 'BHK',
+      icon: <Building2 className="inline-block mr-2 h-5 w-5" />,
+      gradient: 'from-blue-500 to-teal-500',
+    },
+    {
+      type: 'vacation' as PropertyType,
+      label: 'Vacation',
+      icon: <Palmtree className="inline-block mr-2 h-5 w-5" />,
+      gradient: 'from-orange-500 to-yellow-500',
+    },
+  ];
+
+  // Calculate the index of the selected button for sliding animation
+  const selectedIndex = buttons.findIndex((button) => button.type === selectedType);
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header with Toggle */}
+      {/* Header with Sliding Toggle */}
       <div className="container mx-auto px-4 py-8">
-        <div className="bg-white rounded-full shadow-md p-2 max-w-md mx-auto flex justify-between gap-1">
-          <button
-            onClick={() => setSelectedType('pg')}
-            className={`flex-1 py-2 px-4 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white
-              ${selectedType === 'pg' ? 'ring-2 ring-purple-300 brightness-110' : 'opacity-80'}`}
-          >
-            <HomeIcon className="inline-block mr-2 h-5 w-5" />
-            PG
-          </button>
-          <button
-            onClick={() => setSelectedType('bhk')}
-            className={`flex-1 py-2 px-4 rounded-full bg-gradient-to-r from-blue-500 to-teal-500 text-white
-              ${selectedType === 'bhk' ? 'ring-2 ring-blue-300 brightness-110' : 'opacity-80'}`}
-          >
-            <Building2 className="inline-block mr-2 h-5 w-5" />
-            BHK
-          </button>
-          <button
-            onClick={() => setSelectedType('vacation')}
-            className={`flex-1 py-2 px-4 rounded-full bg-gradient-to-r from-orange-500 to-yellow-500 text-white
-              ${selectedType === 'vacation' ? 'ring-2 ring-orange-300 brightness-110' : 'opacity-80'}`}
-          >
-            <Palmtree className="inline-block mr-2 h-5 w-5" />
-            Vacation
-          </button>
+        <div className="relative bg-gray-200 rounded-full shadow-md p-1 max-w-md mx-auto flex justify-between">
+          {/* Sliding Background */}
+          <motion.div
+            className={`absolute top-1 bottom-1 rounded-full bg-gradient-to-r ${
+              buttons[selectedIndex].gradient
+            }`}
+            style={{
+              width: `${100 / buttons.length}%`,
+              left: `${(selectedIndex * 100) / buttons.length}%`,
+            }}
+            initial={false}
+            animate={{
+              left: `${(selectedIndex * 100) / buttons.length}%`,
+              background: `linear-gradient(to right, ${
+                buttons[selectedIndex].gradient.split(' ')[0]
+              }, ${buttons[selectedIndex].gradient.split(' ')[2]})`,
+            }}
+            transition={{
+              type: 'spring',
+              stiffness: 300,
+              damping: 30,
+            }}
+          />
+          {/* Buttons */}
+          {buttons.map((button) => (
+            <button
+              key={button.type}
+              onClick={() => setSelectedType(button.type)}
+              className={`relative flex-1 py-2 px-4 rounded-full text-center transition-colors z-10 ${
+                selectedType === button.type ? 'text-white font-semibold' : 'text-gray-600'
+              }`}
+            >
+              {button.icon}
+              {button.label}
+            </button>
+          ))}
         </div>
       </div>
 
