@@ -423,7 +423,7 @@ function Upload() {
             </div>
 
             <div>
-              <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1 CLEAR
+              <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
                 City
               </label>
               <input
