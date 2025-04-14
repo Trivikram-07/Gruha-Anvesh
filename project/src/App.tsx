@@ -18,52 +18,68 @@ import PreviousBookings from './Components/PreviousBooking';
 import EditProfile from './Components/EditProfile';
 import Notifications from './Components/Notifications';
 import Review from './Components/Review';
-import VacationSpot from './Components/VacationSpot'; // Update the path if the file is in a subfolder
+import VacationSpot from './Components/VacationSpot';
 import ContactUs from './Components/ContactUs';
-const App = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+const App: React.FC = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      setIsLoggedIn(true);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    } else {
-      delete axios.defaults.headers.common['Authorization'];
-    }
+    const checkAuth = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (token) {
+          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+          // Optional: Verify token with backend
+          // await axios.get('/api/auth/verify');
+          setIsLoggedIn(true);
+        } else {
+          setIsLoggedIn(false);
+        }
+      } catch (error) {
+        console.error('Token verification failed:', error);
+        localStorage.removeItem('token');
+        localStorage.removeItem('userId');
+        delete axios.defaults.headers.common['Authorization'];
+        setIsLoggedIn(false);
+      }
+    };
+
+    checkAuth();
   }, []);
+
+  if (isLoggedIn === null) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <Router>
       <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
       <Routes>
-        <Route path="/home" element={isLoggedIn ? <Home /> : <Navigate to="/" />} />
-        <Route path="/upload" element={<Upload />} />
-        <Route path="/profile/bookings" element={<PreviousBookings />} />
-        <Route path="/review/vacation/:propertyId" element={<Review />} />
-        <Route path="/notifications" element={<Notifications />} />
-        <Route path="/subscriptions" element={isLoggedIn ? <Subscription /> : <Navigate to="/" />} />
-        <Route path="/payment/vacation/:propertyId" element={<Payment />} />
-        <Route path="/vacation/:propertyId" element={<VacationSpot />} /> {/* Add this route */}
-        <Route path="/profile" element={isLoggedIn ? <div>Profile Page</div> : <Navigate to="/" />} />
-        <Route path="/previous-rentals" element={isLoggedIn ? <div>Rental History</div> : <Navigate to="/" />} />
-        <Route path="/messages" element={isLoggedIn ? <div>Chat Messages</div> : <Navigate to="/" />} />
-        {/* <Route path="/recommendations" element={isLoggedIn ? <Recommendations /> : <Navigate to="/" />} /> */}
-        <Route path="/booking/:propertyType/:propertyId" element={<Booking />} />
-        <Route path="/chats" element={<ChatList />} />
+        <Route path="/home" element={isLoggedIn ? <Home /> : <Navigate to="/" replace />} />
+        <Route path="/upload" element={isLoggedIn ? <Upload /> : <Navigate to="/" replace />} />
+        <Route path="/profile/bookings" element={isLoggedIn ? <PreviousBookings /> : <Navigate to="/" replace />} />
+        <Route path="/review/vacation/:propertyId" element={isLoggedIn ? <Review /> : <Navigate to="/" replace />} />
+        <Route path="/notifications" element={isLoggedIn ? <Notifications /> : <Navigate to="/" replace />} />
+        <Route path="/subscriptions" element={isLoggedIn ? <Subscription /> : <Navigate to="/" replace />} />
+        <Route path="/payment/vacation/:propertyId" element={isLoggedIn ? <Payment /> : <Navigate to="/" replace />} />
+        <Route path="/vacation/:propertyId" element={<VacationSpot />} />
+        <Route path="/profile" element={isLoggedIn ? <div>Profile Page</div> : <Navigate to="/" replace />} />
+        <Route path="/previous-rentals" element={isLoggedIn ? <div>Rental History</div> : <Navigate to="/" replace />} />
+        <Route path="/messages" element={isLoggedIn ? <div>Chat Messages</div> : <Navigate to="/" replace />} />
+        <Route path="/booking/:propertyType/:propertyId" element={isLoggedIn ? <Booking /> : <Navigate to="/" replace />} />
+        <Route path="/chats" element={isLoggedIn ? <ChatList /> : <Navigate to="/" replace />} />
         <Route path="/ContactUs" element={<ContactUs />} />
-        <Route path="/chat/:propertyId" element={<Chat />} />
-        <Route path="/booking-success" element={<BookingSuccess />} />
-        <Route path="/profile/history" element={isLoggedIn ? <History /> : <Navigate to="/" />} />
-        <Route path="/profile/edit" element={<EditProfile />} />
-        <Route
-  path="/signup"
-  element={<Signup setIsLoggedIn={setIsLoggedIn} />}
-/>
-<Route
-  path="/"
-  element={<Login setIsLoggedIn={setIsLoggedIn} />}
-/>
+        <Route path="/chat/:propertyId" element={isLoggedIn ? <Chat /> : <Navigate to="/" replace />} />
+        <Route path="/booking-success" element={isLoggedIn ? <BookingSuccess /> : <Navigate to="/" replace />} />
+        <Route path="/profile/history" element={isLoggedIn ? <History /> : <Navigate to="/" replace />} />
+        <Route path="/profile/edit" element={isLoggedIn ? <EditProfile /> : <Navigate to="/" replace />} />
+        <Route path="/signup" element={<Signup setIsLoggedIn={setIsLoggedIn} />} />
+        <Route path="/" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
       </Routes>
     </Router>
   );

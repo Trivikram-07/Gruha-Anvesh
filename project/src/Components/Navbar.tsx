@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import "./Navbar.css";
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import './Navbar.css';
 import { io } from 'socket.io-client';
 import { Bell, CheckCircle, AlertCircle } from 'lucide-react';
-import logo from "/image1.png"; // Adjust the path if needed
+import logo from '/image1.png';
 
 const socket = io('/', {
   auth: {
@@ -15,7 +15,7 @@ const socket = io('/', {
 
 interface NavbarProps {
   isLoggedIn: boolean;
-  setIsLoggedIn: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsLoggedIn: React.Dispatch<React.SetStateAction<boolean | null>>;
 }
 
 interface Notification {
@@ -36,21 +36,24 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isLoggedIn) return;
+    if (!isLoggedIn) {
+      setUsername('');
+      setNotifications([]);
+      setUnreadMessages(0);
+      return;
+    }
 
     const fetchUnreadCount = async () => {
       const token = localStorage.getItem('token');
-      console.log('Fetching unread messages with Token:', token);
       try {
         const response = await fetch('/api/properties/messages/chats/unread', {
-          headers: { 'Authorization': `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${token}` },
         });
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(`Failed to fetch unread count: ${errorData.message || response.statusText}`);
         }
         const data = await response.json();
-        console.log('Fetched unread count:', data.totalUnread);
         setUnreadMessages(data.totalUnread || 0);
       } catch (err) {
         console.error('Fetch unread count error:', err);
@@ -59,17 +62,15 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
 
     const fetchUserDetails = async () => {
       const token = localStorage.getItem('token');
-      console.log('Fetching user details with Token:', token);
       try {
         const response = await fetch('/api/users/me', {
-          headers: { 'Authorization': `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${token}` },
         });
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(`Failed to fetch user details: ${errorData.message || response.statusText}`);
         }
         const data = await response.json();
-        console.log('Fetched user details:', data);
         setUsername(data.username || 'User');
       } catch (err) {
         console.error('Fetch user details error:', err);
@@ -132,9 +133,10 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    localStorage.removeItem('token');
+    localStorage.removeItem('userId');
     setIsLoggedIn(false);
-    navigate("/");
+    navigate('/');
   };
 
   const unreadNotificationsCount = notifications.filter((n) => !n.isRead).length;
@@ -143,12 +145,8 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
   return (
     <nav className="navbar">
       <div className="navbar-logo">
-        <Link to={isLoggedIn ? "/home" : "/"} className="flex items-center">
-          <img 
-            src={logo} 
-            alt="Gruha Anvesh Logo" 
-            className="h-11 w-auto mr-2" 
-          />
+        <Link to={isLoggedIn ? '/home' : '/'} className="flex items-center">
+          <img src={logo} alt="Gruha Anvesh Logo" className="h-11 w-auto mr-2" />
           <span></span>
         </Link>
       </div>
@@ -206,11 +204,12 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
                           latestNotification.isRead ? 'text-gray-400' : 'text-white'
                         } hover:bg-gray-700 cursor-pointer`}
                         onClick={() =>
-                          navigate(latestNotification.type === 'success' 
-                            ? `/vacation/${latestNotification.propertyId}` 
-                            : `/review/vacation/${latestNotification.propertyId}`, {
-                              state: { fromNotification: latestNotification.type === 'success' }
-                            })
+                          navigate(
+                            latestNotification.type === 'success'
+                              ? `/vacation/${latestNotification.propertyId}`
+                              : `/review/vacation/${latestNotification.propertyId}`,
+                            { state: { fromNotification: latestNotification.type === 'success' } }
+                          )
                         }
                       >
                         {latestNotification.type === 'success' ? (

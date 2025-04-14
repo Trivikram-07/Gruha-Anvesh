@@ -1,8 +1,8 @@
-import React, { useState, Dispatch, SetStateAction } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 interface SignupProps {
-  setIsLoggedIn: Dispatch<SetStateAction<boolean>>;
+  setIsLoggedIn: React.Dispatch<React.SetStateAction<boolean | null>>;
 }
 
 const Signup: React.FC<SignupProps> = ({ setIsLoggedIn }) => {
@@ -14,6 +14,16 @@ const Signup: React.FC<SignupProps> = ({ setIsLoggedIn }) => {
   const [error, setError] = useState('');
 
   const navigate = useNavigate();
+
+  interface SignupResponse {
+    token: string;
+    user: { id: string };
+  }
+
+  interface ErrorResponse {
+    message: string;
+    errors?: { msg: string }[];
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,30 +39,22 @@ const Signup: React.FC<SignupProps> = ({ setIsLoggedIn }) => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json(); // Parse JSON response
-        console.error('Server error response:', errorData);
-        // Extract and format validation errors
+        const errorData: ErrorResponse = await response.json();
         if (errorData.errors && Array.isArray(errorData.errors)) {
-          const errorMessages = errorData.errors.map((err: { msg: string }) => err.msg).join(', ');
+          const errorMessages = errorData.errors.map((err) => err.msg).join(', ');
           throw new Error(errorMessages);
         }
-        throw new Error('Signup failed: ' + (errorData.message || response.statusText || 'Unknown error'));
+        throw new Error(errorData.message || 'Signup failed');
       }
 
-      const data = await response.json();
-      console.log('Signup success:', data);
-      alert('Signup successful!');
-      localStorage.setItem('token', data.token); // Store token
-      localStorage.setItem('userId', data.user.id); // Store user ID
+      const data: SignupResponse = await response.json();
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('userId', data.user.id);
       setIsLoggedIn(true);
-      navigate('/home'); // Redirect to home after signup
+      navigate('/home');
     } catch (error) {
       console.error('Signup error:', error);
-      if (error instanceof Error) {
-        setError(error.message);
-      } else {
-        setError('An unknown error occurred');
-      }
+      setError(error instanceof Error ? error.message : 'An unknown error occurred');
     }
   };
 
@@ -111,7 +113,12 @@ const Signup: React.FC<SignupProps> = ({ setIsLoggedIn }) => {
             style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', boxSizing: 'border-box' }}
           />
         </div>
-        <button type="submit" style={{ padding: '10px', backgroundColor: '#007BFF', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '16px' }}>Sign Up</button>
+        <button
+          type="submit"
+          style={{ padding: '10px', backgroundColor: '#007BFF', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '16px' }}
+        >
+          Sign Up
+        </button>
         <button
           type="button"
           onClick={() => navigate('/')}

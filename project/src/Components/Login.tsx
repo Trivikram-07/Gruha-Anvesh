@@ -1,63 +1,53 @@
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import "./css/login.css";
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import './css/login.css';
 
 interface LoginProps {
-  setIsLoggedIn: (isLoggedIn: boolean) => void;
+  setIsLoggedIn: React.Dispatch<React.SetStateAction<boolean | null>>;
 }
 
 const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   interface LoginResponse {
     token: string;
+    user: { id: string };
   }
 
   interface ErrorResponse {
     error: string;
   }
 
-  const handleSubmit = async (e: { preventDefault: () => void; }) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-    
+
       if (!response.ok) {
-        const text = await response.text();
-        console.error('Server returned:', text);
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData: ErrorResponse = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
-  
-      const data = await response.json();
-      console.log('Server response:', data);
-  
-      if (!response.ok) {
-        setError(data.error || 'Invalid email or password');
-        return;
-      }
-  
+
+      const data: LoginResponse = await response.json();
       localStorage.setItem('token', data.token);
       localStorage.setItem('userId', data.user.id);
-      console.log('Token saved:', data.token);
       setIsLoggedIn(true);
       navigate('/home');
     } catch (error) {
-      if (error instanceof Error) {
-        console.error('Fetch error:', error.message);
-      } else {
-        console.error('Fetch error:', error);
-      }
-      setError('An error occurred. Please try again.');
+      console.error('Login error:', error);
+      setError(error instanceof Error ? error.message : 'An error occurred. Please try again.');
     }
   };
+
   return (
     <div className="auth-container">
       <div className="auth-form-container login-active">
@@ -88,7 +78,9 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
             />
           </div>
           <div className="form-group">
-            <button type="submit" className="primary-button">Login</button>
+            <button type="submit" className="primary-button">
+              Login
+            </button>
           </div>
           <div className="auth-links">
             <p>
