@@ -38,6 +38,16 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 });
 
+// Custom red icon for property markers
+const redIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
 // Custom blue icon for user's location
 const blueIcon = new L.Icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
@@ -816,7 +826,11 @@ function Home() {
               <UserLocationMarker />
               {/* Property markers */}
               {properties.map((property) => (
-                <Marker key={property.id} position={[property.location[0], property.location[1]]}>
+                <Marker
+                  key={property.id}
+                  position={[property.location[0], property.location[1]]}
+                  icon={redIcon}
+                >
                   <Popup>
                     <div className="w-48 p-2">
                       <img
@@ -826,6 +840,13 @@ function Home() {
                       />
                       <h3 className="font-semibold text-base">{property.name}</h3>
                       <p className="text-sm font-semibold text-blue-600">{property.rent}</p>
+                      <Link
+                        to={`/booking/${property.type}/${property.id}`}
+                        className="mt-2 inline-block bg-blue-600 text-white text-xs px-3 py-1 rounded-md hover:bg-blue-700 transition-colors"
+                        onClick={() => handleClick(property.id, property.type)}
+                      >
+                        View
+                      </Link>
                     </div>
                   </Popup>
                 </Marker>
@@ -1007,7 +1028,7 @@ function Home() {
                 </a>
               </div>
             </div>
-          </div>
+            </div>
           <div className="border-t border-white/20 mt-8 pt-8 text-center text-white/60">
             © 2024 Gruha Anvesh. All rights reserved.
           </div>
