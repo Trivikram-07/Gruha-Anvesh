@@ -15,6 +15,7 @@ interface Message {
   property?: { propertyName: string; images: string[] };
 }
 
+
 const Chat: React.FC = () => {
   const { propertyId } = useParams<{ propertyId: string }>();
   const [messages, setMessages] = useState<Message[]>([]);

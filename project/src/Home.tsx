@@ -24,7 +24,7 @@ import {
   Heart,
   Sliders,
 } from 'lucide-react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import Recommendations from './Components/Recommendations';
@@ -36,6 +36,16 @@ L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+});
+
+// Custom blue icon for user's location
+const blueIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
 });
 
 type PropertyType = 'pg' | 'bhk' | 'vacation';
@@ -147,6 +157,37 @@ const amenityLabels: Record<PropertyType, string[]> = {
 };
 
 const sharingOptions = ['single', 'twoSharing', 'threeSharing', 'fourSharing'];
+
+// Component to handle user's location
+const UserLocationMarker: React.FC = () => {
+  const map = useMap();
+  const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setUserPosition([latitude, longitude]);
+          // Center map on user's location with a reasonable zoom level
+          map.setView([latitude, longitude], 10);
+        },
+        (error) => {
+          console.error('Error getting user location:', error);
+        },
+        { enableHighAccuracy: true }
+      );
+    } else {
+      console.error('Geolocation is not supported by this browser.');
+    }
+  }, [map]);
+
+  return userPosition ? (
+    <Marker position={userPosition} icon={blueIcon}>
+      <Popup>Your Current Location</Popup>
+    </Marker>
+  ) : null;
+};
 
 function Home() {
   const [selectedType, setSelectedType] = useState<PropertyType>('pg');
@@ -771,12 +812,19 @@ function Home() {
                 attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
+              {/* User's location marker */}
+              <UserLocationMarker />
+              {/* Property markers */}
               {properties.map((property) => (
                 <Marker key={property.id} position={[property.location[0], property.location[1]]}>
                   <Popup>
-                    <div className="p-2">
-                      <h3 className="font-semibold">{property.name}</h3>
-                      <p className="text-sm text-gray-600">{property.area}</p>
+                    <div className="w-48 p-2">
+                      <img
+                        src={property.image}
+                        alt={property.name}
+                        className="w-full h-24 object-cover rounded-md mb-2"
+                      />
+                      <h3 className="font-semibold text-base">{property.name}</h3>
                       <p className="text-sm font-semibold text-blue-600">{property.rent}</p>
                     </div>
                   </Popup>
