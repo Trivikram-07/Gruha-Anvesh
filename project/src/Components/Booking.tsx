@@ -462,8 +462,10 @@ const Booking: React.FC = () => {
               center={[property.latitude!, property.longitude!]}
               zoom={15}
               style={{ height: '256px', width: '100%' }}
-              whenCreated={(map: L.Map) => {
-                mapRef.current = map;
+              whenReady={() => {
+                if (mapRef.current) {
+                  mapRef.current.invalidateSize();
+                }
               }}
             >
               <TileLayer
