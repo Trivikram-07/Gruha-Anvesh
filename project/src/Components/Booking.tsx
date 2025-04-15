@@ -402,7 +402,7 @@ const Booking: React.FC = () => {
               center={[property.latitude!, property.longitude!]}
               zoom={15}
               style={{ height: '256px', width: '100%' }}
-              whenCreated={(map) => {
+              onLoad={(map) => {
                 mapRef.current = map;
               }}
             >
