@@ -402,13 +402,15 @@ const Booking: React.FC = () => {
               center={[property.latitude!, property.longitude!]}
               zoom={15}
               style={{ height: '256px', width: '100%' }}
-              onLoad={(map) => {
-                mapRef.current = map;
+              whenReady={() => {
+                if (mapRef.current) {
+                  mapRef.current.invalidateSize();
+                }
               }}
             >
               <TileLayer
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               />
               <Marker position={[property.latitude!, property.longitude!]}>
                 <Popup>{property.propertyName}</Popup>
