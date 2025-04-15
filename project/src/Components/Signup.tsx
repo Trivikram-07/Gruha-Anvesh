@@ -25,11 +25,42 @@ const Signup: React.FC<SignupProps> = ({ setIsLoggedIn }) => {
     errors?: { msg: string }[];
   }
 
+  const validateUsername = (value: string): string | null => {
+    if (value.length < 4) {
+      return 'Username must be at least 4 characters long';
+    }
+    if (!/^[a-zA-Z]+$/.test(value)) {
+      return 'Username must contain only letters (no spaces or special characters)';
+    }
+    return null;
+  };
+
+  const validatePhoneNo = (value: string): string | null => {
+    if (!/^\d{10}$/.test(value)) {
+      return 'Phone number must be exactly 10 digits';
+    }
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    const formData = { username, email, password, confirmPassword, phone_no: phoneNo };
+    // Validate username
+    const usernameError = validateUsername(username);
+    if (usernameError) {
+      setError(usernameError);
+      return;
+    }
+
+    // Validate phone number
+    const phoneError = validatePhoneNo(phoneNo);
+    if (phoneError) {
+      setError(phoneError);
+      return;
+    }
+
+    const formData = { username, email, password, confirmPassword, phone_no: `+91${phoneNo}` };
 
     try {
       const response = await fetch('/api/auth/signup', {
@@ -70,6 +101,8 @@ const Signup: React.FC<SignupProps> = ({ setIsLoggedIn }) => {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
+            pattern="[a-zA-Z]{4,}"
+            title="Username must be at least 4 letters long with no spaces or special characters"
             style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', boxSizing: 'border-box' }}
           />
         </div>
@@ -105,13 +138,23 @@ const Signup: React.FC<SignupProps> = ({ setIsLoggedIn }) => {
         </div>
         <div>
           <label style={{ display: 'block', marginBottom: '5px', color: '#555' }}>Phone Number:</label>
-          <input
-            type="tel"
-            value={phoneNo}
-            onChange={(e) => setPhoneNo(e.target.value)}
-            required
-            style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', boxSizing: 'border-box' }}
-          />
+          <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '4px', overflow: 'hidden' }}>
+            <span style={{ padding: '8px', backgroundColor: '#f5f5f5', color: '#555', borderRight: '1px solid #ddd' }}>+91</span>
+            <input
+              type="tel"
+              value={phoneNo}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, '');
+                if (value.length <= 10) {
+                  setPhoneNo(value);
+                }
+              }}
+              required
+              pattern="\d{10}"
+              title="Phone number must be exactly 10 digits"
+              style={{ flex: 1, padding: '8px', border: 'none', outline: 'none', boxSizing: 'border-box' }}
+            />
+          </div>
         </div>
         <button
           type="submit"
