@@ -841,12 +841,12 @@ function Home() {
                       <h3 className="font-semibold text-base">{property.name}</h3>
                       <p className="text-sm font-semibold text-blue-600">{property.rent}</p>
                       <Link
-                        to={`/booking/${property.type}/${property.id}`}
-                        className="mt-2 inline-block bg-blue-600 text-white text-xs px-3 py-1 rounded-md hover:bg-blue-700 transition-colors"
-                        onClick={() => handleClick(property.id, property.type)}
-                      >
-                        View
-                      </Link>
+  to={`/booking/${property.type}/${property.id}`}
+  className="mt-2 inline-block bg-blue-300 text-black text-xs px-3 py-1 rounded-md hover:bg-blue-400 transition-colors"
+  onClick={() => handleClick(property.id, property.type)}
+>
+  View
+</Link>
                     </div>
                   </Popup>
                 </Marker>
