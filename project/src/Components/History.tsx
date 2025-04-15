@@ -35,13 +35,37 @@ const History: React.FC = () => {
   useEffect(() => {
     const fetchProperties = async () => {
       setLoading(true);
+      setError(null);
       const token = localStorage.getItem('token');
       console.log('Fetching properties with Token:', token);
+
+      if (!token) {
+        setError('No authentication token found. Please log in.');
+        setLoading(false);
+        return;
+      }
+
       try {
+        const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+        console.log('Sending requests to:', '/api/properties/management/my-properties', '/api/properties/management/my-properties/deleted');
+
         const [activeRes, deletedRes] = await Promise.all([
-          fetch('/api/properties/management/my-properties', { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch('/api/properties/management/my-properties/deleted', { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch('/api/properties/management/my-properties', { headers }),
+          fetch('/api/properties/management/my-properties/deleted', { headers }),
         ]);
+
+        console.log('Active response status:', activeRes.status, activeRes.statusText);
+        console.log('Deleted response status:', deletedRes.status, deletedRes.statusText);
+
+        // Check for non-JSON responses
+        const activeContentType = activeRes.headers.get('content-type');
+        const deletedContentType = deletedRes.headers.get('content-type');
+        if (!activeContentType?.includes('application/json') || !deletedContentType?.includes('application/json')) {
+          const activeText = await activeRes.text();
+          const deletedText = await deletedRes.text();
+          console.error('Non-JSON response:', { activeText: activeText.slice(0, 100), deletedText: deletedText.slice(0, 100) });
+          throw new Error('Server returned invalid response (not JSON)');
+        }
 
         if (!activeRes.ok) {
           const errorData = await activeRes.json();
@@ -56,11 +80,11 @@ const History: React.FC = () => {
         const deletedData = await deletedRes.json();
         console.log('Fetched active properties:', activeData);
         console.log('Fetched deleted properties:', deletedData);
-        setProperties(activeData);
-        setDeletedProperties(deletedData);
+        setProperties(Array.isArray(activeData) ? activeData : []);
+        setDeletedProperties(Array.isArray(deletedData) ? deletedData : []);
       } catch (err) {
         console.error('Fetch properties error:', err);
-        setError(err instanceof Error ? err.message : 'An error occurred');
+        setError(err instanceof Error ? err.message : 'An error occurred while fetching properties');
       } finally {
         setLoading(false);
       }
@@ -96,15 +120,20 @@ const History: React.FC = () => {
     if (!editingProperty) return;
     const token = localStorage.getItem('token');
     console.log('Saving edit for property:', editingProperty._id, 'with Token:', token);
+    if (!token) {
+      setError('No authentication token found. Please log in.');
+      return;
+    }
     try {
       const response = await fetch(`/api/properties/management/${editingProperty.type}/${editingProperty._id}`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(editForm),
       });
+      console.log('Edit response status:', response.status, response.statusText);
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || response.statusText);
@@ -125,11 +154,19 @@ const History: React.FC = () => {
     if (!confirm('Are you sure you want to delete this property?')) return;
     const token = localStorage.getItem('token');
     console.log('Deleting property:', propertyId, 'with Token:', token);
+    if (!token) {
+      setError('No authentication token found. Please log in.');
+      return;
+    }
     try {
       const response = await fetch(`/api/properties/management/${type}/${propertyId}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
       });
+      console.log('Delete response status:', response.status, response.statusText);
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || response.statusText);
@@ -311,17 +348,17 @@ const History: React.FC = () => {
                             checked={editForm.sharingOptions?.[option as keyof Property['sharingOptions']] || false}
                             onChange={(e) => setEditForm({
                               ...editForm,
-                              sharingOptions: { 
+                              sharingOptions: {
                                 single: editForm.sharingOptions?.single || false,
                                 twoSharing: editForm.sharingOptions?.twoSharing || false,
                                 threeSharing: editForm.sharingOptions?.threeSharing || false,
                                 fourSharing: editForm.sharingOptions?.fourSharing || false,
-                                [option]: e.target.checked 
+                                [option]: e.target.checked,
                               },
                             })}
                             className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
                           />
-                          <span className="text-gray-700">{option.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</span>
+                          <span className="text-gray-700">{option.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase())}</span>
                         </label>
                       ))}
                     </div>
@@ -342,7 +379,7 @@ const History: React.FC = () => {
                           })}
                           className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
                         />
-                        <span className="text-gray-700">{key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</span>
+                        <span className="text-gray-700">{key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase())}</span>
                       </label>
                     ))}
                   </div>

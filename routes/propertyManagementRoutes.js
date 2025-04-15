@@ -34,7 +34,7 @@ router.get('/user-actions', protect, async (req, res) => {
     const actions = await UserAction.find({ userId })
       .populate('propertyId', 'propertyName')
       .lean();
-    console.log(`Fetched ${actions.length} actions for user ${userId}:`, actions);
+    console.log(`Fetched ${actions.length} actions for user ${userId}`);
     res.json(actions);
   } catch (error) {
     console.error('Error fetching user actions:', error.message, error.stack);
@@ -143,8 +143,6 @@ router.get('/pg', optionalAuth, async (req, res) => {
     const { rentMin, rentMax, city, state, sharingOptions, amenities } = req.query;
 
     const query = { deletedAt: null };
-
-    // Common filters
     const minRent = Number(rentMin);
     const maxRent = Number(rentMax);
     if (!isNaN(minRent) && minRent > 0) {
@@ -158,8 +156,6 @@ router.get('/pg', optionalAuth, async (req, res) => {
     }
     if (city) query.city = { $regex: city, $options: 'i' };
     if (state) query.state = { $regex: state, $options: 'i' };
-
-    // PG-specific filters
     if (sharingOptions) {
       const optionsArray = Array.isArray(sharingOptions) ? sharingOptions : sharingOptions.split(',');
       query.$or = optionsArray.map((option) => ({
@@ -174,12 +170,12 @@ router.get('/pg', optionalAuth, async (req, res) => {
     }
 
     const pgProperties = await PGProperty.find(query).lean();
-    console.log('PG properties fetched:', pgProperties.length);
+    console.log(`Fetched ${pgProperties.length} PG properties`);
 
     if (req.user) {
       console.log('User authenticated, fetching favorites for:', req.user._id);
       const favorites = await Favorite.find({ user: req.user._id, propertyType: 'pg' });
-      console.log('Favorites fetched:', favorites.length);
+      console.log(`Fetched ${favorites.length} favorites`);
       const favoriteIds = new Set(favorites.map((fav) => fav.propertyId.toString()));
       pgProperties.forEach((prop) => {
         prop.isFavorited = favoriteIds.has(prop._id.toString());
@@ -199,8 +195,6 @@ router.get('/bhk', optionalAuth, async (req, res) => {
     const { rentMin, rentMax, city, state, bedrooms, bathrooms, sqftMin, amenities } = req.query;
 
     const query = { deletedAt: null };
-
-    // Common filters
     const minRent = Number(rentMin);
     const maxRent = Number(rentMax);
     if (!isNaN(minRent) && minRent > 0) {
@@ -214,8 +208,6 @@ router.get('/bhk', optionalAuth, async (req, res) => {
     }
     if (city) query.city = { $regex: city, $options: 'i' };
     if (state) query.state = { $regex: state, $options: 'i' };
-
-    // BHK-specific filters
     if (bedrooms) query.bedrooms = Number(bedrooms);
     if (bathrooms) query.bathrooms = Number(bathrooms);
     if (sqftMin) query.squareFeet = { $gte: Number(sqftMin) };
@@ -227,12 +219,12 @@ router.get('/bhk', optionalAuth, async (req, res) => {
     }
 
     const bhkProperties = await BHKHouse.find(query).lean();
-    console.log('BHK properties fetched:', bhkProperties.length);
+    console.log(`Fetched ${bhkProperties.length} BHK properties`);
 
     if (req.user) {
       console.log('User authenticated, fetching favorites for:', req.user._id);
       const favorites = await Favorite.find({ user: req.user._id, propertyType: 'bhk' });
-      console.log('Favorites fetched:', favorites.length);
+      console.log(`Fetched ${favorites.length} favorites`);
       const favoriteIds = new Set(favorites.map((fav) => fav.propertyId.toString()));
       bhkProperties.forEach((prop) => {
         prop.isFavorited = favoriteIds.has(prop._id.toString());
@@ -252,8 +244,6 @@ router.get('/vacation', optionalAuth, async (req, res) => {
     const { rentMin, rentMax, city, state, maxGuests, amenities } = req.query;
 
     const query = { deletedAt: null };
-
-    // Common filters
     const minRent = Number(rentMin);
     const maxRent = Number(rentMax);
     if (!isNaN(minRent) && minRent > 0) {
@@ -267,8 +257,6 @@ router.get('/vacation', optionalAuth, async (req, res) => {
     }
     if (city) query.city = { $regex: city, $options: 'i' };
     if (state) query.state = { $regex: state, $options: 'i' };
-
-    // Vacation-specific filters
     if (maxGuests) query.maxGuests = { $gte: Number(maxGuests) };
     if (amenities) {
       const amenitiesArray = Array.isArray(amenities) ? amenities : amenities.split(',');
@@ -278,12 +266,12 @@ router.get('/vacation', optionalAuth, async (req, res) => {
     }
 
     const vacationProperties = await VacationSpot.find(query).lean();
-    console.log('Vacation properties fetched:', vacationProperties.length);
+    console.log(`Fetched ${vacationProperties.length} vacation properties`);
 
     if (req.user) {
       console.log('User authenticated, fetching favorites for:', req.user._id);
       const favorites = await Favorite.find({ user: req.user._id, propertyType: 'vacation' });
-      console.log('Favorites fetched:', favorites.length);
+      console.log(`Fetched ${favorites.length} favorites`);
       const favoriteIds = new Set(favorites.map((fav) => fav.propertyId.toString()));
       vacationProperties.forEach((prop) => {
         prop.isFavorited = favoriteIds.has(prop._id.toString());
@@ -302,17 +290,17 @@ router.get('/my-properties', protect, async (req, res) => {
     const userId = req.user._id;
     console.log('Fetching active properties for user:', userId);
 
-    const pgProperties = await PGProperty.find({ user: userId, deletedAt: null });
-    const bhkProperties = await BHKHouse.find({ user: userId, deletedAt: null });
-    const vacationProperties = await VacationSpot.find({ user: userId, deletedAt: null });
+    const pgProperties = await PGProperty.find({ user: userId, deletedAt: null }).lean();
+    const bhkProperties = await BHKHouse.find({ user: userId, deletedAt: null }).lean();
+    const vacationProperties = await VacationSpot.find({ user: userId, deletedAt: null }).lean();
 
     const properties = [
-      ...pgProperties.map((p) => ({ ...p.toObject(), type: 'pg' })),
-      ...bhkProperties.map((p) => ({ ...p.toObject(), type: 'bhk' })),
-      ...vacationProperties.map((p) => ({ ...p.toObject(), type: 'vacation' })),
+      ...pgProperties.map((p) => ({ ...p, type: 'pg' })),
+      ...bhkProperties.map((p) => ({ ...p, type: 'bhk' })),
+      ...vacationProperties.map((p) => ({ ...p, type: 'vacation' })),
     ];
 
-    console.log('Active user properties fetched:', properties.length);
+    console.log(`Fetched ${properties.length} active user properties`);
     res.json(properties);
   } catch (error) {
     console.error('Error fetching user properties:', error.message, error.stack);
@@ -325,17 +313,17 @@ router.get('/my-properties/deleted', protect, async (req, res) => {
     const userId = req.user._id;
     console.log('Fetching deleted properties for user:', userId);
 
-    const pgProperties = await PGProperty.find({ user: userId, deletedAt: { $ne: null } });
-    const bhkProperties = await BHKHouse.find({ user: userId, deletedAt: { $ne: null } });
-    const vacationProperties = await VacationSpot.find({ user: userId, deletedAt: { $ne: null } });
+    const pgProperties = await PGProperty.find({ user: userId, deletedAt: { $ne: null } }).lean();
+    const bhkProperties = await BHKHouse.find({ user: userId, deletedAt: { $ne: null } }).lean();
+    const vacationProperties = await VacationSpot.find({ user: userId, deletedAt: { $ne: null } }).lean();
 
     const properties = [
-      ...pgProperties.map((p) => ({ ...p.toObject(), type: 'pg' })),
-      ...bhkProperties.map((p) => ({ ...p.toObject(), type: 'bhk' })),
-      ...vacationProperties.map((p) => ({ ...p.toObject(), type: 'vacation' })),
+      ...pgProperties.map((p) => ({ ...p, type: 'pg' })),
+      ...bhkProperties.map((p) => ({ ...p, type: 'bhk' })),
+      ...vacationProperties.map((p) => ({ ...p, type: 'vacation' })),
     ];
 
-    console.log('Deleted user properties fetched:', properties.length);
+    console.log(`Fetched ${properties.length} deleted user properties`);
     res.json(properties);
   } catch (error) {
     console.error('Error fetching deleted properties:', error.message, error.stack);
@@ -355,9 +343,9 @@ router.get('/:type/:propertyId', optionalAuth, async (req, res) => {
   try {
     console.log(`Fetching property: ${type}/${propertyId}`);
     let property;
-    if (type === 'pg') property = await PGProperty.findById(propertyId);
-    else if (type === 'bhk') property = await BHKHouse.findById(propertyId);
-    else if (type === 'vacation') property = await VacationSpot.findById(propertyId);
+    if (type === 'pg') property = await PGProperty.findById(propertyId).lean();
+    else if (type === 'bhk') property = await BHKHouse.findById(propertyId).lean();
+    else if (type === 'vacation') property = await VacationSpot.findById(propertyId).lean();
     else {
       console.log('Invalid property type:', type);
       return res.status(400).json({ message: 'Invalid property type' });
@@ -371,18 +359,17 @@ router.get('/:type/:propertyId', optionalAuth, async (req, res) => {
     if (type === 'vacation') {
       const sixMonthsAgo = new Date();
       sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-      const recentBookings = property.bookings.filter(
+      const recentBookings = property.bookings ? property.bookings.filter(
         (booking) => new Date(booking.createdAt) >= sixMonthsAgo
-      );
+      ) : [];
       const bookingsLast6Months = recentBookings.reduce(
         (sum, booking) => sum + (booking.numGuests || 0),
         0
       );
-      property = property.toObject();
       property.bookingsLast6Months = bookingsLast6Months;
     }
 
-    console.log('Property fetched:', property.propertyName);
+    console.log(`Fetched property: ${property.propertyName}`);
     res.json(property);
   } catch (error) {
     console.error('Error fetching property:', error.message, error.stack);
@@ -415,10 +402,11 @@ router.put('/:type/:propertyId', protect, async (req, res) => {
 
     delete updates.user;
     delete updates.deletedAt;
+    delete updates._id;
 
     Object.assign(property, updates);
     await property.save();
-    console.log(`Property ${propertyId} updated by user ${userId} with updates:`, updates);
+    console.log(`Property ${propertyId} updated by user ${userId}`);
     res.json(property);
   } catch (error) {
     console.error('Error updating property:', error.message, error.stack);
@@ -462,7 +450,7 @@ router.delete('/:type/:propertyId', protect, async (req, res) => {
 router.post('/vacation/:propertyId/review', protect, async (req, res) => {
   const { propertyId } = req.params;
   const { rating, review } = req.body;
-  const userId = req.user.id;
+  const userId = req.user._id;
 
   console.log('Review request:', { propertyId, rating, review, userId });
 

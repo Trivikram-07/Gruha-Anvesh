@@ -5,7 +5,7 @@ import io, { Socket } from 'socket.io-client';
 import {
   Bed, Bath, Square, Wifi, Utensils, Dumbbell, Car, Shield, Waves, Trees, Star, Users,
   MessageSquare, Loader2, MapPin, DollarSign, Phone, Tv, Droplet, Coffee, AirVent,
-  ChefHat, X, Maximize2, Link as LinkIcon
+  ChefHat, X, Maximize2, Link as LinkIcon, Calendar
 } from 'lucide-react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, useGLTF } from '@react-three/drei';
@@ -26,8 +26,11 @@ const DefaultIcon = L.icon({
 L.Marker.prototype.options.icon = DefaultIcon;
 
 // Socket.IO connection
-const socket: Socket = io({
+const socket: Socket = io('https://gruha-anvesh.onrender.com', {
   auth: { token: localStorage.getItem('token') },
+  transports: ['websocket', 'polling'],
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000,
 });
 
 type PropertyType = 'pg' | 'bhk' | 'vacation';
@@ -159,25 +162,38 @@ const Booking: React.FC = () => {
       setError(null);
       const token = localStorage.getItem('token');
       console.log('Fetching property details with Token:', token);
+
+      if (!token) {
+        setError('No authentication token found. Please log in.');
+        setLoading(false);
+        return;
+      }
+
       try {
         if (!propertyId || !propertyType) throw new Error('Invalid property ID or type');
         const response = await fetch(`/api/properties/management/${propertyType}/${propertyId}`, {
           headers: {
             'Content-Type': 'application/json',
-            ...(token && { 'Authorization': `Bearer ${token}` }),
+            Authorization: `Bearer ${token}`,
           },
         });
+        console.log('Fetch response status:', response.status, response.statusText);
+        if (!response.headers.get('content-type')?.includes('application/json')) {
+          const text = await response.text();
+          console.error('Non-JSON response:', text.slice(0, 100));
+          throw new Error('Server returned invalid response (not JSON)');
+        }
         if (!response.ok) {
           const errorData = await response.json();
           console.error('Fetch property error response:', errorData);
-          throw new Error(`Failed to fetch property details: ${response.status} - ${errorData.message || response.statusText}`);
+          throw new Error(`Failed to fetch property details: ${errorData.message || response.statusText}`);
         }
         const data = await response.json();
         console.log('Fetched property:', data);
         setProperty(data);
       } catch (err) {
         console.error('Fetch property error:', err);
-        setError(err instanceof Error ? err.message : 'An error occurred');
+        setError(err instanceof Error ? err.message : 'An error occurred while fetching property details');
       } finally {
         setLoading(false);
       }
@@ -191,17 +207,22 @@ const Booking: React.FC = () => {
     const fetchMessages = async () => {
       const token = localStorage.getItem('token');
       console.log('Fetching messages with Token:', token);
+      if (!token) {
+        setChatError('No authentication token found. Please log in.');
+        return;
+      }
       try {
         const response = await fetch(`/api/properties/messages/${propertyId}/messages`, {
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         });
+        console.log('Messages fetch status:', response.status, response.statusText);
         if (!response.ok) {
           const errorData = await response.json();
           console.error('Fetch messages error response:', errorData);
-          throw new Error(`Failed to fetch messages: ${response.status} - ${errorData.message || response.statusText}`);
+          throw new Error(`Failed to fetch messages: ${errorData.message || response.statusText}`);
         }
         const data = await response.json();
         console.log('Fetched messages:', data);
@@ -214,14 +235,17 @@ const Booking: React.FC = () => {
     };
 
     socket.on('connect', () => console.log('Socket connected'));
-    socket.on('connect_error', (err) => console.error('Socket connection error:', err.message));
+    socket.on('connect_error', (err) => {
+      console.error('Socket connection error:', err.message);
+      setChatError('Failed to connect to chat server');
+    });
     socket.on('receiveMessage', (message) => {
       setMessages((prev) => [...prev, message]);
       console.log('Received message:', message);
     });
     socket.on('error', (error) => {
       console.error('Socket error:', error);
-      setChatError(error.message);
+      setChatError(error.message || 'Chat error occurred');
     });
 
     fetchMessages();
@@ -241,7 +265,6 @@ const Booking: React.FC = () => {
     }
   }, [messages, showChat]);
 
-  // Force map invalidation after render
   useEffect(() => {
     if (mapRef.current) {
       setTimeout(() => {
@@ -252,14 +275,17 @@ const Booking: React.FC = () => {
 
   const handleBookNow = () => {
     if (propertyType !== 'vacation') {
-      alert('Booking only available for vacation properties');
+      setError('Booking only available for vacation properties');
       return;
     }
     navigate(`/payment/vacation/${propertyId}`);
   };
 
   const handleContact = () => {
-    if (userId === property?.user) return;
+    if (userId === property?.user) {
+      setChatError('You cannot chat with yourself');
+      return;
+    }
     setShowChat(!showChat);
   };
 
@@ -273,22 +299,29 @@ const Booking: React.FC = () => {
       recipient: property.user, 
       propertyId, 
       propertyType, 
-      content: newMessage 
+      content: newMessage,
+      timestamp: new Date(),
     };
     console.log('Sending message:', messageData);
     socket.emit('sendMessage', messageData);
-    setMessages((prev) => [...prev, { ...messageData, sender: { _id: userId }, timestamp: new Date() }]);
+    setMessages((prev) => [...prev, { ...messageData, sender: { _id: userId } }]);
     setNewMessage('');
     setChatError(null);
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
   const isOwner = userId === property?.user;
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div>;
   if (error) return <div className="min-h-screen flex items-center justify-center text-red-500">{error}</div>;
-  if (!property) return <div className="min-h-screen flex items-center justify-center">No property found</div>;
+  if (!property) return <div className="min-h-screen flex items-center justify-center text-gray-500">No property found</div>;
 
-  // Validate latitude and longitude
   const isValidLatLng = property.latitude != null && property.longitude != null &&
     !isNaN(property.latitude) && !isNaN(property.longitude) &&
     property.latitude >= -90 && property.latitude <= 90 &&
@@ -296,15 +329,18 @@ const Booking: React.FC = () => {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-h-screen bg-gray-50 p-8">
-      <div className="container mx-auto">
+      <div className="container mx-auto max-w-5xl">
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
           <h1 className="text-3xl font-bold text-gray-800 mb-2">{property.propertyName}</h1>
-          <p className="text-gray-600 mb-4">{property.address}</p>
+          <p className="text-gray-600 mb-4 flex items-center">
+            <MapPin className="h-5 w-5 mr-2 text-blue-500" />
+            {property.address}
+          </p>
           {propertyType === 'vacation' && (
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 mb-4">
               <div className="flex items-center">
                 <Star className="h-5 w-5 text-yellow-400 fill-yellow-400 mr-1" />
-                <span>{property.rating || 'N/A'} ({property.reviewsCount || 0} reviews)</span>
+                <span>{property.rating?.toFixed(1) || 'N/A'} ({property.reviewsCount || 0} reviews)</span>
               </div>
               <div className="flex items-center">
                 <Users className="h-5 w-5 text-blue-600 mr-1" />
@@ -323,7 +359,8 @@ const Booking: React.FC = () => {
                   key={index}
                   src={img}
                   alt={`${property.propertyName} - Image ${index + 1}`}
-                  className="w-full h-56 object-cover rounded-lg hover:scale-105 transition-transform"
+                  className="w-full h-56 object-cover rounded-lg hover:scale-105 transition-transform duration-200"
+                  onError={(e) => (e.currentTarget.src = 'https://placehold.co/300')}
                 />
               ))}
             </div>
@@ -342,26 +379,49 @@ const Booking: React.FC = () => {
           <h2 className="text-2xl font-semibold mb-4">Details</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {property.monthlyRent && (
-              <p className="flex items-center"><DollarSign className="h-5 w-5 mr-2 text-green-500" /> ₹{property.monthlyRent}/month</p>
+              <p className="flex items-center">
+                <DollarSign className="h-5 w-5 mr-2 text-green-500" />
+                ₹{property.monthlyRent.toLocaleString()}/month
+              </p>
             )}
             {property.ratePerDay && (
-              <p className="flex items-center"><DollarSign className="h-5 w-5 mr-2 text-green-500" /> ₹{property.ratePerDay}/day</p>
+              <p className="flex items-center">
+                <DollarSign className="h-5 w-5 mr-2 text-green-500" />
+                ₹{property.ratePerDay.toLocaleString()}/day
+              </p>
             )}
             {property.maxGuests && (
-              <p className="flex items-center"><Users className="h-5 w-5 mr-2 text-blue-500" /> Max Guests: {property.maxGuests}</p>
+              <p className="flex items-center">
+                <Users className="h-5 w-5 mr-2 text-blue-500" />
+                Max Guests: {property.maxGuests}
+              </p>
             )}
             {property.bedrooms && (
-              <p className="flex items-center"><Bed className="h-5 w-5 mr-2 text-purple-500" /> {property.bedrooms} Bedrooms</p>
+              <p className="flex items-center">
+                <Bed className="h-5 w-5 mr-2 text-purple-500" />
+                {property.bedrooms} Bedrooms
+              </p>
             )}
             {property.bathrooms && (
-              <p className="flex items-center"><Bath className="h-5 w-5 mr-2 text-blue-500" /> {property.bathrooms} Bathrooms</p>
+              <p className="flex items-center">
+                <Bath className="h-5 w-5 mr-2 text-blue-500" />
+                {property.bathrooms} Bathrooms
+              </p>
             )}
             {property.squareFeet && (
-              <p className="flex items-center"><Square className="h-5 w-5 mr-2 text-gray-500" /> {property.squareFeet} sq.ft.</p>
+              <p className="flex items-center">
+                <Square className="h-5 w-5 mr-2 text-gray-500" />
+                {property.squareFeet.toLocaleString()} sq.ft.
+              </p>
             )}
-            <p className="flex items-center"><Phone className="h-5 w-5 mr-2 text-gray-600" /> {property.contactNumber}</p>
+            <p className="flex items-center">
+              <Phone className="h-5 w-5 mr-2 text-gray-600" />
+              {property.contactNumber}
+            </p>
           </div>
-          <p className="mt-4 text-gray-600"><strong>Description:</strong> {property.description}</p>
+          <p className="mt-4 text-gray-600">
+            <strong>Description:</strong> {property.description || 'No description provided'}
+          </p>
           {property.interiorTourLink && (
             <p className="mt-4">
               <strong>Interior Tour:</strong>{' '}
@@ -402,10 +462,8 @@ const Booking: React.FC = () => {
               center={[property.latitude!, property.longitude!]}
               zoom={15}
               style={{ height: '256px', width: '100%' }}
-              whenReady={() => {
-                if (mapRef.current) {
-                  mapRef.current.invalidateSize();
-                }
+              whenCreated={(map: L.Map) => {
+                mapRef.current = map;
               }}
             >
               <TileLayer
@@ -449,57 +507,58 @@ const Booking: React.FC = () => {
           </div>
         )}
 
-        <div className="flex justify-end gap-4 mb-8">
-          <button
-            onClick={handleContact}
-            disabled={isOwner}
-            className={`px-6 py-2 rounded-lg flex items-center ${isOwner ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-gray-600 text-white hover:bg-gray-700'}`}
-          >
-            <MessageSquare className="h-5 w-5 mr-2" /> {showChat && !isOwner ? 'Hide Chat' : 'Contact'}
-          </button>
-          <button
-            onClick={handleBookNow}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
-          >
-            Book Now
-          </button>
-        </div>
-
         <AnimatePresence>
           {showChat && !isOwner && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="bg-white rounded-xl shadow-lg p-6"
+              className="bg-white rounded-xl shadow-lg p-6 mb-8 overflow-hidden"
             >
               <h2 className="text-2xl font-semibold mb-4">Chat with Owner</h2>
-              {chatError && <p className="text-red-500 mb-4">{chatError}</p>}
-              <div className="h-64 overflow-y-auto mb-4 bg-gray-50 p-4 rounded-lg">
-                {messages.map((msg, index) => (
-                  <div key={index} className={`mb-2 ${msg.sender._id === userId ? 'text-right' : 'text-left'}`}>
-                    <p className={`inline-block p-2 rounded-lg ${msg.sender._id === userId ? 'bg-blue-100' : 'bg-green-100'}`}>
-                      {msg.content}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {new Date(msg.timestamp).toLocaleTimeString()}
-                    </p>
-                  </div>
-                ))}
+              {chatError && (
+                <p className="text-red-500 mb-4">{chatError}</p>
+              )}
+              <div className="h-64 overflow-y-auto mb-4 p-4 bg-gray-50 rounded-lg">
+                {messages.length === 0 ? (
+                  <p className="text-gray-500 text-center">No messages yet</p>
+                ) : (
+                  messages.map((msg, index) => (
+                    <div
+                      key={index}
+                      className={`mb-2 flex ${
+                        msg.sender._id === userId ? 'justify-end' : 'justify-start'
+                      }`}
+                    >
+                      <div
+                        className={`max-w-xs p-3 rounded-lg ${
+                          msg.sender._id === userId
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-gray-200 text-gray-800'
+                        }`}
+                      >
+                        <p>{msg.content}</p>
+                        <p className="text-xs mt-1 opacity-70">
+                          {new Date(msg.timestamp).toLocaleTimeString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
                 <div ref={messagesEndRef} />
               </div>
-              <div className="flex">
-                <input
-                  type="text"
+              <div className="flex gap-2">
+                <textarea
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
-                  className="flex-1 p-2 border rounded-l-lg"
-                  placeholder="Type a message..."
-                  onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Type your message..."
+                  className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  rows={2}
                 />
                 <button
                   onClick={sendMessage}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-r-lg hover:bg-blue-700"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   Send
                 </button>
@@ -507,6 +566,33 @@ const Booking: React.FC = () => {
             </motion.div>
           )}
         </AnimatePresence>
+
+        <div className="flex justify-end gap-4 mb-8">
+          <button
+            onClick={handleContact}
+            disabled={isOwner}
+            className={`px-6 py-2 rounded-lg flex items-center transition-colors ${
+              isOwner
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-gray-600 text-white hover:bg-gray-700'
+            }`}
+          >
+            <MessageSquare className="h-5 w-5 mr-2" />
+            {showChat && !isOwner ? 'Hide Chat' : 'Contact Owner'}
+          </button>
+          <button
+            onClick={handleBookNow}
+            disabled={propertyType !== 'vacation'}
+            className={`px-6 py-2 rounded-lg flex items-center transition-colors ${
+              propertyType !== 'vacation'
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+            }`}
+          >
+            <Calendar className="h-5 w-5 mr-2" />
+            Book Now
+          </button>
+        </div>
       </div>
     </motion.div>
   );
