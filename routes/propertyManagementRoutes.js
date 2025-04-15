@@ -423,6 +423,10 @@ router.delete('/:type/:propertyId', protect, async (req, res) => {
       console.log('Invalid property type:', type);
       return res.status(400).json({ message: 'Invalid property type' });
     }
+    if (!mongoose.Types.ObjectId.isValid(propertyId)) {
+      console.log('Invalid propertyId:', propertyId);
+      return res.status(400).json({ message: 'Invalid property ID' });
+    }
 
     let Model;
     if (type === 'pg') Model = PGProperty;
@@ -439,7 +443,7 @@ router.delete('/:type/:propertyId', protect, async (req, res) => {
     property.deletedAt = new Date();
     await property.save();
     console.log(`Property ${propertyId} soft deleted by user ${userId}`);
-    res.json({ message: 'Property deleted successfully' });
+    res.json({ message: 'Property deleted successfully', propertyId });
   } catch (error) {
     console.error('Error deleting property:', error.message, error.stack);
     res.status(500).json({ message: 'Server error', error: error.message });

@@ -32,63 +32,63 @@ const History: React.FC = () => {
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
   const [editForm, setEditForm] = useState<Partial<Property>>({});
 
+  const fetchProperties = async () => {
+    setLoading(true);
+    setError(null);
+    const token = localStorage.getItem('token');
+    console.log('Fetching properties with Token:', token);
+
+    if (!token) {
+      setError('No authentication token found. Please log in.');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+      console.log('Sending requests to:', '/api/properties/management/my-properties', '/api/properties/management/my-properties/deleted');
+
+      const [activeRes, deletedRes] = await Promise.all([
+        fetch('/api/properties/management/my-properties', { headers }),
+        fetch('/api/properties/management/my-properties/deleted', { headers }),
+      ]);
+
+      console.log('Active response status:', activeRes.status, activeRes.statusText);
+      console.log('Deleted response status:', deletedRes.status, deletedRes.statusText);
+
+      const activeContentType = activeRes.headers.get('content-type');
+      const deletedContentType = deletedRes.headers.get('content-type');
+      if (!activeContentType?.includes('application/json') || !deletedContentType?.includes('application/json')) {
+        const activeText = await activeRes.text();
+        const deletedText = await deletedRes.text();
+        console.error('Non-JSON response:', { activeText: activeText.slice(0, 100), deletedText: deletedText.slice(0, 100) });
+        throw new Error('Server returned invalid response (not JSON)');
+      }
+
+      if (!activeRes.ok) {
+        const errorData = await activeRes.json();
+        throw new Error(`Failed to fetch active properties: ${errorData.message || activeRes.statusText}`);
+      }
+      if (!deletedRes.ok) {
+        const errorData = await deletedRes.json();
+        throw new Error(`Failed to fetch deleted properties: ${errorData.message || deletedRes.statusText}`);
+      }
+
+      const activeData = await activeRes.json();
+      const deletedData = await deletedRes.json();
+      console.log('Fetched active properties:', activeData);
+      console.log('Fetched deleted properties:', deletedData);
+      setProperties(Array.isArray(activeData) ? activeData : []);
+      setDeletedProperties(Array.isArray(deletedData) ? deletedData : []);
+    } catch (err) {
+      console.error('Fetch properties error:', err);
+      setError(err instanceof Error ? err.message : 'An error occurred while fetching properties');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchProperties = async () => {
-      setLoading(true);
-      setError(null);
-      const token = localStorage.getItem('token');
-      console.log('Fetching properties with Token:', token);
-
-      if (!token) {
-        setError('No authentication token found. Please log in.');
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
-        console.log('Sending requests to:', '/api/properties/management/my-properties', '/api/properties/management/my-properties/deleted');
-
-        const [activeRes, deletedRes] = await Promise.all([
-          fetch('/api/properties/management/my-properties', { headers }),
-          fetch('/api/properties/management/my-properties/deleted', { headers }),
-        ]);
-
-        console.log('Active response status:', activeRes.status, activeRes.statusText);
-        console.log('Deleted response status:', deletedRes.status, deletedRes.statusText);
-
-        // Check for non-JSON responses
-        const activeContentType = activeRes.headers.get('content-type');
-        const deletedContentType = deletedRes.headers.get('content-type');
-        if (!activeContentType?.includes('application/json') || !deletedContentType?.includes('application/json')) {
-          const activeText = await activeRes.text();
-          const deletedText = await deletedRes.text();
-          console.error('Non-JSON response:', { activeText: activeText.slice(0, 100), deletedText: deletedText.slice(0, 100) });
-          throw new Error('Server returned invalid response (not JSON)');
-        }
-
-        if (!activeRes.ok) {
-          const errorData = await activeRes.json();
-          throw new Error(`Failed to fetch active properties: ${errorData.message || activeRes.statusText}`);
-        }
-        if (!deletedRes.ok) {
-          const errorData = await deletedRes.json();
-          throw new Error(`Failed to fetch deleted properties: ${errorData.message || deletedRes.statusText}`);
-        }
-
-        const activeData = await activeRes.json();
-        const deletedData = await deletedRes.json();
-        console.log('Fetched active properties:', activeData);
-        console.log('Fetched deleted properties:', deletedData);
-        setProperties(Array.isArray(activeData) ? activeData : []);
-        setDeletedProperties(Array.isArray(deletedData) ? deletedData : []);
-      } catch (err) {
-        console.error('Fetch properties error:', err);
-        setError(err instanceof Error ? err.message : 'An error occurred while fetching properties');
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchProperties();
   }, []);
 
@@ -144,6 +144,7 @@ const History: React.FC = () => {
         prev.map((p) => (p._id === updatedProperty._id ? { ...p, ...updatedProperty } : p))
       );
       setEditingProperty(null);
+      setError(null);
     } catch (err) {
       console.error('Edit error:', err);
       setError(err instanceof Error ? err.message : 'Edit failed');
@@ -151,11 +152,15 @@ const History: React.FC = () => {
   };
 
   const handleDelete = async (type: string, propertyId: string) => {
-    if (!confirm('Are you sure you want to delete this property?')) return;
+    if (!confirm('Are you sure you want to delete this property?')) {
+      console.log('Deletion cancelled by user');
+      return;
+    }
     const token = localStorage.getItem('token');
-    console.log('Deleting property:', propertyId, 'with Token:', token);
+    console.log('Initiating delete for property:', propertyId, 'Type:', type, 'with Token:', token);
     if (!token) {
       setError('No authentication token found. Please log in.');
+      console.log('No token for deletion');
       return;
     }
     try {
@@ -167,22 +172,46 @@ const History: React.FC = () => {
         },
       });
       console.log('Delete response status:', response.status, response.statusText);
+
+      if (!response.headers.get('content-type')?.includes('application/json')) {
+        const text = await response.text();
+        console.error('Non-JSON delete response:', text.slice(0, 100));
+        throw new Error('Server returned invalid response (not JSON)');
+      }
+
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || response.statusText);
+        console.error('Delete error response:', errorData);
+        throw new Error(`Failed to delete property: ${errorData.message || response.statusText}`);
       }
-      setProperties((prev) => prev.filter((p) => p._id !== propertyId));
-      const deletedProperty = properties.find((p) => p._id === propertyId);
-      if (deletedProperty) setDeletedProperties((prev) => [...prev, deletedProperty]);
-      console.log('Property deleted:', propertyId);
+
+      const data = await response.json();
+      console.log('Delete response data:', data);
+
+      // Re-fetch to sync with backend
+      await fetchProperties();
+      console.log('Property deleted successfully:', propertyId);
+      setError(null);
     } catch (err) {
       console.error('Delete error:', err);
-      setError(err instanceof Error ? err.message : 'Delete failed');
+      setError(err instanceof Error ? err.message : 'Failed to delete property');
     }
   };
 
   if (loading) return <div className="min-h-screen bg-gray-100 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div>;
-  if (error) return <div className="min-h-screen bg-gray-100 flex items-center justify-center"><p className="text-red-500">{error}</p></div>;
+  if (error) return (
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="bg-white rounded-lg p-6 shadow-lg max-w-md text-center">
+        <p className="text-red-500 mb-4">{error}</p>
+        <button
+          onClick={fetchProperties}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Retry
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-100 py-8">
