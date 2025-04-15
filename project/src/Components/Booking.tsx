@@ -11,21 +11,24 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls, useGLTF } from '@react-three/drei';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 
 // Fix for default marker icons in Leaflet
-import L from 'leaflet';
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
+const DefaultIcon = L.icon({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
 });
+L.Marker.prototype.options.icon = DefaultIcon;
 
 // Socket.IO connection
 const socket: Socket = io({
   auth: { token: localStorage.getItem('token') },
 });
-
 
 type PropertyType = 'pg' | 'bhk' | 'vacation';
 
@@ -43,7 +46,7 @@ interface Property {
   description: string;
   images: string[];
   threeDModel?: string;
-  interiorTourLink?: string; // New field
+  interiorTourLink?: string;
   latitude?: number;
   longitude?: number;
   sharingOptions?: { [key: string]: boolean };
@@ -147,6 +150,7 @@ const Booking: React.FC = () => {
   const [newMessage, setNewMessage] = useState('');
   const [chatError, setChatError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<L.Map | null>(null);
   const userId = localStorage.getItem('userId');
 
   useEffect(() => {
@@ -237,6 +241,15 @@ const Booking: React.FC = () => {
     }
   }, [messages, showChat]);
 
+  // Force map invalidation after render
+  useEffect(() => {
+    if (mapRef.current) {
+      setTimeout(() => {
+        mapRef.current?.invalidateSize();
+      }, 100);
+    }
+  }, [property]);
+
   const handleBookNow = () => {
     if (propertyType !== 'vacation') {
       alert('Booking only available for vacation properties');
@@ -274,6 +287,12 @@ const Booking: React.FC = () => {
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>;
   if (error) return <div className="min-h-screen flex items-center justify-center text-red-500">{error}</div>;
   if (!property) return <div className="min-h-screen flex items-center justify-center">No property found</div>;
+
+  // Validate latitude and longitude
+  const isValidLatLng = property.latitude != null && property.longitude != null &&
+    !isNaN(property.latitude) && !isNaN(property.longitude) &&
+    property.latitude >= -90 && property.latitude <= 90 &&
+    property.longitude >= -180 && property.longitude <= 180;
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-h-screen bg-gray-50 p-8">
@@ -378,10 +397,20 @@ const Booking: React.FC = () => {
 
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
           <h2 className="text-2xl font-semibold mb-4">Location</h2>
-          {property.latitude && property.longitude ? (
-            <MapContainer center={[property.latitude, property.longitude]} zoom={15} style={{ height: '256px', width: '100%' }}>
-              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-              <Marker position={[property.latitude, property.longitude]}>
+          {isValidLatLng ? (
+            <MapContainer
+              center={[property.latitude!, property.longitude!]}
+              zoom={15}
+              style={{ height: '256px', width: '100%' }}
+              whenCreated={(map) => {
+                mapRef.current = map;
+              }}
+            >
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              />
+              <Marker position={[property.latitude!, property.longitude!]}>
                 <Popup>{property.propertyName}</Popup>
               </Marker>
             </MapContainer>
