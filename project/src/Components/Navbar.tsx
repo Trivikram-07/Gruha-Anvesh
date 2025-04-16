@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import './Navbar.css';
 import { io } from 'socket.io-client';
 import { Bell, CheckCircle, AlertCircle } from 'lucide-react';
 import logo from '/image1.png';
@@ -34,6 +33,8 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
   const [username, setUsername] = useState<string>('');
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const navigate = useNavigate();
+  const profileRef = useRef<HTMLDivElement>(null);
+  const notificationsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -122,17 +123,38 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
     };
   }, [isLoggedIn]);
 
+  // Handle clicks outside dropdowns
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        profileRef.current &&
+        !profileRef.current.contains(event.target as Node) &&
+        notificationsRef.current &&
+        !notificationsRef.current.contains(event.target as Node)
+      ) {
+        setShowProfileDropdown(false);
+        setShowNotifications(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   const toggleProfileDropdown = () => {
-    setShowProfileDropdown(!showProfileDropdown);
+    setShowProfileDropdown((prev) => !prev);
     setShowNotifications(false);
   };
 
   const toggleNotifications = () => {
-    setShowNotifications(!showNotifications);
+    setShowNotifications((prev) => !prev);
     setShowProfileDropdown(false);
   };
 
   const handleLogout = () => {
+    console.log('Logout clicked, removing token');
     localStorage.removeItem('token');
     localStorage.removeItem('userId');
     setIsLoggedIn(false);
@@ -143,113 +165,164 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
   const latestNotification = notifications.length > 0 ? notifications[notifications.length - 1] : null;
 
   return (
-    <nav className="navbar">
-      <div className="navbar-logo">
+    <nav className="sticky top-0 z-[900] bg-gray-800 px-4 py-3 sm:px-6 flex justify-between items-center">
+      <div className="flex items-center">
         <Link to={isLoggedIn ? '/home' : '/'} className="flex items-center">
           <img src={logo} alt="Gruha Anvesh Logo" className="h-11 w-auto mr-2" />
-          <span></span>
         </Link>
       </div>
-      <div className="navbar-links">
+      <div className="flex items-center space-x-4 sm:space-x-6">
         {isLoggedIn ? (
           <>
-            <Link to="/home">Home</Link>
-            <Link to="/subscriptions">Subscriptions</Link>
-            <Link to="/ContactUs">Contact Us</Link>
-            <Link to="/upload">Upload</Link>
-            <div className="navbar-profile" onClick={toggleProfileDropdown}>
-              <span className="flex items-center">
+            <Link to="/home" className="text-white hover:text-blue-200 font-medium">
+              Home
+            </Link>
+            <Link to="/subscriptions" className="text-white hover:text-blue-200 font-medium">
+              Subscriptions
+            </Link>
+            <Link to="/ContactUs" className="text-white hover:text-blue-200 font-medium">
+              Contact Us
+            </Link>
+            <Link to="/upload" className="text-white hover:text-blue-200 font-medium">
+              Upload
+            </Link>
+            <div className="relative" ref={profileRef}>
+              <span
+                className="flex items-center text-white hover:text-blue-200 cursor-pointer font-medium"
+                onClick={toggleProfileDropdown}
+              >
                 Profile
                 {unreadMessages > 0 && (
                   <span className="ml-2 h-2 w-2 bg-red-500 rounded-full"></span>
                 )}
               </span>
-              {showProfileDropdown && (
-                <div className="profile-dropdown z-50">
-                  <div className="text-white font-semibold text-lg px-4 py-2 border-b border-gray-700">
-                    {username}
-                  </div>
-                  <Link to="/profile/history" className="text-white hover:text-blue-200 px-4 py-2">
-                    History
-                  </Link>
-                  <Link to="/profile/bookings" className="text-white hover:text-blue-200 px-4 py-2">
-                    Previous Bookings
-                  </Link>
-                  <Link to="/chats" className="text-white hover:text-blue-200 px-4 py-2">
-                    Chat
-                  </Link>
-                  <Link to="/profile/edit" className="text-white hover:text-blue-200 px-4 py-2">
-                    Edit Profile
-                  </Link>
-                  <button
-                    onClick={handleLogout}
-                    className="w-full text-left text-white hover:text-blue-200 px-4 py-2"
-                  >
-                    Logout
-                  </button>
+              <div
+                className={`absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-lg z-[1000] overflow-hidden transition-all duration-300 ease-in-out transform ${
+                  showProfileDropdown
+                    ? 'opacity-100 translate-y-0'
+                    : 'opacity-0 -translate-y-2 pointer-events-none'
+                }`}
+              >
+                <div className="text-white font-semibold text-lg px-4 py-2 border-b border-gray-700">
+                  {username}
                 </div>
-              )}
+                <Link
+                  to="/profile/history"
+                  className="block text-white hover:text-blue-200 px-4 py-2"
+                  onClick={() => setShowProfileDropdown(false)}
+                >
+                  History
+                </Link>
+                <Link
+                  to="/profile/bookings"
+                  className="block text-white hover:text-blue-200 px-4 py-2"
+                  onClick={() => setShowProfileDropdown(false)}
+                >
+                  Previous Bookings
+                </Link>
+                <Link
+                  to="/chats"
+                  className="block text-white hover:text-blue-200 px-4 py-2"
+                  onClick={() => setShowProfileDropdown(false)}
+                >
+                  Chat
+                </Link>
+                <Link
+                  to="/profile/edit"
+                  className="block text-white hover:text-blue-200 px-4 py-2"
+                  onClick={() => setShowProfileDropdown(false)}
+                >
+                  Edit Profile
+                </Link>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setShowProfileDropdown(false);
+                  }}
+                  className="w-full text-left text-white hover:text-blue-200 px-4 py-2"
+                >
+                  Logout
+                </button>
+              </div>
             </div>
-            <div className="relative" onClick={toggleNotifications}>
-              <Bell className="h-6 w-6 text-white cursor-pointer" />
+            <div className="relative" ref={notificationsRef}>
+              <Bell
+                className="h-6 w-6 text-white cursor-pointer hover:text-blue-200"
+                onClick={toggleNotifications}
+              />
               {unreadNotificationsCount > 0 && (
                 <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
               )}
-              {showNotifications && (
-                <div className="absolute right-0 mt-2 w-80 bg-gray-800 rounded-lg shadow-lg z-50">
-                  {latestNotification ? (
-                    <div>
-                      <div
-                        className={`px-4 py-2 flex items-start ${
-                          latestNotification.isRead ? 'text-gray-400' : 'text-white'
-                        } hover:bg-gray-700 cursor-pointer`}
-                        onClick={() =>
-                          navigate(
-                            latestNotification.type === 'success'
-                              ? `/vacation/${latestNotification.propertyId}`
-                              : `/review/vacation/${latestNotification.propertyId}`,
-                            { state: { fromNotification: latestNotification.type === 'success' } }
-                          )
-                        }
-                      >
-                        {latestNotification.type === 'success' ? (
-                          <CheckCircle className="h-5 w-5 mr-2 text-green-500" />
-                        ) : (
-                          <AlertCircle className="h-5 w-5 mr-2 text-blue-500" />
-                        )}
-                        <div>
-                          <p>{latestNotification.message}</p>
-                          <span className="text-xs">
-                            {new Date(latestNotification.timestamp).toLocaleString()}
-                          </span>
-                        </div>
+              <div
+                className={`absolute right-0 mt-2 w-80 bg-gray-800 rounded-lg shadow-lg z-[1000] overflow-hidden transition-all duration-300 ease-in-out transform ${
+                  showNotifications
+                    ? 'opacity-100 translate-y-0'
+                    : 'opacity-0 -translate-y-2 pointer-events-none'
+                }`}
+              >
+                {latestNotification ? (
+                  <div>
+                    <div
+                      className={`px-4 py-2 flex items-start ${
+                        latestNotification.isRead ? 'text-gray-400' : 'text-white'
+                      } hover:bg-gray-700 cursor-pointer`}
+                      onClick={() => {
+                        navigate(
+                          latestNotification.type === 'success'
+                            ? `/vacation/${latestNotification.propertyId}`
+                            : `/review/vacation/${latestNotification.propertyId}`,
+                          { state: { fromNotification: latestNotification.type === 'success' } }
+                        );
+                        setShowNotifications(false);
+                      }}
+                    >
+                      {latestNotification.type === 'success' ? (
+                        <CheckCircle className="h-5 w-5 mr-2 text-green-500" />
+                      ) : (
+                        <AlertCircle className="h-5 w-5 mr-2 text-blue-500" />
+                      )}
+                      <div>
+                        <p>{latestNotification.message}</p>
+                        <span className="text-xs">
+                          {new Date(latestNotification.timestamp).toLocaleString()}
+                        </span>
                       </div>
-                      <button
-                        onClick={() => navigate('/notifications')}
-                        className="w-full text-center text-white bg-blue-600 hover:bg-blue-700 py-2 rounded-b-lg"
-                      >
-                        All Notifications
-                      </button>
                     </div>
-                  ) : (
-                    <div>
-                      <p className="text-gray-400 px-4 py-2">No notifications yet</p>
-                      <button
-                        onClick={() => navigate('/notifications')}
-                        className="w-full text-center text-white bg-blue-600 hover:bg-blue-700 py-2 rounded-b-lg"
-                      >
-                        All Notifications
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
+                    <button
+                      onClick={() => {
+                        navigate('/notifications');
+                        setShowNotifications(false);
+                      }}
+                      className="w-full text-center text-white bg-blue-600 hover:bg-blue-700 py-2 rounded-b-lg"
+                    >
+                      All Notifications
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="text-gray-400 px-4 py-2">No notifications yet</p>
+                    <button
+                      onClick={() => {
+                        navigate('/notifications');
+                        setShowNotifications(false);
+                      }}
+                      className="w-full text-center text-white bg-blue-600 hover:bg-blue-700 py-2 rounded-b-lg"
+                    >
+                      All Notifications
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </>
         ) : (
           <>
-            <Link to="/home">Home</Link>
-            <Link to="/signup">Sign Up</Link>
+            <Link to="/home" className="text-white hover:text-blue-200 font-medium">
+              Home
+            </Link>
+            <Link to="/signup" className="text-white hover:text-blue-200 font-medium">
+              Sign Up
+            </Link>
           </>
         )}
       </div>
