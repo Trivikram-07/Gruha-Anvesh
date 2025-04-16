@@ -416,7 +416,7 @@ const Booking: React.FC = () => {
               onClick={handleCloseViewer}
             >
               <div
-                className="relative w-[90vw] h-[90vh] bg-white rounded-xl p-6 flex flex-col"
+                className="relative w-[90vw] h-[85vh] bg-grey rounded-xl p-6 flex flex-col"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Close Button */}
