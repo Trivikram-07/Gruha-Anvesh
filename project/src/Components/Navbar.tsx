@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import './Navbar.css';
 import { io } from 'socket.io-client';
 import { Bell, CheckCircle, AlertCircle, Menu, X } from 'lucide-react';
 import logo from '/image1.png';
@@ -126,7 +125,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
     };
   }, [isLoggedIn]);
 
-  // Handle clicks outside dropdowns and mobile menu to close them
+  // Handle clicks outside dropdowns and mobile menu
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -177,36 +176,41 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
   const latestNotification = notifications.length > 0 ? notifications[notifications.length - 1] : null;
 
   return (
-    <nav className="navbar">
-      <div className="navbar-logo">
+    <nav className="sticky top-0 z-[1000] bg-gray-800 px-4 py-3 sm:px-6 flex justify-between items-center">
+      <div className="flex items-center">
         <Link to={isLoggedIn ? '/home' : '/'} className="flex items-center">
           <img src={logo} alt="Gruha Anvesh Logo" className="h-11 w-auto mr-2" />
-          <span></span>
         </Link>
       </div>
-      {/* Hamburger Icon for Mobile */}
+
+      {/* Hamburger Button for Mobile */}
       <button
         className="md:hidden text-white focus:outline-none"
         onClick={toggleMobileMenu}
         aria-label={showMobileMenu ? 'Close menu' : 'Open menu'}
       >
-        {showMobileMenu ? (
-          <X className="h-6 w-6" />
-        ) : (
-          <Menu className="h-6 w-6" />
-        )}
+        {showMobileMenu ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
       </button>
-      {/* Desktop Navbar Links */}
-      <div className="navbar-links hidden md:flex items-center space-x-6">
+
+      {/* Desktop Links */}
+      <div className="hidden md:flex items-center space-x-6">
         {isLoggedIn ? (
           <>
-            <Link to="/home">Home</Link>
-            <Link to="/subscriptions">Subscriptions</Link>
-            <Link to="/ContactUs">Contact Us</Link>
-            <Link to="/upload">Upload</Link>
-            <div className="navbar-profile relative" ref={profileRef}>
+            <Link to="/home" className="text-white hover:text-blue-200 font-medium">
+              Home
+            </Link>
+            <Link to="/subscriptions" className="text-white hover:text-blue-200 font-medium">
+              Subscriptions
+            </Link>
+            <Link to="/ContactUs" className="text-white hover:text-blue-200 font-medium">
+              Contact Us
+            </Link>
+            <Link to="/upload" className="text-white hover:text-blue-200 font-medium">
+              Upload
+            </Link>
+            <div className="relative" ref={profileRef}>
               <span
-                className="flex items-center cursor-pointer"
+                className="flex items-center text-white hover:text-blue-200 cursor-pointer font-medium"
                 onClick={toggleProfileDropdown}
               >
                 Profile
@@ -215,7 +219,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
                 )}
               </span>
               <div
-                className={`profile-dropdown absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-lg z-[1000] overflow-hidden transition-all duration-300 ease-in-out transform ${
+                className={`absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-lg z-[1000] overflow-hidden transition-all duration-300 ease-in-out transform ${
                   showProfileDropdown
                     ? 'opacity-100 translate-y-0'
                     : 'opacity-0 -translate-y-2 pointer-events-none'
@@ -265,7 +269,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
             </div>
             <div className="relative" ref={notificationsRef}>
               <Bell
-                className="h-6 w-6 text-white cursor-pointer"
+                className="h-6 w-6 text-white cursor-pointer hover:text-blue-200"
                 onClick={toggleNotifications}
               />
               {unreadNotificationsCount > 0 && (
@@ -335,17 +339,22 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
           </>
         ) : (
           <>
-            <Link to="/home">Home</Link>
-            <Link to="/signup">Sign Up</Link>
+            <Link to="/home" className="text-white hover:text-blue-200 font-medium">
+              Home
+            </Link>
+            <Link to="/signup" className="text-white hover:text-blue-200 font-medium">
+              Sign Up
+            </Link>
           </>
         )}
       </div>
+
       {/* Mobile Menu */}
       <div
         ref={mobileMenuRef}
-        className={`mobile-menu fixed inset-0 bg-gray-900 z-[1100] transform transition-transform duration-300 ease-in-out ${
+        className={`fixed inset-0 bg-gray-900 z-[1100] transform transition-transform duration-300 ease-in-out md:hidden ${
           showMobileMenu ? 'translate-x-0' : 'translate-x-full'
-        } md:hidden`}
+        }`}
       >
         <div className="flex flex-col items-center justify-center h-full space-y-6">
           {isLoggedIn ? (
@@ -380,7 +389,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
               </Link>
               <div className="relative" ref={profileRef}>
                 <span
-                  className="flex items-center text-white text-xl cursor-pointer"
+                  className="flex items-center text-white text-xl hover:text-blue-200 cursor-pointer"
                   onClick={toggleProfileDropdown}
                 >
                   Profile
@@ -389,7 +398,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
                   )}
                 </span>
                 <div
-                  className={`profile-dropdown absolute left-1/2 transform -translate-x-1/2 mt-2 w-48 bg-gray-800 rounded-lg shadow-lg z-[1200] overflow-hidden transition-all duration-300 ease-in-out transform ${
+                  className={`absolute left-1/2 -translate-x-1/2 mt-2 w-48 bg-gray-800 rounded-lg shadow-lg z-[1200] overflow-hidden transition-all duration-300 ease-in-out transform ${
                     showProfileDropdown
                       ? 'opacity-100 translate-y-0'
                       : 'opacity-0 -translate-y-2 pointer-events-none'
@@ -452,13 +461,13 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
               </div>
               <div className="relative" ref={notificationsRef}>
                 <div className="flex items-center" onClick={toggleNotifications}>
-                  <Bell className="h-6 w-6 text-white cursor-pointer" />
+                  <Bell className="h-6 w-6 text-white cursor-pointer hover:text-blue-200" />
                   {unreadNotificationsCount > 0 && (
                     <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
                   )}
                 </div>
                 <div
-                  className={`profile-dropdown absolute left-1/2 transform -translate-x-1/2 mt-2 w-64 bg-gray-800 rounded-lg shadow-lg z-[1200] overflow-hidden transition-all duration-300 ease-in-out transform ${
+                  className={`absolute left-1/2 -translate-x-1/2 mt-2 w-64 bg-gray-800 rounded-lg shadow-lg z-[1200] overflow-hidden transition-all duration-300 ease-in-out transform ${
                     showNotifications
                       ? 'opacity-100 translate-y-0'
                       : 'opacity-0 -translate-y-2 pointer-events-none'
