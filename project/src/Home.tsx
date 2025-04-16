@@ -178,27 +178,41 @@ const UserLocationMarker: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) =
   const [locationError, setLocationError] = useState<string | null>(null);
 
   const requestLocation = useCallback(() => {
+    console.log('requestLocation called, isLoggedIn:', isLoggedIn);
+    if (!isLoggedIn) {
+      console.log('Skipping geolocation: User not logged in');
+      setLocationError(null);
+      setUserPosition(null);
+      return;
+    }
+
     if (!navigator.geolocation) {
+      console.error('Geolocation not supported');
       setLocationError('Geolocation is not supported by your browser.');
       return;
     }
 
-    // Check secure context
-    if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
-      setLocationError('Location access requires a secure connection (HTTPS).');
+    const isSecure = window.location.protocol === 'https:' || window.location.hostname === 'localhost';
+    console.log('Secure context:', isSecure, 'URL:', window.location.href);
+    if (!isSecure) {
+      console.error('Non-secure context detected');
+      setLocationError('Location access requires a secure connection (HTTPS or localhost).');
       return;
     }
 
+    console.log('Requesting geolocation permission');
     setLocationError(null);
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-        console.log('User location obtained:', { latitude, longitude });
+        console.log('Geolocation success:', { latitude, longitude });
         setUserPosition([latitude, longitude]);
+        console.log('Setting map view to:', [latitude, longitude], 'Zoom: 12');
         map.setView([latitude, longitude], 12);
+        console.log('Current map view:', { center: map.getCenter(), zoom: map.getZoom() });
       },
       (error) => {
-        console.error('Geolocation error:', error);
+        console.error('Geolocation error:', error.message, 'Code:', error.code);
         switch (error.code) {
           case error.PERMISSION_DENIED:
             setLocationError('Location permission denied. Please enable location access in your browser settings.');
@@ -219,28 +233,37 @@ const UserLocationMarker: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) =
         maximumAge: 0,
       }
     );
-  }, [map]);
+  }, [map, isLoggedIn]);
 
   useEffect(() => {
+    console.log('UserLocationMarker useEffect, isLoggedIn:', isLoggedIn, 'userPosition:', userPosition);
     if (isLoggedIn) {
-      console.log('Requesting user location');
       requestLocation();
     } else {
-      console.log('User not logged in, skipping geolocation');
+      console.log('Clearing user position: Not logged in');
       setUserPosition(null);
       setLocationError(null);
     }
   }, [isLoggedIn, requestLocation]);
 
+  useEffect(() => {
+    if (userPosition) {
+      console.log('userPosition updated:', userPosition, 'Rendering marker');
+    }
+  }, [userPosition]);
+
   return (
     <>
       {locationError && (
-        <div className="absolute top-4 left-4 z-[1000] bg-red-500 text-white px-4 py-2 rounded-lg shadow-md flex items-center gap-2">
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-[1000] bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 max-w-md">
           <span>{locationError}</span>
           {locationError.includes('denied') && (
             <button
-              onClick={requestLocation}
-              className="bg-white text-red-500 px-2 py-1 rounded hover:bg-gray-100"
+              onClick={() => {
+                console.log('Retry button clicked');
+                requestLocation();
+              }}
+              className="bg-white text-red-500 px-3 py-1 rounded hover:bg-gray-100"
             >
               Retry
             </button>
@@ -248,7 +271,7 @@ const UserLocationMarker: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) =
         </div>
       )}
       {userPosition && (
-        <Marker position={userPosition} icon={blueIcon}>
+        <Marker position={userPosition} icon={blueIcon} zIndexOffset={1000}>
           <Popup>Your Current Location</Popup>
         </Marker>
       )}
@@ -266,6 +289,7 @@ function Home({ isLoggedIn }: HomeProps) {
   const [cities, setCities] = useState<string[]>([]);
   const [states, setStates] = useState<string[]>([]);
   const [filterError, setFilterError] = useState<string | null>(null);
+  const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -274,36 +298,23 @@ function Home({ isLoggedIn }: HomeProps) {
       const token = localStorage.getItem('token');
       console.log('Fetching properties with Token:', token);
 
-      // Build query string from filters
       const queryParams = new URLSearchParams();
-      if (filters.rentMin && filters.rentMin > 0) {
-        queryParams.append('rentMin', filters.rentMin.toString());
-      }
-      if (filters.rentMax && filters.rentMax > 0) {
-        queryParams.append('rentMax', filters.rentMax.toString());
-      }
+      if (filters.rentMin && filters.rentMin > 0) queryParams.append('rentMin', filters.rentMin.toString());
+      if (filters.rentMax && filters.rentMax > 0) queryParams.append('rentMax', filters.rentMax.toString());
       if (filters.city) queryParams.append('city', filters.city);
       if (filters.state) queryParams.append('state', filters.state);
 
       if (selectedType === 'pg') {
-        if (filters.sharingOptions?.length) {
-          queryParams.append('sharingOptions', filters.sharingOptions.join(','));
-        }
-        if (filters.amenities?.length) {
-          queryParams.append('amenities', filters.amenities.join(','));
-        }
+        if (filters.sharingOptions?.length) queryParams.append('sharingOptions', filters.sharingOptions.join(','));
+        if (filters.amenities?.length) queryParams.append('amenities', filters.amenities.join(','));
       } else if (selectedType === 'bhk') {
         if (filters.bedrooms) queryParams.append('bedrooms', filters.bedrooms.toString());
         if (filters.bathrooms) queryParams.append('bathrooms', filters.bathrooms.toString());
         if (filters.sqftMin) queryParams.append('sqftMin', filters.sqftMin.toString());
-        if (filters.amenities?.length) {
-          queryParams.append('amenities', filters.amenities.join(','));
-        }
+        if (filters.amenities?.length) queryParams.append('amenities', filters.amenities.join(','));
       } else if (selectedType === 'vacation') {
         if (filters.maxGuests) queryParams.append('maxGuests', filters.maxGuests.toString());
-        if (filters.amenities?.length) {
-          queryParams.append('amenities', filters.amenities.join(','));
-        }
+        if (filters.amenities?.length) queryParams.append('amenities', filters.amenities.join(','));
       }
 
       try {
@@ -317,9 +328,7 @@ function Home({ isLoggedIn }: HomeProps) {
           const errorData = await response.json();
           console.error('Fetch error response:', errorData);
           throw new Error(
-            `Failed to fetch ${selectedType} properties: ${response.status} - ${
-              errorData.message || response.statusText
-            }`
+            `Failed to fetch ${selectedType} properties: ${response.status} - ${errorData.message || response.statusText}`
           );
         }
         const data = await response.json();
@@ -332,10 +341,7 @@ function Home({ isLoggedIn }: HomeProps) {
             type: selectedType,
             name: item.propertyName,
             image: item.images && item.images.length > 0 ? item.images[0] : 'https://via.placeholder.com/300',
-            rent:
-              selectedType === 'vacation'
-                ? `₹${item.ratePerDay}/day`
-                : `₹${item.monthlyRent}/month`,
+            rent: selectedType === 'vacation' ? `₹${item.ratePerDay}/day` : `₹${item.monthlyRent}/month`,
             phone: item.contactNumber,
             area: item.address.split(',')[0],
             location: [item.latitude || 19.0760, item.longitude || 72.8777],
@@ -356,7 +362,6 @@ function Home({ isLoggedIn }: HomeProps) {
         console.log('Mapped properties:', mappedProperties);
         setProperties(mappedProperties);
 
-        // Extract unique cities and states for filter dropdowns
         const uniqueCities = [...new Set(mappedProperties.map((p) => p.city).filter(Boolean))] as string[];
         const uniqueStates = [...new Set(mappedProperties.map((p) => p.state).filter(Boolean))] as string[];
         setCities(uniqueCities);
@@ -372,7 +377,6 @@ function Home({ isLoggedIn }: HomeProps) {
     fetchProperties();
   }, [selectedType, filters]);
 
-  // Reset filters when switching to bhk or vacation
   useEffect(() => {
     if (selectedType !== 'pg') {
       setFilters({});
@@ -452,16 +456,11 @@ function Home({ isLoggedIn }: HomeProps) {
     setFilterError(null);
     setFilters((prev) => {
       let newFilters = { ...prev, [key]: value };
-
-      // Validate price filters
       if (key === 'rentMin' || key === 'rentMax') {
         const rentMin = key === 'rentMin' ? value : prev.rentMin;
         const rentMax = key === 'rentMax' ? value : prev.rentMax;
-
-        // Convert to numbers and ensure positive
         const min = rentMin ? Number(rentMin) : undefined;
         const max = rentMax ? Number(rentMax) : undefined;
-
         if (min && (min <= 0 || isNaN(min))) {
           setFilterError('Minimum rent must be a positive number');
           newFilters.rentMin = undefined;
@@ -476,7 +475,6 @@ function Home({ isLoggedIn }: HomeProps) {
           newFilters.rentMax = undefined;
         }
       }
-
       return newFilters;
     });
   };
@@ -484,22 +482,24 @@ function Home({ isLoggedIn }: HomeProps) {
   const toggleAmenity = (amenity: string) => {
     setFilters((prev) => {
       const currentAmenities = prev.amenities || [];
-      if (currentAmenities.includes(amenity)) {
-        return { ...prev, amenities: currentAmenities.filter((a) => a !== amenity) };
-      } else {
-        return { ...prev, amenities: [...currentAmenities, amenity] };
-      }
+      return {
+        ...prev,
+        amenities: currentAmenities.includes(amenity)
+          ? currentAmenities.filter((a) => a !== amenity)
+          : [...currentAmenities, amenity],
+      };
     });
   };
 
   const toggleSharingOption = (option: string) => {
     setFilters((prev) => {
       const currentOptions = prev.sharingOptions || [];
-      if (currentOptions.includes(option)) {
-        return { ...prev, sharingOptions: currentOptions.filter((o) => o !== option) };
-      } else {
-        return { ...prev, sharingOptions: [...currentOptions, option] };
-      }
+      return {
+        ...prev,
+        sharingOptions: currentOptions.includes(option)
+          ? currentOptions.filter((o) => o !== option)
+          : [...currentOptions, option],
+      };
     });
   };
 
@@ -510,14 +510,17 @@ function Home({ isLoggedIn }: HomeProps) {
 
   const isApplyDisabled = !!filterError;
 
-  const center = properties.length > 0
-    ? [
-        properties.reduce((sum, p) => sum + p.location[0], 0) / properties.length,
-        properties.reduce((sum, p) => sum + p.location[1], 0) / properties.length,
-      ] as [number, number]
-    : [19.0760, 72.8777] as [number, number]; // Default to Mumbai
+  const center = userPosition
+    ? userPosition
+    : properties.length > 0
+      ? [
+          properties.reduce((sum, p) => sum + p.location[0], 0) / properties.length,
+          properties.reduce((sum, p) => sum + p.location[1], 0) / properties.length,
+        ]
+      : [19.0760, 72.8777];
 
-  // Define button configurations for sliding effect
+  console.log('Map center:', center);
+
   const buttons = [
     {
       type: 'pg' as PropertyType,
@@ -539,37 +542,22 @@ function Home({ isLoggedIn }: HomeProps) {
     },
   ];
 
-  // Calculate the index of the selected button for sliding animation
   const selectedIndex = buttons.findIndex((button) => button.type === selectedType);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header with Sliding Toggle */}
       <div className="container mx-auto px-4 py-8">
         <div className="relative bg-gray-200 rounded-full shadow-md p-1 max-w-md mx-auto flex justify-between">
-          {/* Sliding Background */}
           <motion.div
-            className={`absolute top-1 bottom-1 rounded-full bg-gradient-to-r ${
-              buttons[selectedIndex].gradient
-            }`}
-            style={{
-              width: `${100 / buttons.length}%`,
-              left: `${(selectedIndex * 100) / buttons.length}%`,
-            }}
+            className={`absolute top-1 bottom-1 rounded-full bg-gradient-to-r ${buttons[selectedIndex].gradient}`}
+            style={{ width: `${100 / buttons.length}%`, left: `${(selectedIndex * 100) / buttons.length}%` }}
             initial={false}
             animate={{
               left: `${(selectedIndex * 100) / buttons.length}%`,
-              background: `linear-gradient(to right, ${
-                buttons[selectedIndex].gradient.split(' ')[0]
-              }, ${buttons[selectedIndex].gradient.split(' ')[2]})`,
+              background: `linear-gradient(to right, ${buttons[selectedIndex].gradient.split(' ')[0]}, ${buttons[selectedIndex].gradient.split(' ')[2]})`,
             }}
-            transition={{
-              type: 'spring',
-              stiffness: 300,
-              damping: 30,
-            }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           />
-          {/* Buttons */}
           {buttons.map((button) => (
             <button
               key={button.type}
@@ -585,7 +573,6 @@ function Home({ isLoggedIn }: HomeProps) {
         </div>
       </div>
 
-      {/* Filter Button */}
       <div className="container mx-auto px-4 mb-4">
         <button
           onClick={() => setShowFilters(!showFilters)}
@@ -596,41 +583,29 @@ function Home({ isLoggedIn }: HomeProps) {
         </button>
       </div>
 
-      {/* Filter Panel */}
       {showFilters && (
         <div className="container mx-auto px-4 mb-8 bg-white rounded-lg shadow-md p-6">
           <h3 className="text-xl font-semibold mb-4">Filter Properties</h3>
-          {filterError && (
-            <div className="mb-4 text-red-500 text-sm">{filterError}</div>
-          )}
+          {filterError && <div className="mb-4 text-red-500 text-sm">{filterError}</div>}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Common Filters */}
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Min Rent (₹)
-              </label>
+              <label className="block text-sm font-medium text-gray-700">Min Rent (₹)</label>
               <input
                 type="number"
                 min="1"
                 value={filters.rentMin || ''}
-                onChange={(e) =>
-                  handleFilterChange('rentMin', parseInt(e.target.value) || undefined)
-                }
+                onChange={(e) => handleFilterChange('rentMin', parseInt(e.target.value) || undefined)}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
                 placeholder="Min rent"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Max Rent (₹)
-              </label>
+              <label className="block text-sm font-medium text-gray-700">Max Rent (₹)</label>
               <input
                 type="number"
                 min="1"
                 value={filters.rentMax || ''}
-                onChange={(e) =>
-                  handleFilterChange('rentMax', parseInt(e.target.value) || undefined)
-                }
+                onChange={(e) => handleFilterChange('rentMax', parseInt(e.target.value) || undefined)}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
                 placeholder="Max rent"
               />
@@ -644,9 +619,7 @@ function Home({ isLoggedIn }: HomeProps) {
               >
                 <option value="">All Cities</option>
                 {cities.map((city) => (
-                  <option key={city} value={city}>
-                    {city}
-                  </option>
+                  <option key={city} value={city}>{city}</option>
                 ))}
               </select>
             </div>
@@ -659,20 +632,14 @@ function Home({ isLoggedIn }: HomeProps) {
               >
                 <option value="">All States</option>
                 {states.map((state) => (
-                  <option key={state} value={state}>
-                    {state}
-                  </option>
+                  <option key={state} value={state}>{state}</option>
                 ))}
               </select>
             </div>
-
-            {/* PG Filters */}
             {selectedType === 'pg' && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Sharing Options
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700">Sharing Options</label>
                   <div className="mt-2 space-y-2">
                     {sharingOptions.map((option) => (
                       <div key={option} className="flex items-center">
@@ -683,17 +650,14 @@ function Home({ isLoggedIn }: HomeProps) {
                           className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
                         />
                         <label className="ml-2 text-sm text-gray-600">
-                          {option.charAt(0).toUpperCase() +
-                            option.slice(1).replace('Sharing', ' Sharing')}
+                          {option.charAt(0).toUpperCase() + option.slice(1).replace('Sharing', ' Sharing')}
                         </label>
                       </div>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Amenities
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700">Amenities</label>
                   <div className="mt-2 space-y-2">
                     {amenityLabels.pg.map((amenity) => (
                       <div key={amenity} className="flex items-center">
@@ -704,9 +668,7 @@ function Home({ isLoggedIn }: HomeProps) {
                           className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
                         />
                         <label className="ml-2 text-sm text-gray-600">
-                          {amenity
-                            .replace(/([A-Z])/g, ' $1')
-                            .replace(/^./, (str) => str.toUpperCase())}
+                          {amenity.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase())}
                         </label>
                       </div>
                     ))}
@@ -714,67 +676,47 @@ function Home({ isLoggedIn }: HomeProps) {
                 </div>
               </>
             )}
-
-            {/* BHK Filters */}
             {selectedType === 'bhk' && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Bedrooms
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700">Bedrooms</label>
                   <select
                     value={filters.bedrooms || ''}
-                    onChange={(e) =>
-                      handleFilterChange('bedrooms', parseInt(e.target.value) || undefined)
-                    }
+                    onChange={(e) => handleFilterChange('bedrooms', parseInt(e.target.value) || undefined)}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
                   >
                     <option value="">Any</option>
                     {[1, 2, 3, 4, 5].map((num) => (
-                      <option key={num} value={num}>
-                        {num}
-                      </option>
+                      <option key={num} value={num}>{num}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Bathrooms
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700">Bathrooms</label>
                   <select
                     value={filters.bathrooms || ''}
-                    onChange={(e) =>
-                      handleFilterChange('bathrooms', parseInt(e.target.value) || undefined)
-                    }
+                    onChange={(e) => handleFilterChange('bathrooms', parseInt(e.target.value) || undefined)}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
                   >
                     <option value="">Any</option>
                     {[1, 2, 3, 4].map((num) => (
-                      <option key={num} value={num}>
-                        {num}
-                      </option>
+                      <option key={num} value={num}>{num}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Min Sq.Ft
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700">Min Sq.Ft</label>
                   <input
                     type="number"
                     min="1"
                     value={filters.sqftMin || ''}
-                    onChange={(e) =>
-                      handleFilterChange('sqftMin', parseInt(e.target.value) || undefined)
-                    }
+                    onChange={(e) => handleFilterChange('sqftMin', parseInt(e.target.value) || undefined)}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
                     placeholder="Min sq.ft"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Amenities
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700">Amenities</label>
                   <div className="mt-2 space-y-2">
                     {amenityLabels.bhk.map((amenity) => (
                       <div key={amenity} className="flex items-center">
@@ -785,9 +727,7 @@ function Home({ isLoggedIn }: HomeProps) {
                           className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
                         />
                         <label className="ml-2 text-sm text-gray-600">
-                          {amenity
-                            .replace(/([A-Z])/g, ' $1')
-                            .replace(/^./, (str) => str.toUpperCase())}
+                          {amenity.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase())}
                         </label>
                       </div>
                     ))}
@@ -795,33 +735,23 @@ function Home({ isLoggedIn }: HomeProps) {
                 </div>
               </>
             )}
-
-            {/* Vacation Filters */}
             {selectedType === 'vacation' && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Max Guests
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700">Max Guests</label>
                   <select
                     value={filters.maxGuests || ''}
-                    onChange={(e) =>
-                      handleFilterChange('maxGuests', parseInt(e.target.value) || undefined)
-                    }
+                    onChange={(e) => handleFilterChange('maxGuests', parseInt(e.target.value) || undefined)}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
                   >
                     <option value="">Any</option>
                     {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
-                      <option key={num} value={num}>
-                        {num}
-                      </option>
+                      <option key={num} value={num}>{num}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Amenities
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700">Amenities</label>
                   <div className="mt-2 space-y-2">
                     {amenityLabels.vacation.map((amenity) => (
                       <div key={amenity} className="flex items-center">
@@ -832,9 +762,7 @@ function Home({ isLoggedIn }: HomeProps) {
                           className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
                         />
                         <label className="ml-2 text-sm text-gray-600">
-                          {amenity
-                            .replace(/([A-Z])/g, ' $1')
-                            .replace(/^./, (str) => str.toUpperCase())}
+                          {amenity.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase())}
                         </label>
                       </div>
                     ))}
@@ -854,9 +782,7 @@ function Home({ isLoggedIn }: HomeProps) {
               onClick={() => setShowFilters(false)}
               disabled={isApplyDisabled}
               className={`px-4 py-2 rounded-lg transition-colors ${
-                isApplyDisabled
-                  ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
+                isApplyDisabled ? 'bg-gray-400 text-gray-200 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'
               }`}
             >
               Apply Filters
@@ -865,23 +791,22 @@ function Home({ isLoggedIn }: HomeProps) {
         </div>
       )}
 
-      {/* Main Content */}
       {loading ? (
         <div className="text-center py-8">Loading properties...</div>
       ) : error ? (
         <div className="text-center py-8 text-red-500">{error}</div>
       ) : (
         <>
-          {/* Map */}
           <div className="w-full h-[400px] mb-8 relative">
-            <MapContainer center={center} zoom={10} style={{ height: '100%', width: '100%' }}>
+            <MapContainer center={center} zoom={userPosition ? 12 : 10} style={{ height: '100%', width: '100%' }}>
               <TileLayer
                 attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
-              {/* User's location marker */}
-              <UserLocationMarker isLoggedIn={isLoggedIn} />
-              {/* Property markers */}
+              <UserLocationMarker
+                isLoggedIn={isLoggedIn}
+                setUserPosition={setUserPosition}
+              />
               {properties.map((property) => (
                 <Marker
                   key={property.id}
@@ -911,7 +836,6 @@ function Home({ isLoggedIn }: HomeProps) {
             </MapContainer>
           </div>
 
-          {/* Properties and Recommendations */}
           <div className="container mx-auto px-4 py-8">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {properties.map((property) => (
@@ -921,11 +845,7 @@ function Home({ isLoggedIn }: HomeProps) {
                   onClick={() => handleClick(property.id, property.type)}
                 >
                   <div className="relative">
-                    <img
-                      src={property.image}
-                      alt={property.name}
-                      className="w-full h-48 object-cover"
-                    />
+                    <img src={property.image} alt={property.name} className="w-full h-48 object-cover" />
                     <motion.button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -940,9 +860,7 @@ function Home({ isLoggedIn }: HomeProps) {
                         transition={{ duration: 0.3 }}
                       >
                         <Heart
-                          className={`h-5 w-5 ${
-                            property.isFavorited ? 'text-red-500 fill-red-500' : 'text-gray-600'
-                          }`}
+                          className={`h-5 w-5 ${property.isFavorited ? 'text-red-500 fill-red-500' : 'text-gray-600'}`}
                         />
                       </motion.div>
                     </motion.button>
@@ -951,22 +869,17 @@ function Home({ isLoggedIn }: HomeProps) {
                     <h3 className="text-xl font-semibold mb-2">{property.name}</h3>
                     <p className="text-gray-600 mb-2">{property.area}</p>
                     <p className="text-gray-600 mb-4 text-sm">{property.description}</p>
-
                     <div className="flex items-center gap-4 mb-4 text-gray-600">
                       {property.beds && (
                         <div className="flex items-center">
                           <Bed className="h-4 w-4 mr-1" />
-                          <span>
-                            {property.beds} {property.beds === 1 ? 'Bed' : 'Beds'}
-                          </span>
+                          <span>{property.beds} {property.beds === 1 ? 'Bed' : 'Beds'}</span>
                         </div>
                       )}
                       {property.baths && (
                         <div className="flex items-center">
                           <Bath className="h-4 w-4 mr-1" />
-                          <span>
-                            {property.baths} {property.baths === 1 ? 'Bath' : 'Baths'}
-                          </span>
+                          <span>{property.baths} {property.baths === 1 ? 'Bath' : 'Baths'}</span>
                         </div>
                       )}
                       {property.sqft && (
@@ -976,7 +889,6 @@ function Home({ isLoggedIn }: HomeProps) {
                         </div>
                       )}
                     </div>
-
                     <div className="flex items-center justify-between mb-4">
                       <span className="text-2xl font-bold text-blue-600">{property.rent}</span>
                       <Link
@@ -994,7 +906,6 @@ function Home({ isLoggedIn }: HomeProps) {
                       <Phone className="h-4 w-4 mr-2" />
                       {property.phone}
                     </div>
-
                     <div className="grid grid-cols-3 gap-2">
                       {property.amenities.map((amenity, index) => (
                         <span
@@ -1002,9 +913,7 @@ function Home({ isLoggedIn }: HomeProps) {
                           className="bg-gradient-to-r from-blue-500 to-teal-500 text-white text-xs font-semibold px-2 py-1 rounded-full flex items-center justify-center gap-1 shadow-md"
                         >
                           {getAmenityIcon(amenity)}
-                          {amenity
-                            .replace(/([A-Z])/g, ' $1')
-                            .replace(/^./, (str) => str.toUpperCase())}
+                          {amenity.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase())}
                         </span>
                       ))}
                     </div>
@@ -1012,8 +921,6 @@ function Home({ isLoggedIn }: HomeProps) {
                 </div>
               ))}
             </div>
-
-            {/* Recommendations Section */}
             <div className="mt-12">
               <Recommendations propertyType={selectedType} />
             </div>
@@ -1021,11 +928,8 @@ function Home({ isLoggedIn }: HomeProps) {
         </>
       )}
 
-      {/* Footer */}
       <footer
-        className={`bg-gradient-to-r ${
-          categoryColors[selectedType] || 'from-gray-500 to-gray-700'
-        } text-white mt-16`}
+        className={`bg-gradient-to-r ${categoryColors[selectedType] || 'from-gray-500 to-gray-700'} text-white mt-16`}
       >
         <div className="container mx-auto px-4 py-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -1036,53 +940,25 @@ function Home({ isLoggedIn }: HomeProps) {
             <div>
               <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
               <ul className="space-y-2">
-                <li>
-                  <a href="#" className="hover:text-white/80">
-                    About Us
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white/80">
-                    Properties
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white/80">
-                    List Property
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white/80">
-                    Contact
-                  </a>
-                </li>
+                <li><a href="#" className="hover:text-white/80">About Us</a></li>
+                <li><a href="#" className="hover:text-white/80">Properties</a></li>
+                <li><a href="#" className="hover:text-white/80">List Property</a></li>
+                <li><a href="#" className="hover:text-white/80">Contact</a></li>
               </ul>
             </div>
             <div>
               <h4 className="text-lg font-semibold mb-4">Contact Us</h4>
               <ul className="space-y-2">
-                <li className="flex items-center">
-                  <Phone className="h-4 w-4 mr-2" />
-                  +91 9876543210
-                </li>
-                <li className="flex items-center">
-                  <Mail className="h-4 w-4 mr-2" />
-                  contact@GruhaAnvesh.com
-                </li>
+                <li className="flex items-center"><Phone className="h-4 w-4 mr-2" />+91 9876543210</li>
+                <li className="flex items-center"><Mail className="h-4 w-4 mr-2" />contact@GruhaAnvesh.com</li>
               </ul>
             </div>
             <div>
               <h4 className="text-lg font-semibold mb-4">Follow Us</h4>
               <div className="flex space-x-4">
-                <a href="#" className="hover:text-white/80">
-                  <Instagram className="h-6 w-6" />
-                </a>
-                <a href="#" className="hover:text-white/80">
-                  <Facebook className="h-6 w-6" />
-                </a>
-                <a href="#" className="hover:text-white/80">
-                  <Twitter className="h-6 w-6" />
-                </a>
+                <a href="#" className="hover:text-white/80"><Instagram className="h-6 w-6" /></a>
+                <a href="#" className="hover:text-white/80"><Facebook className="h-6 w-6" /></a>
+                <a href="#" className="hover:text-white/80"><Twitter className="h-6 w-6" /></a>
               </div>
             </div>
           </div>
