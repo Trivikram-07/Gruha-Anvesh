@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
@@ -175,33 +175,85 @@ const sharingOptions = ['single', 'twoSharing', 'threeSharing', 'fourSharing'];
 const UserLocationMarker: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) => {
   const map = useMap();
   const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
+
+  const requestLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      setLocationError('Geolocation is not supported by your browser.');
+      return;
+    }
+
+    // Check secure context
+    if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+      setLocationError('Location access requires a secure connection (HTTPS).');
+      return;
+    }
+
+    setLocationError(null);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        console.log('User location obtained:', { latitude, longitude });
+        setUserPosition([latitude, longitude]);
+        map.setView([latitude, longitude], 12);
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            setLocationError('Location permission denied. Please enable location access in your browser settings.');
+            break;
+          case error.POSITION_UNAVAILABLE:
+            setLocationError('Location information is unavailable.');
+            break;
+          case error.TIMEOUT:
+            setLocationError('The request to get your location timed out.');
+            break;
+          default:
+            setLocationError('An error occurred while retrieving your location.');
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
+    );
+  }, [map]);
 
   useEffect(() => {
-    if (isLoggedIn && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setUserPosition([latitude, longitude]);
-          map.setView([latitude, longitude], 10);
-        },
-        (error) => {
-          console.error('Error getting user location:', error);
-          // Do not set userPosition, so no marker is placed
-        },
-        { enableHighAccuracy: true }
-      );
-    } else if (!isLoggedIn) {
-      console.log('User not logged in, skipping geolocation request');
+    if (isLoggedIn) {
+      console.log('Requesting user location');
+      requestLocation();
     } else {
-      console.error('Geolocation is not supported by this browser.');
+      console.log('User not logged in, skipping geolocation');
+      setUserPosition(null);
+      setLocationError(null);
     }
-  }, [map, isLoggedIn]);
+  }, [isLoggedIn, requestLocation]);
 
-  return userPosition ? (
-    <Marker position={userPosition} icon={blueIcon}>
-      <Popup>Your Current Location</Popup>
-    </Marker>
-  ) : null;
+  return (
+    <>
+      {locationError && (
+        <div className="absolute top-4 left-4 z-[1000] bg-red-500 text-white px-4 py-2 rounded-lg shadow-md flex items-center gap-2">
+          <span>{locationError}</span>
+          {locationError.includes('denied') && (
+            <button
+              onClick={requestLocation}
+              className="bg-white text-red-500 px-2 py-1 rounded hover:bg-gray-100"
+            >
+              Retry
+            </button>
+          )}
+        </div>
+      )}
+      {userPosition && (
+        <Marker position={userPosition} icon={blueIcon}>
+          <Popup>Your Current Location</Popup>
+        </Marker>
+      )}
+    </>
+  );
 };
 
 function Home({ isLoggedIn }: HomeProps) {

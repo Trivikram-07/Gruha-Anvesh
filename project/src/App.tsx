@@ -60,7 +60,7 @@ const App: React.FC = () => {
     <Router>
       <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
       <Routes>
-        <Route path="/home" element={isLoggedIn ? <Home /> : <Navigate to="/" replace />} />
+        <Route path="/home" element={isLoggedIn ? <Home isLoggedIn={isLoggedIn} /> : <Navigate to="/" replace />} />
         <Route path="/upload" element={isLoggedIn ? <Upload /> : <Navigate to="/" replace />} />
         <Route path="/profile/bookings" element={isLoggedIn ? <PreviousBookings /> : <Navigate to="/" replace />} />
         <Route path="/review/vacation/:propertyId" element={isLoggedIn ? <Review /> : <Navigate to="/" replace />} />

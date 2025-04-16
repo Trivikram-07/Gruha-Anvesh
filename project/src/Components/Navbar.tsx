@@ -123,7 +123,6 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
     };
   }, [isLoggedIn]);
 
-  // Handle clicks outside dropdowns
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -165,25 +164,25 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
   const latestNotification = notifications.length > 0 ? notifications[notifications.length - 1] : null;
 
   return (
-    <nav className="sticky top-0 z-[900] bg-gray-800 px-4 py-3 sm:px-6 flex justify-between items-center">
-      <div className="flex items-center">
+    <nav className="sticky top-0 z-[900] bg-gray-800 px-4 py-3 sm:px-6 flex flex-col sm:flex-row justify-between items-center">
+      <div className="flex items-center w-full sm:w-auto">
         <Link to={isLoggedIn ? '/home' : '/'} className="flex items-center">
           <img src={logo} alt="Gruha Anvesh Logo" className="h-11 w-auto mr-2" />
         </Link>
       </div>
-      <div className="flex items-center space-x-4 sm:space-x-6">
+      <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-6 mt-2 sm:mt-0 w-full sm:w-auto">
         {isLoggedIn ? (
           <>
-            <Link to="/home" className="text-white hover:text-blue-200 font-medium">
+            <Link to="/home" className="text-white hover:text-blue-200 font-medium text-center">
               Home
             </Link>
-            <Link to="/subscriptions" className="text-white hover:text-blue-200 font-medium">
+            <Link to="/subscriptions" className="text-white hover:text-blue-200 font-medium text-center">
               Subscriptions
             </Link>
-            <Link to="/ContactUs" className="text-white hover:text-blue-200 font-medium">
+            <Link to="/ContactUs" className="text-white hover:text-blue-200 font-medium text-center">
               Contact Us
             </Link>
-            <Link to="/upload" className="text-white hover:text-blue-200 font-medium">
+            <Link to="/upload" className="text-white hover:text-blue-200 font-medium text-center">
               Upload
             </Link>
             <div className="relative" ref={profileRef}>
@@ -317,10 +316,10 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
           </>
         ) : (
           <>
-            <Link to="/home" className="text-white hover:text-blue-200 font-medium">
+            <Link to="/home" className="text-white hover:text-blue-200 font-medium text-center">
               Home
             </Link>
-            <Link to="/signup" className="text-white hover:text-blue-200 font-medium">
+            <Link to="/signup" className="text-white hover:text-blue-200 font-medium text-center">
               Sign Up
             </Link>
           </>
