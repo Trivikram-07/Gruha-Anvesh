@@ -949,7 +949,7 @@ function Home({ isLoggedIn }: HomeProps) {
               <h4 className="text-lg font-semibold mb-4">Contact Us</h4>
               <ul className="space-y-2">
                 <li className="flex items-center"><Phone className="h-4 w-4 mr-2" />+91 9876543210</li>
-                <li className="flex items-center"><Mail className="h-4 w-4 mr-2" />contact@GruhaAnvesh.com</li>
+                <li className="flex items-center"><Mail className="h-4 w-4 mr-2" />sudhakarreddyvikram@gmail.com</li>
               </ul>
             </div>
             <div>

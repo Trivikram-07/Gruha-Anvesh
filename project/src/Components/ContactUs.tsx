@@ -20,7 +20,7 @@ function ContactUs() {
                 />
               </div>
             </div>
-            <h1 className="text-4xl font-bold mb-2">Dhaniredddy Trivikram Reddy</h1>
+            <h1 className="text-4xl font-bold mb-2">Trivikram</h1>
             <div className="flex items-center justify-center gap-2 text-emerald-400 mb-4">
               <Code2 className="w-5 h-5" />
               <span className="text-xl">Full Stack Developer</span>
@@ -40,7 +40,7 @@ function ContactUs() {
               <div className="space-y-4">
                 <a href="tel:+1234567890" className="flex items-center gap-3 text-gray-300 hover:text-emerald-400 transition-colors">
                   <Phone className="w-5 h-5" />
-                  <span>+1 (234) 567-890</span>
+                  <span>+91 9876543210</span>
                 </a>
                 <a href="mailto:sudhkarreddyvikram@gmail.com" className="flex items-center gap-3 text-gray-300 hover:text-emerald-400 transition-colors">
                   <Mail className="w-5 h-5" />
