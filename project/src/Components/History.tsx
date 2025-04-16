@@ -171,29 +171,41 @@ const History: React.FC = () => {
           'Content-Type': 'application/json',
         },
       });
-      console.log('Delete response:', { status: response.status, body: await response.text() });
+      
+      // Read body once
+      const bodyText = await response.text();
+      console.log('Delete response:', { status: response.status, body: bodyText });
 
-      if (!response.headers.get('content-type')?.includes('application/json')) {
-        const text = await response.text();
-        console.error('Non-JSON delete response:', text.slice(0, 100));
-        throw new Error('Server returned invalid response (not JSON)');
+      // Check content-type and parse JSON if applicable
+      const contentType = response.headers.get('content-type');
+      let data;
+      if (contentType?.includes('application/json')) {
+        try {
+          data = JSON.parse(bodyText);
+        } catch (e) {
+          console.error('Failed to parse JSON:', bodyText);
+          throw new Error('Invalid JSON response from server');
+        }
+      } else {
+        console.error('Non-JSON delete response:', bodyText.slice(0, 100));
+        throw new Error('Server returned non-JSON response');
       }
 
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Delete error response:', errorData);
-        throw new Error(`Failed to delete property: ${errorData.message || response.statusText}`);
+        console.error('Delete error response:', data);
+        throw new Error(`Failed to delete property: ${data.message || response.statusText}`);
       }
 
-      const data = await response.json();
       console.log('Delete response data:', data);
 
+      // Update state
       setProperties((prev) => {
         const updated = prev.filter((p) => p._id !== propertyId);
         console.log('Updated properties:', updated.map(p => p._id));
         return updated;
       });
 
+      // Fetch updated deleted properties
       const deletedRes = await fetch('/api/properties/management/my-properties/deleted', {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       });
