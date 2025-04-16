@@ -148,7 +148,8 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
     };
   }, []);
 
-  const toggleProfileDropdown = () => {
+  const toggleProfileDropdown = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setShowProfileDropdown((prev) => !prev);
     setShowNotifications(false);
   };
@@ -165,6 +166,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
   };
 
   const handleLogout = () => {
+    console.log('Logout clicked');
     localStorage.removeItem('token');
     localStorage.removeItem('userId');
     setIsLoggedIn(false);
@@ -230,38 +232,51 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
                 </div>
                 <Link
                   to="/profile/history"
-                  className="block text-white hover:text-blue-200 px-4 py-2"
-                  onClick={() => setShowProfileDropdown(false)}
+                  className="block text-white hover:text-blue-200 px-4 py-2 cursor-pointer"
+                  onClick={() => {
+                    console.log('History clicked');
+                    setShowProfileDropdown(false);
+                  }}
                 >
                   History
                 </Link>
                 <Link
                   to="/profile/bookings"
-                  className="block text-white hover:text-blue-200 px-4 py-2"
-                  onClick={() => setShowProfileDropdown(false)}
+                  className="block text-white hover:text-blue-200 px-4 py-2 cursor-pointer"
+                  onClick={() => {
+                    console.log('Previous Bookings clicked');
+                    setShowProfileDropdown(false);
+                  }}
                 >
                   Previous Bookings
                 </Link>
                 <Link
                   to="/chats"
-                  className="block text-white hover:text-blue-200 px-4 py-2"
-                  onClick={() => setShowProfileDropdown(false)}
+                  className="block text-white hover:text-blue-200 px-4 py-2 cursor-pointer"
+                  onClick={() => {
+                    console.log('Chat clicked');
+                    setShowProfileDropdown(false);
+                  }}
                 >
                   Chat
                 </Link>
                 <Link
                   to="/profile/edit"
-                  className="block text-white hover:text-blue-200 px-4 py-2"
-                  onClick={() => setShowProfileDropdown(false)}
+                  className="block text-white hover:text-blue-200 px-4 py-2 cursor-pointer"
+                  onClick={() => {
+                    console.log('Edit Profile clicked');
+                    setShowProfileDropdown(false);
+                  }}
                 >
                   Edit Profile
                 </Link>
                 <button
                   onClick={() => {
+                    console.log('Logout button clicked');
                     handleLogout();
                     setShowProfileDropdown(false);
                   }}
-                  className="w-full text-left text-white hover:text-blue-200 px-4 py-2"
+                  className="w-full text-left text-white hover:text-blue-200 px-4 py-2 cursor-pointer"
                 >
                   Logout
                 </button>
@@ -362,28 +377,40 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
               <Link
                 to="/home"
                 className="text-white text-xl hover:text-blue-200"
-                onClick={() => setShowMobileMenu(false)}
+                onClick={() => {
+                  console.log('Home clicked (mobile)');
+                  setShowMobileMenu(false);
+                }}
               >
                 Home
               </Link>
               <Link
                 to="/subscriptions"
                 className="text-white text-xl hover:text-blue-200"
-                onClick={() => setShowMobileMenu(false)}
+                onClick={() => {
+                  console.log('Subscriptions clicked (mobile)');
+                  setShowMobileMenu(false);
+                }}
               >
                 Subscriptions
               </Link>
               <Link
                 to="/ContactUs"
                 className="text-white text-xl hover:text-blue-200"
-                onClick={() => setShowMobileMenu(false)}
+                onClick={() => {
+                  console.log('Contact Us clicked (mobile)');
+                  setShowMobileMenu(false);
+                }}
               >
                 Contact Us
               </Link>
               <Link
                 to="/upload"
                 className="text-white text-xl hover:text-blue-200"
-                onClick={() => setShowMobileMenu(false)}
+                onClick={() => {
+                  console.log('Upload clicked (mobile)');
+                  setShowMobileMenu(false);
+                }}
               >
                 Upload
               </Link>
@@ -398,10 +425,10 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
                   )}
                 </span>
                 <div
-                  className={`absolute left-1/2 -translate-x-1/2 mt-2 w-48 bg-gray-800 rounded-lg shadow-lg z-[1200] overflow-hidden transition-all duration-300 ease-in-out transform ${
+                  className={`absolute left-1/2 -translate-x-1/2 mt-2 w-48 bg-gray-800 rounded-lg shadow-lg z-[1200] overflow-hidden transition-all duration-300 ease-in-out ${
                     showProfileDropdown
                       ? 'opacity-100 translate-y-0'
-                      : 'opacity-0 -translate-y-2 pointer-events-none'
+                      : 'opacity-0 -translate-y-2 pointer-events-auto'
                   }`}
                 >
                   <div className="text-white font-semibold text-lg px-4 py-2 border-b border-gray-700">
@@ -409,8 +436,9 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
                   </div>
                   <Link
                     to="/profile/history"
-                    className="block text-white hover:text-blue-200 px-4 py-2"
-                    onClick={() => {
+                    className="block text-white hover:text-blue-200 px-4 py-2 cursor-pointer"
+                    onClick={(e) => {
+                      console.log('History clicked (mobile)');
                       setShowProfileDropdown(false);
                       setShowMobileMenu(false);
                     }}
@@ -419,8 +447,9 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
                   </Link>
                   <Link
                     to="/profile/bookings"
-                    className="block text-white hover:text-blue-200 px-4 py-2"
-                    onClick={() => {
+                    className="block text-white hover:text-blue-200 px-4 py-2 cursor-pointer"
+                    onClick={(e) => {
+                      console.log('Previous Bookings clicked (mobile)');
                       setShowProfileDropdown(false);
                       setShowMobileMenu(false);
                     }}
@@ -429,8 +458,9 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
                   </Link>
                   <Link
                     to="/chats"
-                    className="block text-white hover:text-blue-200 px-4 py-2"
-                    onClick={() => {
+                    className="block text-white hover:text-blue-200 px-4 py-2 cursor-pointer"
+                    onClick={(e) => {
+                      console.log('Chat clicked (mobile)');
                       setShowProfileDropdown(false);
                       setShowMobileMenu(false);
                     }}
@@ -439,8 +469,9 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
                   </Link>
                   <Link
                     to="/profile/edit"
-                    className="block text-white hover:text-blue-200 px-4 py-2"
-                    onClick={() => {
+                    className="block text-white hover:text-blue-200 px-4 py-2 cursor-pointer"
+                    onClick={(e) => {
+                      console.log('Edit Profile clicked (mobile)');
                       setShowProfileDropdown(false);
                       setShowMobileMenu(false);
                     }}
@@ -449,11 +480,12 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
                   </Link>
                   <button
                     onClick={() => {
+                      console.log('Logout clicked (mobile)');
                       handleLogout();
                       setShowProfileDropdown(false);
                       setShowMobileMenu(false);
                     }}
-                    className="w-full text-left text-white hover:text-blue-200 px-4 py-2"
+                    className="w-full text-left text-white hover:text-blue-200 px-4 py-2 cursor-pointer"
                   >
                     Logout
                   </button>
@@ -467,10 +499,10 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
                   )}
                 </div>
                 <div
-                  className={`absolute left-1/2 -translate-x-1/2 mt-2 w-64 bg-gray-800 rounded-lg shadow-lg z-[1200] overflow-hidden transition-all duration-300 ease-in-out transform ${
+                  className={`absolute left-1/2 -translate-x-1/2 mt-2 w-64 bg-gray-800 rounded-lg shadow-lg z-[1200] overflow-hidden transition-all duration-300 ease-in-out ${
                     showNotifications
                       ? 'opacity-100 translate-y-0'
-                      : 'opacity-0 -translate-y-2 pointer-events-none'
+                      : 'opacity-0 -translate-y-2 pointer-events-auto'
                   }`}
                 >
                   {latestNotification ? (
@@ -480,6 +512,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
                           latestNotification.isRead ? 'text-gray-400' : 'text-white'
                         } hover:bg-gray-700 cursor-pointer`}
                         onClick={() => {
+                          console.log('Notification clicked (mobile)');
                           navigate(
                             latestNotification.type === 'success'
                               ? `/vacation/${latestNotification.propertyId}`
@@ -504,6 +537,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
                       </div>
                       <button
                         onClick={() => {
+                          console.log('All Notifications clicked (mobile)');
                           navigate('/notifications');
                           setShowNotifications(false);
                           setShowMobileMenu(false);
@@ -518,6 +552,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
                       <p className="text-gray-400 px-4 py-2">No notifications yet</p>
                       <button
                         onClick={() => {
+                          console.log('All Notifications clicked (mobile)');
                           navigate('/notifications');
                           setShowNotifications(false);
                           setShowMobileMenu(false);
@@ -536,14 +571,20 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
               <Link
                 to="/home"
                 className="text-white text-xl hover:text-blue-200"
-                onClick={() => setShowMobileMenu(false)}
+                onClick={() => {
+                  console.log('Home clicked (mobile, logged out)');
+                  setShowMobileMenu(false);
+                }}
               >
                 Home
               </Link>
               <Link
                 to="/signup"
                 className="text-white text-xl hover:text-blue-200"
-                onClick={() => setShowMobileMenu(false)}
+                onClick={() => {
+                  console.log('Sign Up clicked (mobile, logged out)');
+                  setShowMobileMenu(false);
+                }}
               >
                 Sign Up
               </Link>
