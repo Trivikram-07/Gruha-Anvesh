@@ -5,7 +5,7 @@ import io, { Socket } from 'socket.io-client';
 import {
   Bed, Bath, Square, Wifi, Utensils, Dumbbell, Car, Shield, Waves, Trees, Star, Users,
   MessageSquare, Loader2, MapPin, DollarSign, Phone, Tv, Droplet, Coffee, AirVent,
-  ChefHat, X, Maximize2, Link as LinkIcon, Calendar
+  ChefHat, X, Maximize2, Link as LinkIcon, Calendar, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, useGLTF } from '@react-three/drei';
@@ -155,6 +155,31 @@ const Booking: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const userId = localStorage.getItem('userId');
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+
+  const handleImageClick = (index: number) => {
+    setSelectedImageIndex(index);
+  };
+
+  const handleCloseViewer = () => {
+    setSelectedImageIndex(null);
+  };
+
+  const handleNextImage = () => {
+    if (selectedImageIndex !== null && property) {
+      setSelectedImageIndex((selectedImageIndex + 1) % property.images.length);
+    }
+  };
+
+  const handlePrevImage = () => {
+    if (selectedImageIndex !== null && property) {
+      setSelectedImageIndex((selectedImageIndex - 1 + property.images.length) % property.images.length);
+    }
+  };
+
+  const handleThumbnailClick = (index: number) => {
+    setSelectedImageIndex(index);
+  };
 
   useEffect(() => {
     const fetchPropertyDetails = async () => {
@@ -359,7 +384,8 @@ const Booking: React.FC = () => {
                   key={index}
                   src={img}
                   alt={`${property.propertyName} - Image ${index + 1}`}
-                  className="w-full h-56 object-cover rounded-lg hover:scale-105 transition-transform duration-200"
+                  className="w-full h-56 object-cover rounded-lg hover:scale-105 transition-transform duration-200 cursor-pointer"
+                  onClick={() => handleImageClick(index)}
                   onError={(e) => (e.currentTarget.src = 'https://placehold.co/300')}
                 />
               ))}
@@ -374,6 +400,71 @@ const Booking: React.FC = () => {
             />
           </div>
         </div>
+
+        {/* Image Viewer Modal */}
+        <AnimatePresence>
+          {selectedImageIndex !== null && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center"
+              onClick={handleCloseViewer}
+            >
+              <div
+                className="relative w-[70vw] h-[70vh] bg-white rounded-lg p-4 flex flex-col"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Close Button */}
+                <button
+                  className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-full hover:bg-red-700"
+                  onClick={handleCloseViewer}
+                >
+                  <X className="h-6 w-6" />
+                </button>
+
+                {/* Main Image */}
+                <div className="flex-1 flex items-center justify-center relative">
+                  <img
+                    src={property.images[selectedImageIndex]}
+                    alt={`${property.propertyName} - Image ${selectedImageIndex + 1}`}
+                    className="max-w-full max-h-[60vh] object-contain rounded-lg"
+                    onError={(e) => (e.currentTarget.src = 'https://placehold.co/600')}
+                  />
+                  {/* Navigation Arrows */}
+                  <button
+                    className="absolute left-4 p-2 bg-gray-800 text-white rounded-full hover:bg-gray-700"
+                    onClick={handlePrevImage}
+                  >
+                    <ChevronLeft className="h-6 w-6" />
+                  </button>
+                  <button
+                    className="absolute right-4 p-2 bg-gray-800 text-white rounded-full hover:bg-gray-700"
+                    onClick={handleNextImage}
+                  >
+                    <ChevronRight className="h-6 w-6" />
+                  </button>
+                </div>
+
+                {/* Thumbnail Gallery */}
+                <div className="mt-4 flex overflow-x-auto gap-2 p-2 bg-gray-100 rounded-lg">
+                  {property.images.map((img: string, index: number) => (
+                    <img
+                      key={index}
+                      src={img}
+                      alt={`${property.propertyName} - Thumbnail ${index + 1}`}
+                      className={`w-16 h-16 object-cover rounded-lg cursor-pointer border-2 ${
+                        selectedImageIndex === index ? 'border-blue-500' : 'border-transparent'
+                      }`}
+                      onClick={() => handleThumbnailClick(index)}
+                      onError={(e) => (e.currentTarget.src = 'https://placehold.co/100')}
+                    />
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
           <h2 className="text-2xl font-semibold mb-4">Details</h2>
@@ -481,34 +572,6 @@ const Booking: React.FC = () => {
           )}
         </div>
 
-        {propertyType === 'vacation' && (
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-            <h2 className="text-2xl font-semibold mb-4">Reviews</h2>
-            {property.reviews && property.reviews.length > 0 ? (
-              property.reviews.map((review, index) => (
-                <div key={index} className="mb-4 border-b pb-4">
-                  <div className="flex items-center mb-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Star
-                        key={star}
-                        className={`h-5 w-5 ${
-                          star <= review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  <p className="text-gray-700">{review.review || 'No comment provided'}</p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {new Date(review.date).toLocaleDateString()}
-                  </p>
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-500">No reviews yet</p>
-            )}
-          </div>
-        )}
-
         <AnimatePresence>
           {showChat && !isOwner && (
             <motion.div
@@ -582,19 +645,44 @@ const Booking: React.FC = () => {
             <MessageSquare className="h-5 w-5 mr-2" />
             {showChat && !isOwner ? 'Hide Chat' : 'Contact Owner'}
           </button>
-          <button
-            onClick={handleBookNow}
-            disabled={propertyType !== 'vacation'}
-            className={`px-6 py-2 rounded-lg flex items-center transition-colors ${
-              propertyType !== 'vacation'
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-blue-600 text-white hover:bg-blue-700'
-            }`}
-          >
-            <Calendar className="h-5 w-5 mr-2" />
-            Book Now
-          </button>
+          {propertyType === 'vacation' && (
+            <button
+              onClick={handleBookNow}
+              className="px-6 py-2 rounded-lg flex items-center transition-colors bg-blue-600 text-white hover:bg-blue-700"
+            >
+              <Calendar className="h-5 w-5 mr-2" />
+              Book Now
+            </button>
+          )}
         </div>
+
+        {propertyType === 'vacation' && (
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 className="text-2xl font-semibold mb-4">Reviews</h2>
+            {property.reviews && property.reviews.length > 0 ? (
+              property.reviews.map((review, index) => (
+                <div key={index} className="mb-4 border-b pb-4">
+                  <div className="flex items-center mb-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`h-5 w-5 ${
+                          star <= review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-gray-700">{review.review || 'No comment provided'}</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {new Date(review.date).toLocaleDateString()}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500">No reviews yet</p>
+            )}
+          </div>
+        )}
       </div>
     </motion.div>
   );
