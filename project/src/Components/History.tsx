@@ -188,8 +188,17 @@ const History: React.FC = () => {
       const data = await response.json();
       console.log('Delete response data:', data);
 
-      // Re-fetch to sync with backend
-      await fetchProperties();
+      // Update local state to reflect deletion
+      setProperties((prev) => prev.filter((p) => p._id !== propertyId));
+      // Optionally fetch deleted properties to update deleted list
+      const deletedRes = await fetch('/api/properties/management/my-properties/deleted', {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      });
+      if (deletedRes.ok) {
+        const deletedData = await deletedRes.json();
+        setDeletedProperties(Array.isArray(deletedData) ? deletedData : []);
+      }
+
       console.log('Property deleted successfully:', propertyId);
       setError(null);
     } catch (err) {
