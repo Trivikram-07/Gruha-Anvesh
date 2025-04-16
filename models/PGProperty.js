@@ -29,7 +29,8 @@ const pgPropertySchema = new mongoose.Schema({
   longitude: { type: Number },
   images: [{ type: String }],
   threeDModel: { type: String },
-  interiorTourLink: { type: String }, // New field
+  interiorTourLink: { type: String },
+  deletedAt: { type: Date, default: null }, // Added for soft deletion
 }, { timestamps: true });
 
 module.exports = mongoose.model('PGProperty', pgPropertySchema);

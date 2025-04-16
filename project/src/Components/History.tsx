@@ -157,7 +157,7 @@ const History: React.FC = () => {
       return;
     }
     const token = localStorage.getItem('token');
-    console.log('Initiating delete for property:', propertyId, 'Type:', type, 'with Token:', token);
+    console.log('Delete attempt:', { type, propertyId, properties: properties.map(p => p._id) });
     if (!token) {
       setError('No authentication token found. Please log in.');
       console.log('No token for deletion');
@@ -171,7 +171,7 @@ const History: React.FC = () => {
           'Content-Type': 'application/json',
         },
       });
-      console.log('Delete response status:', response.status, response.statusText);
+      console.log('Delete response:', { status: response.status, body: await response.text() });
 
       if (!response.headers.get('content-type')?.includes('application/json')) {
         const text = await response.text();
@@ -188,15 +188,22 @@ const History: React.FC = () => {
       const data = await response.json();
       console.log('Delete response data:', data);
 
-      // Update local state to reflect deletion
-      setProperties((prev) => prev.filter((p) => p._id !== propertyId));
-      // Optionally fetch deleted properties to update deleted list
+      setProperties((prev) => {
+        const updated = prev.filter((p) => p._id !== propertyId);
+        console.log('Updated properties:', updated.map(p => p._id));
+        return updated;
+      });
+
       const deletedRes = await fetch('/api/properties/management/my-properties/deleted', {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       });
+      console.log('Deleted fetch status:', deletedRes.status);
       if (deletedRes.ok) {
         const deletedData = await deletedRes.json();
+        console.log('Fetched deleted properties:', deletedData);
         setDeletedProperties(Array.isArray(deletedData) ? deletedData : []);
+      } else {
+        console.error('Failed to fetch deleted properties:', await deletedRes.text());
       }
 
       console.log('Property deleted successfully:', propertyId);

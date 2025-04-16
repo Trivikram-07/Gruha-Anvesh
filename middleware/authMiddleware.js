@@ -3,7 +3,7 @@ const User = require('../models/userModel');
 
 const protect = async (req, res, next) => {
   const token = req.header('Authorization')?.replace('Bearer ', '');
-  console.log('Protect middleware - Token:', token);
+  console.log('Protect middleware - Token:', token?.slice(0, 20) + '...');
   if (!token) {
     console.log('No token provided');
     return res.status(401).json({ message: 'Not authorized, no token' });
@@ -11,17 +11,17 @@ const protect = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log('Token decoded:', decoded);
+    console.log('Token decoded:', { id: decoded.id });
     const user = await User.findById(decoded.id);
     if (!user) {
       console.log('User not found for ID:', decoded.id);
-      return res.status(404).json({ message: 'User not found, broo!' });
+      return res.status(404).json({ message: 'User not found' });
     }
-    req.user = user; // Full Mongoose doc
-    console.log('req.user set:', { id: req.user._id, banditStats: req.user.banditStats });
+    req.user = user;
+    console.log('req.user set:', { id: req.user._id });
     next();
   } catch (err) {
-    console.log('Token verification failed:', err.message);
+    console.error('Token verification failed:', err.message);
     return res.status(401).json({ message: 'Not authorized, token failed' });
   }
 };

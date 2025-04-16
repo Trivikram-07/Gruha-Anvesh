@@ -433,8 +433,9 @@ router.delete('/:type/:propertyId', protect, async (req, res) => {
     else if (type === 'bhk') Model = BHKHouse;
     else Model = VacationSpot;
 
-    console.log(`Deleting property ${type}/${propertyId} by user ${userId}`);
+    console.log('Delete query:', { type, propertyId, userId });
     const property = await Model.findOne({ _id: propertyId, user: userId, deletedAt: null });
+    console.log('Property found:', property ? property._id : 'none');
     if (!property) {
       console.log('Property not found or not owned by user:', propertyId);
       return res.status(404).json({ message: 'Property not found or not yours' });
@@ -442,10 +443,10 @@ router.delete('/:type/:propertyId', protect, async (req, res) => {
 
     property.deletedAt = new Date();
     await property.save();
-    console.log(`Property ${propertyId} soft deleted by user ${userId}`);
+    console.log('Deleted:', { propertyId, deletedAt: property.deletedAt });
     res.json({ message: 'Property deleted successfully', propertyId });
   } catch (error) {
-    console.error('Error deleting property:', error.message, error.stack);
+    console.error('Delete error:', error.message, error.stack);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
