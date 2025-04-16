@@ -6,7 +6,6 @@ import {
   Building2,
   Palmtree,
   Phone,
-  MapPin,
   Mail,
   Instagram,
   Facebook,
@@ -92,6 +91,10 @@ interface Filters {
   amenities?: string[];
 }
 
+interface HomeProps {
+  isLoggedIn: boolean;
+}
+
 const categoryColors = {
   pg: 'from-purple-500 to-pink-500',
   bhk: 'from-blue-500 to-teal-500',
@@ -169,28 +172,30 @@ const amenityLabels: Record<PropertyType, string[]> = {
 const sharingOptions = ['single', 'twoSharing', 'threeSharing', 'fourSharing'];
 
 // Component to handle user's location
-const UserLocationMarker: React.FC = () => {
+const UserLocationMarker: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) => {
   const map = useMap();
   const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
 
   useEffect(() => {
-    if (navigator.geolocation) {
+    if (isLoggedIn && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
           setUserPosition([latitude, longitude]);
-          // Center map on user's location with a reasonable zoom level
           map.setView([latitude, longitude], 10);
         },
         (error) => {
           console.error('Error getting user location:', error);
+          // Do not set userPosition, so no marker is placed
         },
         { enableHighAccuracy: true }
       );
+    } else if (!isLoggedIn) {
+      console.log('User not logged in, skipping geolocation request');
     } else {
       console.error('Geolocation is not supported by this browser.');
     }
-  }, [map]);
+  }, [map, isLoggedIn]);
 
   return userPosition ? (
     <Marker position={userPosition} icon={blueIcon}>
@@ -199,7 +204,7 @@ const UserLocationMarker: React.FC = () => {
   ) : null;
 };
 
-function Home() {
+function Home({ isLoggedIn }: HomeProps) {
   const [selectedType, setSelectedType] = useState<PropertyType>('pg');
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
@@ -281,7 +286,7 @@ function Home() {
                 : `₹${item.monthlyRent}/month`,
             phone: item.contactNumber,
             area: item.address.split(',')[0],
-            location: [item.latitude || 20.5937, item.longitude || 78.9629],
+            location: [item.latitude || 19.0760, item.longitude || 72.8777],
             beds: selectedType === 'bhk' ? item.bedrooms : item.maxGuests || undefined,
             baths: selectedType === 'bhk' ? item.bathrooms : undefined,
             sqft: item.squareFeet,
@@ -458,7 +463,7 @@ function Home() {
         properties.reduce((sum, p) => sum + p.location[0], 0) / properties.length,
         properties.reduce((sum, p) => sum + p.location[1], 0) / properties.length,
       ] as [number, number]
-    : [20.5937, 78.9629] as [number, number];
+    : [19.0760, 72.8777] as [number, number]; // Default to Mumbai
 
   // Define button configurations for sliding effect
   const buttons = [
@@ -817,13 +822,13 @@ function Home() {
         <>
           {/* Map */}
           <div className="w-full h-[400px] mb-8 relative">
-            <MapContainer center={center} zoom={5} style={{ height: '100%', width: '100%' }}>
+            <MapContainer center={center} zoom={10} style={{ height: '100%', width: '100%' }}>
               <TileLayer
                 attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
               {/* User's location marker */}
-              <UserLocationMarker />
+              <UserLocationMarker isLoggedIn={isLoggedIn} />
               {/* Property markers */}
               {properties.map((property) => (
                 <Marker
@@ -841,12 +846,12 @@ function Home() {
                       <h3 className="font-semibold text-base">{property.name}</h3>
                       <p className="text-sm font-semibold text-blue-600">{property.rent}</p>
                       <Link
-  to={`/booking/${property.type}/${property.id}`}
-  className="mt-2 inline-block bg-blue-300 text-black text-xs px-3 py-1 rounded-md hover:bg-blue-400 transition-colors"
-  onClick={() => handleClick(property.id, property.type)}
->
-  View
-</Link>
+                        to={`/booking/${property.type}/${property.id}`}
+                        className="mt-2 inline-block bg-blue-300 text-black text-xs px-3 py-1 rounded-md hover:bg-blue-400 transition-colors"
+                        onClick={() => handleClick(property.id, property.type)}
+                      >
+                        View
+                      </Link>
                     </div>
                   </Popup>
                 </Marker>
@@ -1028,7 +1033,7 @@ function Home() {
                 </a>
               </div>
             </div>
-            </div>
+          </div>
           <div className="border-t border-white/20 mt-8 pt-8 text-center text-white/60">
             © 2024 Gruha Anvesh. All rights reserved.
           </div>
