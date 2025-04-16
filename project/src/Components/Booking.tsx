@@ -420,7 +420,7 @@ const Booking: React.FC = () => {
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Close Button */}
-                <button className="absolute top-6 right-4 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-700 z-50" onClick={handleCloseViewer}>
+                <button className="absolute top-8 right-4 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-700 z-50" onClick={handleCloseViewer}>
                   <X className="h-8 w-8" />
                 </button>
 
