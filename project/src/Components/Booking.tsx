@@ -161,23 +161,27 @@ const Booking: React.FC = () => {
     setSelectedImageIndex(index);
   };
 
-  const handleCloseViewer = () => {
+  const handleCloseViewer = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setSelectedImageIndex(null);
   };
 
-  const handleNextImage = () => {
+  const handleNextImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (selectedImageIndex !== null && property) {
       setSelectedImageIndex((selectedImageIndex + 1) % property.images.length);
     }
   };
 
-  const handlePrevImage = () => {
+  const handlePrevImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (selectedImageIndex !== null && property) {
       setSelectedImageIndex((selectedImageIndex - 1 + property.images.length) % property.images.length);
     }
   };
 
-  const handleThumbnailClick = (index: number) => {
+  const handleThumbnailClick = (index: number, e: React.MouseEvent) => {
+    e.stopPropagation();
     setSelectedImageIndex(index);
   };
 
@@ -375,7 +379,7 @@ const Booking: React.FC = () => {
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 relative z-10">
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h2 className="text-2xl font-semibold mb-4">Gallery</h2>
             <div className="grid grid-cols-2 gap-4">
@@ -408,19 +412,19 @@ const Booking: React.FC = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center"
+              className="fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center"
               onClick={handleCloseViewer}
             >
               <div
-                className="relative w-[70vw] h-[70vh] bg-white rounded-lg p-4 flex flex-col"
+                className="relative w-[90vw] h-[90vh] bg-white rounded-xl p-6 flex flex-col"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Close Button */}
                 <button
-                  className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-full hover:bg-red-700"
+                  className="absolute top-4 right-4 p-3 bg-red-600 text-white rounded-full hover:bg-red-700 z-50"
                   onClick={handleCloseViewer}
                 >
-                  <X className="h-6 w-6" />
+                  <X className="h-8 w-8" />
                 </button>
 
                 {/* Main Image */}
@@ -428,36 +432,36 @@ const Booking: React.FC = () => {
                   <img
                     src={property.images[selectedImageIndex]}
                     alt={`${property.propertyName} - Image ${selectedImageIndex + 1}`}
-                    className="max-w-full max-h-[60vh] object-contain rounded-lg"
-                    onError={(e) => (e.currentTarget.src = 'https://placehold.co/600')}
+                    className="max-w-full max-h-[70vh] object-contain rounded-lg"
+                    onError={(e) => (e.currentTarget.src = 'https://placehold.co/800')}
                   />
                   {/* Navigation Arrows */}
                   <button
-                    className="absolute left-4 p-2 bg-gray-800 text-white rounded-full hover:bg-gray-700"
-                    onClick={handlePrevImage}
-                  >
-                    <ChevronLeft className="h-6 w-6" />
-                  </button>
-                  <button
-                    className="absolute right-4 p-2 bg-gray-800 text-white rounded-full hover:bg-gray-700"
+                    className="absolute left-6 p-3 bg-gray-800 text-white rounded-full hover:bg-gray-700"
                     onClick={handleNextImage}
                   >
-                    <ChevronRight className="h-6 w-6" />
+                    <ChevronLeft className="h-8 w-8" />
+                  </button>
+                  <button
+                    className="absolute right-6 p-3 bg-gray-800 text-white rounded-full hover:bg-gray-700"
+                    onClick={handlePrevImage}
+                  >
+                    <ChevronRight className="h-8 w-8" />
                   </button>
                 </div>
 
                 {/* Thumbnail Gallery */}
-                <div className="mt-4 flex overflow-x-auto gap-2 p-2 bg-gray-100 rounded-lg">
+                <div className="mt-6 flex overflow-x-auto gap-3 p-3 bg-gray-100 rounded-lg">
                   {property.images.map((img: string, index: number) => (
                     <img
                       key={index}
                       src={img}
                       alt={`${property.propertyName} - Thumbnail ${index + 1}`}
-                      className={`w-16 h-16 object-cover rounded-lg cursor-pointer border-2 ${
+                      className={`w-24 h-24 object-cover rounded-lg cursor-pointer border-4 ${
                         selectedImageIndex === index ? 'border-blue-500' : 'border-transparent'
                       }`}
-                      onClick={() => handleThumbnailClick(index)}
-                      onError={(e) => (e.currentTarget.src = 'https://placehold.co/100')}
+                      onClick={(e) => handleThumbnailClick(index, e)}
+                      onError={(e) => (e.currentTarget.src = 'https://placehold.co/150')}
                     />
                   ))}
                 </div>
@@ -546,7 +550,7 @@ const Booking: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-8 relative z-0">
           <h2 className="text-2xl font-semibold mb-4">Location</h2>
           {isValidLatLng ? (
             <MapContainer
