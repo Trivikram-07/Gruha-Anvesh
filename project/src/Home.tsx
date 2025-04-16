@@ -510,7 +510,7 @@ function Home({ isLoggedIn }: HomeProps) {
 
   const isApplyDisabled = !!filterError;
 
-  const center = userPosition
+  const center: [number, number] = userPosition
     ? userPosition
     : properties.length > 0
       ? [
@@ -805,7 +805,6 @@ function Home({ isLoggedIn }: HomeProps) {
               />
               <UserLocationMarker
                 isLoggedIn={isLoggedIn}
-                setUserPosition={setUserPosition}
               />
               {properties.map((property) => (
                 <Marker
