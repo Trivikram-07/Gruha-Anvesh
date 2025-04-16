@@ -416,7 +416,7 @@ const Booking: React.FC = () => {
               onClick={handleCloseViewer}
             >
               <div
-                className="relative w-[90vw] h-[85vh] bg-grey rounded-xl p-6 flex flex-col"
+                className="relative w-[90vw] h-[90vh] bg-gray-300 rounded-xl p-6 flex flex-col"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Close Button */}
@@ -457,7 +457,7 @@ const Booking: React.FC = () => {
                       key={index}
                       src={img}
                       alt={`${property.propertyName} - Thumbnail ${index + 1}`}
-                      className={`w-24 h-24 object-cover rounded-lg cursor-pointer border-4 ${
+                      className={`w-[96px] h-[96px] min-w-[96px] min-h-[96px] object-cover rounded-lg cursor-pointer border-4 ${
                         selectedImageIndex === index ? 'border-blue-500' : 'border-transparent'
                       }`}
                       onClick={(e) => handleThumbnailClick(index, e)}
