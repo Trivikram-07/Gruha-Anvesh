@@ -46,13 +46,13 @@ function ContactUs() {
                   <Mail className="w-5 h-5" />
                   <span>sudhkarreddyvikram@gmail.com</span>
                 </a>
-                <a href="https://linkedin.com/in/johndeveloper" target="_blank" rel="noopener noreferrer" 
+                <a href="https://www.linkedin.com/in/dhanireddy-trivikram-reddy-35b342246/" target="_blank" rel="noopener noreferrer" 
                    className="flex items-center gap-3 text-gray-300 hover:text-emerald-400 transition-colors">
                   <Linkedin className="w-5 h-5" />
                   <span>linkedin.com/in/Dhanireddy Trivikram Reddy
                   </span>
                 </a>
-                <a href="https://github.com/johndeveloper" target="_blank" rel="noopener noreferrer"
+                <a href="https://github.com/Trivikram-07" target="_blank" rel="noopener noreferrer"
                    className="flex items-center gap-3 text-gray-300 hover:text-emerald-400 transition-colors">
                   <Github className="w-5 h-5" />
                   <span>github.com/Trivikram-07</span>
