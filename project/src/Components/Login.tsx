@@ -39,7 +39,7 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
 
       const data: LoginResponse = await response.json();
       localStorage.setItem('token', data.token);
-      localural: localStorage.setItem('userId', data.user.id);
+      localStorage.setItem('userId', data.user.id);
       setIsLoggedIn(true);
       navigate('/home');
     } catch (error) {
@@ -63,25 +63,41 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
           .animate-spin-slow {
             animation: spin-slow 10s linear infinite;
           }
+          @keyframes fade-in-up {
+            from {
+              opacity: 0;
+              transform: translateY(20px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+          .animate-fade-in-up {
+            animation: fade-in-up 0.5s ease-out forwards;
+          }
+          .custom-shadow-all {
+            box-shadow: 0 0 12px rgba(0, 0, 0, 0.15);
+          }
         `}
       </style>
-      <div className="flex flex-row min-h-screen">
-        <div className="flex-1 flex flex-col items-center pt-12 bg-gray-100">
+      <div className="flex flex-row min-h-screen bg-gray-50">
+        <div className="flex-1 flex flex-col items-center pt-12 bg-gray-50">
           <img
             src={logo}
             alt="Gruha Anvesh Logo"
             className="w-80 h-80 mb-6 animate-spin-slow"
           />
-          <h1 className="text-4xl font-bold text-black">Gruha Anvesh</h1>
+          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Gruha Anvesh</h1>
         </div>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="max-w-md w-full">
-            <div className="bg-white p-8 rounded-lg shadow-lg">
-              <h2 className="text-2xl font-semibold text-center">Welcome to Gruha Anvesh</h2>
-              <h3 className="text-xl text-center mb-4">Login to Your Account</h3>
-              {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-              <div className="mb-4">
-                <label htmlFor="email" className="block text-sm font-medium">Email</label>
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="max-w-md w-full animate-fade-in-up -mt-12">
+            <div className="bg-gray-50 p-8 rounded-xl custom-shadow-all border border-gray-200">
+              <h2 className="text-3xl font-bold text-center text-gray-800 mb-2">Welcome to Gruha Anvesh</h2>
+              <h3 className="text-xl text-center text-gray-600 mb-6">Login to Your Account</h3>
+              {error && <p className="text-red-500 text-center mb-6 font-medium">{error}</p>}
+              <div className="mb-5">
+                <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
                 <input
                   type="email"
                   id="email"
@@ -89,11 +105,11 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors hover:border-indigo-400"
                 />
               </div>
-              <div className="mb-4">
-                <label htmlFor="password" className="block text-sm font-medium">Password</label>
+              <div className="mb-5">
+                <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
                 <input
                   type="password"
                   id="password"
@@ -101,21 +117,22 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors hover:border-indigo-400"
                 />
               </div>
-              <div className="mb-4">
+              <div className="mb-5">
                 <button
                   type="submit"
-                  className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+                  className="w-full bg-indigo-600 text-white p-3 rounded-lg hover:bg-indigo-700 transition-colors font-semibold"
                   onClick={handleSubmit}
                 >
                   Login
                 </button>
               </div>
               <div className="text-center">
-                <p>
-                  Don't have an account? <Link to="/signup" className="text-blue-500 hover:underline">Sign Up</Link>
+                <p className="text-gray-600">
+                  Don't have an account?{' '}
+                  <Link to="/signup" className="text-indigo-600 hover:underline font-medium">Sign Up</Link>
                 </p>
               </div>
             </div>

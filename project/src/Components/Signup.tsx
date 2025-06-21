@@ -118,13 +118,13 @@ const Signup: React.FC<SignupProps> = ({ setIsLoggedIn }) => {
           .animate-fade-in-up {
             animation: fade-in-up 0.5s ease-out forwards;
           }
-          .custom-shadow-sides {
-            box-shadow: -6px 0 12px rgba(0, 0, 0, 0.1), 6px 0 12px rgba(0, 0, 0, 0.1);
+          .custom-shadow-all {
+            box-shadow: 0 0 12px rgba(0, 0, 0, 0.15);
           }
         `}
       </style>
       <div className="flex flex-row min-h-screen bg-gray-50">
-        <div className="flex-1 flex flex-col items-center pt-12 bg-gradient-to-b from-gray-100 to-gray-200">
+        <div className="flex-1 flex flex-col items-center pt-12 bg-gray-50">
           <img
             src={logo}
             alt="Gruha Anvesh Logo"
@@ -134,7 +134,7 @@ const Signup: React.FC<SignupProps> = ({ setIsLoggedIn }) => {
         </div>
         <div className="flex-1 flex items-center justify-center p-4">
           <div className="max-w-md w-full animate-fade-in-up -mt-12">
-            <div className="bg-gray-50 p-8 rounded-xl custom-shadow-sides border border-gray-200">
+            <div className="bg-gray-50 p-8 rounded-xl custom-shadow-all border border-gray-200">
               <h2 className="text-3xl font-bold text-center text-gray-800 mb-2">Welcome to Gruha Anvesh</h2>
               <h3 className="text-xl text-center text-gray-600 mb-6">Create Your Account</h3>
               {error && <p className="text-red-500 text-center mb-6 font-medium">{error}</p>}
@@ -183,7 +183,7 @@ const Signup: React.FC<SignupProps> = ({ setIsLoggedIn }) => {
                   id="confirmPassword"
                   placeholder="Confirm your password"
                   value={confirmPassword}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                   className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors hover:border-indigo-400"
                 />
