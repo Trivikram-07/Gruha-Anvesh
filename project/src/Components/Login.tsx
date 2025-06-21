@@ -49,45 +49,57 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-form-container login-active">
-        <form className="auth-form" onSubmit={handleSubmit}>
-          <h2>Welcome to Gruha Anvesh</h2>
-          <h3>Login to Your Account</h3>
-          {error && <p className="error-message">{error}</p>}
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+    <div className="auth-container flex flex-row min-h-screen">
+      <div className="left-section flex-1 flex flex-col items-center justify-center bg-gray-100">
+        <img
+          src="https://via.placeholder.com/300" // Replace with your image URL
+          alt="Gruha Anvesh Logo"
+          className="w-64 h-64 mb-4 animate-spin-slow"
+        />
+        <h1 className="text-3xl font-bold text-black">Gruha Anvesh</h1>
+      </div>
+      <div className="right-section flex-1 flex items-center justify-center">
+        <div className="auth-form-container login-active">
+          <div className="auth-form bg-white p-8 rounded-lg shadow-lg">
+            <h2 className="text-2xl font-semibold text-center">Welcome to Gruha Anvesh</h2>
+            <h3 className="text-xl text-center mb-4">Login to Your Account</h3>
+            {error && <p className="error-message text-red-500 text-center">{error}</p>}
+            <div className="form-group mb-4">
+              <label htmlFor="email" className="block text-sm font-medium">Email</label>
+              <input
+                type="email"
+                id="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="form-group mb-4">
+              <label htmlFor="password" className="block text-sm font-medium">Password</label>
+              <input
+                type="password"
+                id="password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="form-group">
+              <button type="submit" className="primary-button w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600" onClick={handleSubmit}>
+                Login
+              </button>
+            </div>
+            <div className="auth-links text-center mt-4">
+              <p>
+                Don't have an account? <Link to="/signup" className="text-blue-500 hover:underline">Sign Up</Link>
+              </p>
+            </div>
           </div>
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <button type="submit" className="primary-button">
-              Login
-            </button>
-          </div>
-          <div className="auth-links">
-            <p>
-              Don't have an account? <Link to="/signup">Sign Up</Link>
-            </p>
-          </div>
-        </form>
+        </div>
       </div>
     </div>
   );
