@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import logo from '/white bg logo.png';
+import logo from '/white bg logo.png'; // Adjust the path as necessary
 
 interface SignupProps {
   setIsLoggedIn: React.Dispatch<React.SetStateAction<boolean | null>>;
@@ -105,25 +105,38 @@ const Signup: React.FC<SignupProps> = ({ setIsLoggedIn }) => {
           .animate-spin-slow {
             animation: spin-slow 10s linear infinite;
           }
+          @keyframes fade-in-up {
+            from {
+              opacity: 0;
+              transform: translateY(20px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+          .animate-fade-in-up {
+            animation: fade-in-up 0.5s ease-out forwards;
+          }
         `}
       </style>
-      <div className="flex flex-row min-h-screen">
-        <div className="flex-1 flex flex-col items-center justify-center bg-gray-100">
+      <div className="flex flex-row min-h-screen bg-gray-50">
+        <div className="flex-1 flex flex-col items-center pt-12 bg-gradient-to-b from-gray-100 to-gray-200">
           <img
-            src={logo} // Replace with your optimized image URL
+            src={logo}
             alt="Gruha Anvesh Logo"
-            className="w-64 h-64 mb-4 animate-spin-slow"
+            className="w-80 h-80 mb-6 animate-spin-slow"
           />
-          <h1 className="text-3xl font-bold text-black">Gruha Anvesh</h1>
+          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Gruha Anvesh</h1>
         </div>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="max-w-md w-full">
-            <div className="bg-white p-8 rounded-lg shadow-lg">
-              <h2 className="text-2xl font-semibold text-center">Welcome to Gruha Anvesh</h2>
-              <h3 className="text-xl text-center mb-4">Create Your Account</h3>
-              {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-              <div className="mb-4">
-                <label htmlFor="username" className="block text-sm font-medium text-gray-700">Username</label>
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="max-w-md w-full animate-fade-in-up">
+            <div className="bg-white p-8 rounded-xl shadow-2xl border border-gray-100">
+              <h2 className="text-3xl font-bold text-center text-gray-800 mb-2">Welcome to Gruha Anvesh</h2>
+              <h3 className="text-xl text-center text-gray-600 mb-6">Create Your Account</h3>
+              {error && <p className="text-red-500 text-center mb-6 font-medium">{error}</p>}
+              <div className="mb-5">
+                <label htmlFor="username" className="block text-sm font-semibold text-gray-700 mb-2">Username</label>
                 <input
                   type="text"
                   id="username"
@@ -133,11 +146,11 @@ const Signup: React.FC<SignupProps> = ({ setIsLoggedIn }) => {
                   required
                   pattern="[a-zA-Z]{4,}"
                   title="Username must be at least 4 letters long with no spaces or special characters"
-                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors hover:border-indigo-400"
                 />
               </div>
-              <div className="mb-4">
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+              <div className="mb-5">
+                <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
                 <input
                   type="email"
                   id="email"
@@ -145,11 +158,11 @@ const Signup: React.FC<SignupProps> = ({ setIsLoggedIn }) => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors hover:border-indigo-400"
                 />
               </div>
-              <div className="mb-4">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+              <div className="mb-5">
+                <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
                 <input
                   type="password"
                   id="password"
@@ -157,11 +170,11 @@ const Signup: React.FC<SignupProps> = ({ setIsLoggedIn }) => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors hover:border-indigo-400"
                 />
               </div>
-              <div className="mb-4">
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">Confirm Password</label>
+              <div className="mb-5">
+                <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-700 mb-2">Confirm Password</label>
                 <input
                   type="password"
                   id="confirmPassword"
@@ -169,13 +182,13 @@ const Signup: React.FC<SignupProps> = ({ setIsLoggedIn }) => {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors hover:border-indigo-400"
                 />
               </div>
-              <div className="mb-4">
-                <label htmlFor="phoneNo" className="block text-sm font-medium text-gray-700">Phone Number</label>
-                <div className="flex items-center border rounded focus-within:ring-2 focus-within:ring-blue-500">
-                  <span className="px-2 bg-gray-100 text-gray-600 border-r">+91</span>
+              <div className="mb-5">
+                <label htmlFor="phoneNo" className="block text-sm font-semibold text-gray-700 mb-2">Phone Number</label>
+                <div className="flex items-center border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-indigo-500 transition-colors hover:border-indigo-400">
+                  <span className="px-3 py-3 bg-gray-100 text-gray-600 border-r border-gray-300">+91</span>
                   <input
                     type="tel"
                     id="phoneNo"
@@ -188,24 +201,27 @@ const Signup: React.FC<SignupProps> = ({ setIsLoggedIn }) => {
                       }
                     }}
                     required
-                    pattern="\d{10}"
+                    pattern="\d{10Links to an external site.10"
                     title="Phone number must be exactly 10 digits"
-                    className="flex-1 p-2 border-none focus:outline-none"
+                    className="flex-1 p-3 border-none focus:outline-none"
                   />
                 </div>
               </div>
-              <div className="mb-4">
+              <div className="mb-5">
                 <button
                   type="submit"
-                  className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+                  className="w-full bg-indigo-600 text-white p-3 rounded-lg hover:bg-indigo-700 transition-colors font-semibold"
                   onClick={handleSubmit}
                 >
                   Sign Up
                 </button>
               </div>
               <div className="text-center">
-                <p>
-                  Already have an account? <Link to="/" className="text-blue-500 hover:underline">Login</Link>
+                <p className="text-gray-600">
+                  Already have an account?{' '}
+                  <Link to="/" className="text-indigo-600 hover:underline font-medium">
+                    Login
+                  </Link>
                 </p>
               </div>
             </div>
