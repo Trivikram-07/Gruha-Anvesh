@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import './css/login.css';
+import logo from '/white bg logo.png'; // Adjust the path as necessary
 
 interface LoginProps {
   setIsLoggedIn: React.Dispatch<React.SetStateAction<boolean | null>>;
@@ -52,7 +53,7 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
     <div className="auth-container flex flex-row min-h-screen">
       <div className="left-section flex-1 flex flex-col items-center justify-center bg-gray-100">
         <img
-          src="https://via.placeholder.com/300" // Replace with your image URL
+          src={logo} // Replace with your image URL
           alt="Gruha Anvesh Logo"
           className="w-64 h-64 mb-4 animate-spin-slow"
         />
