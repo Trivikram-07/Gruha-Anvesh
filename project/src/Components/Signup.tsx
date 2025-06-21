@@ -118,6 +118,9 @@ const Signup: React.FC<SignupProps> = ({ setIsLoggedIn }) => {
           .animate-fade-in-up {
             animation: fade-in-up 0.5s ease-out forwards;
           }
+          .custom-shadow-sides {
+            box-shadow: -6px 0 12px rgba(0, 0, 0, 0.1), 6px 0 12px rgba(0, 0, 0, 0.1);
+          }
         `}
       </style>
       <div className="flex flex-row min-h-screen bg-gray-50">
@@ -130,8 +133,8 @@ const Signup: React.FC<SignupProps> = ({ setIsLoggedIn }) => {
           <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Gruha Anvesh</h1>
         </div>
         <div className="flex-1 flex items-center justify-center p-4">
-          <div className="max-w-md w-full animate-fade-in-up">
-            <div className="bg-white p-8 rounded-xl shadow-2xl border border-gray-100">
+          <div className="max-w-md w-full animate-fade-in-up -mt-12">
+            <div className="bg-gray-50 p-8 rounded-xl custom-shadow-sides border border-gray-200">
               <h2 className="text-3xl font-bold text-center text-gray-800 mb-2">Welcome to Gruha Anvesh</h2>
               <h3 className="text-xl text-center text-gray-600 mb-6">Create Your Account</h3>
               {error && <p className="text-red-500 text-center mb-6 font-medium">{error}</p>}
@@ -180,7 +183,7 @@ const Signup: React.FC<SignupProps> = ({ setIsLoggedIn }) => {
                   id="confirmPassword"
                   placeholder="Confirm your password"
                   value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
                   className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors hover:border-indigo-400"
                 />
@@ -201,7 +204,7 @@ const Signup: React.FC<SignupProps> = ({ setIsLoggedIn }) => {
                       }
                     }}
                     required
-                    pattern="\d{10Links to an external site.10"
+                    pattern="\d{10}"
                     title="Phone number must be exactly 10 digits"
                     className="flex-1 p-3 border-none focus:outline-none"
                   />
