@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import logo from '/white bg logo.png';
 
 interface SignupProps {
   setIsLoggedIn: React.Dispatch<React.SetStateAction<boolean | null>>;
@@ -90,96 +91,128 @@ const Signup: React.FC<SignupProps> = ({ setIsLoggedIn }) => {
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '0 auto', padding: '20px', borderRadius: '8px', boxShadow: '0 0 10px rgba(0,0,0,0.1)' }}>
-      <h2 style={{ textAlign: 'center', color: '#333', marginBottom: '20px' }}>Sign Up</h2>
-      {error && <p style={{ color: 'red', textAlign: 'center', marginBottom: '15px' }}>{error}</p>}
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-        <div>
-          <label style={{ display: 'block', marginBottom: '5px', color: '#555' }}>Username:</label>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-            pattern="[a-zA-Z]{4,}"
-            title="Username must be at least 4 letters long with no spaces or special characters"
-            style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', boxSizing: 'border-box' }}
+    <>
+      <style>
+        {`
+          @keyframes spin-slow {
+            from {
+              transform: rotate(0deg);
+            }
+            to {
+              transform: rotate(360deg);
+            }
+          }
+          .animate-spin-slow {
+            animation: spin-slow 10s linear infinite;
+          }
+        `}
+      </style>
+      <div className="flex flex-row min-h-screen">
+        <div className="flex-1 flex flex-col items-center justify-center bg-gray-100">
+          <img
+            src={logo} // Replace with your optimized image URL
+            alt="Gruha Anvesh Logo"
+            className="w-64 h-64 mb-4 animate-spin-slow"
           />
+          <h1 className="text-3xl font-bold text-black">Gruha Anvesh</h1>
         </div>
-        <div>
-          <label style={{ display: 'block', marginBottom: '5px', color: '#555' }}>Email:</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', boxSizing: 'border-box' }}
-          />
-        </div>
-        <div>
-          <label style={{ display: 'block', marginBottom: '5px', color: '#555' }}>Password:</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', boxSizing: 'border-box' }}
-          />
-        </div>
-        <div>
-          <label style={{ display: 'block', marginBottom: '5px', color: '#555' }}>Confirm Password:</label>
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-            style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', boxSizing: 'border-box' }}
-          />
-        </div>
-        <div>
-          <label style={{ display: 'block', marginBottom: '5px', color: '#555' }}>Phone Number:</label>
-          <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '4px', overflow: 'hidden' }}>
-            <span style={{ padding: '8px', backgroundColor: '#f5f5f5', color: '#555', borderRight: '1px solid #ddd' }}>+91</span>
-            <input
-              type="tel"
-              value={phoneNo}
-              onChange={(e) => {
-                const value = e.target.value.replace(/\D/g, '');
-                if (value.length <= 10) {
-                  setPhoneNo(value);
-                }
-              }}
-              required
-              pattern="\d{10}"
-              title="Phone number must be exactly 10 digits"
-              style={{ flex: 1, padding: '8px', border: 'none', outline: 'none', boxSizing: 'border-box' }}
-            />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="max-w-md w-full">
+            <div className="bg-white p-8 rounded-lg shadow-lg">
+              <h2 className="text-2xl font-semibold text-center">Welcome to Gruha Anvesh</h2>
+              <h3 className="text-xl text-center mb-4">Create Your Account</h3>
+              {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+              <div className="mb-4">
+                <label htmlFor="username" className="block text-sm font-medium text-gray-700">Username</label>
+                <input
+                  type="text"
+                  id="username"
+                  placeholder="Enter your username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                  pattern="[a-zA-Z]{4,}"
+                  title="Username must be at least 4 letters long with no spaces or special characters"
+                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+                <input
+                  type="email"
+                  id="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+                <input
+                  type="password"
+                  id="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">Confirm Password</label>
+                <input
+                  type="password"
+                  id="confirmPassword"
+                  placeholder="Confirm your password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="phoneNo" className="block text-sm font-medium text-gray-700">Phone Number</label>
+                <div className="flex items-center border rounded focus-within:ring-2 focus-within:ring-blue-500">
+                  <span className="px-2 bg-gray-100 text-gray-600 border-r">+91</span>
+                  <input
+                    type="tel"
+                    id="phoneNo"
+                    placeholder="Enter 10-digit phone number"
+                    value={phoneNo}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '');
+                      if (value.length <= 10) {
+                        setPhoneNo(value);
+                      }
+                    }}
+                    required
+                    pattern="\d{10}"
+                    title="Phone number must be exactly 10 digits"
+                    className="flex-1 p-2 border-none focus:outline-none"
+                  />
+                </div>
+              </div>
+              <div className="mb-4">
+                <button
+                  type="submit"
+                  className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+                  onClick={handleSubmit}
+                >
+                  Sign Up
+                </button>
+              </div>
+              <div className="text-center">
+                <p>
+                  Already have an account? <Link to="/" className="text-blue-500 hover:underline">Login</Link>
+                </p>
+              </div>
+            </div>
           </div>
         </div>
-        <button
-          type="submit"
-          style={{ padding: '10px', backgroundColor: '#007BFF', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '16px' }}
-        >
-          Sign Up
-        </button>
-        <button
-          type="button"
-          onClick={() => navigate('/')}
-          style={{
-            padding: '10px',
-            backgroundColor: '#28a745',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '16px',
-            marginTop: '10px',
-          }}
-        >
-          Login
-        </button>
-      </form>
-    </div>
+      </div>
+    </>
   );
 };
 
