@@ -124,7 +124,7 @@ const Signup: React.FC<SignupProps> = ({ setIsLoggedIn }) => {
         `}
       </style>
       <div className="flex flex-row min-h-screen bg-gray-50">
-        <div className="flex-1 flex flex-col items-center pt-12 bg-gray-50">
+        <div className="hidden sm:flex flex-1 flex-col items-center pt-12 bg-gray-50">
           <img
             src={logo}
             alt="Gruha Anvesh Logo"
@@ -132,7 +132,7 @@ const Signup: React.FC<SignupProps> = ({ setIsLoggedIn }) => {
           />
           <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Gruha Anvesh</h1>
         </div>
-        <div className="flex-1 flex items-center justify-center p-4">
+        <div className="w-full sm:w-1/2 flex items-center justify-center p-4">
           <div className="max-w-md w-full animate-fade-in-up -mt-12">
             <div className="bg-gray-50 p-8 rounded-xl custom-shadow-all border border-gray-200">
               <h2 className="text-3xl font-bold text-center text-gray-800 mb-2">Welcome to Gruha Anvesh</h2>

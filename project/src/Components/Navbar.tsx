@@ -181,7 +181,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
         <Link to={isLoggedIn ? '/home' : '/'} className="flex items-center">
           <img src={logo} alt="Gruha Anvesh Logo" className="h-11 w-auto mr-2" />
         </Link>
-        <button className="sm:block text-white" onClick={toggleMenu}>
+        <button className="sm:hidden text-white" onClick={toggleMenu}>
           {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>
       </div>
@@ -189,9 +189,9 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
         ref={menuRef}
         className={`${
           isMenuOpen ? 'flex' : 'hidden'
-        } flex-col sm:flex sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 mt-4 sm:mt-0 w-full sm:w-auto bg-black sm:bg-transparent fixed sm:static top-16 left-0 sm:top-auto sm:left-auto h-[calc(100vh-64px)] sm:h-auto px-4 sm:px-0 transition-transform duration-300 transform ${
+        } flex-col sm:flex sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 mt-4 sm:mt-0 w-4/5 sm:w-auto bg-black sm:bg-transparent fixed sm:static top-16 right-0 sm:top-auto sm:left-auto h-[calc(100vh-64px)] sm:h-auto px-4 sm:px-0 transition-transform duration-300 transform ${
           isMenuOpen ? 'translate-x-0' : 'translate-x-full'
-        } sm:transform-none z-[800] sm:z-auto`}
+        } sm:transform-none z-[800] sm:z-auto shadow-lg sm:shadow-none`}
       >
         {isLoggedIn ? (
           <>
