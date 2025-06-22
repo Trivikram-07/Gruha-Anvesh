@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import logo from '/white bg logo.png'; // Adjust the path as necessary
 
@@ -20,6 +20,15 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
   interface ErrorResponse {
     error: string;
   }
+
+  // Check for existing token and redirect to /home if present
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      setIsLoggedIn(true);
+      navigate('/home');
+    }
+  }, [navigate, setIsLoggedIn]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
