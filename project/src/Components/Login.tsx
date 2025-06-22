@@ -41,7 +41,7 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
       localStorage.setItem('token', data.token);
       localStorage.setItem('userId', data.user.id);
       setIsLoggedIn(true);
-      navigate('/');
+      navigate('/home');
     } catch (error) {
       console.error('Login error:', error);
       setError(error instanceof Error ? error.message : 'An error occurred. Please try again.');

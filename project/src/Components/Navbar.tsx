@@ -157,7 +157,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
     localStorage.removeItem('token');
     localStorage.removeItem('userId');
     setIsLoggedIn(false);
-    navigate('/login');
+    navigate('/');
   };
 
   const unreadNotificationsCount = notifications.filter((n) => !n.isRead).length;
@@ -166,14 +166,14 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
   return (
     <nav className="sticky top-0 z-[900] bg-gray-800 px-4 py-3 sm:px-6 flex flex-col sm:flex-row justify-between items-center">
       <div className="flex items-center w-full sm:w-auto">
-        <Link to={isLoggedIn ? '/' : '/login'} className="flex items-center">
+        <Link to={isLoggedIn ? '/home' : '/'} className="flex items-center">
           <img src={logo} alt="Gruha Anvesh Logo" className="h-11 w-auto mr-2" />
         </Link>
       </div>
       <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-6 mt-2 sm:mt-0 w-full sm:w-auto">
         {isLoggedIn ? (
           <>
-            <Link to="/" className="text-white hover:text-blue-200 font-medium text-center">
+            <Link to="/home" className="text-white hover:text-blue-200 font-medium text-center">
               Home
             </Link>
             <Link to="/subscriptions" className="text-white hover:text-blue-200 font-medium text-center">
@@ -316,7 +316,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
           </>
         ) : (
           <>
-            <Link to="/" className="text-white hover:text-blue-200 font-medium text-center">
+            <Link to="/home" className="text-white hover:text-blue-200 font-medium text-center">
               Home
             </Link>
             <Link to="/signup" className="text-white hover:text-blue-200 font-medium text-center">
