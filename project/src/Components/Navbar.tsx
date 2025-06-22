@@ -383,14 +383,3 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
               to="/signup"
               className="text-white hover:text-blue-200 font-medium text-center"
               onClick={() => setIsMenuOpen(false)}
-            >
-              Sign Up
-            </Link>
-          </>
-        )}
-      </div>
-    </nav>
-  );
-};
-
-export default Navbar;
