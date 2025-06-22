@@ -370,11 +370,11 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
         ) : (
           <>
             <Link
-              to="/home"
+              to="/"
               className="text-white hover:text-blue-200 font-medium text-center"
               onClick={() => setIsMenuOpen(false)}
             >
-              Home
+              login
             </Link>
             <Link
               to="/signup"

@@ -130,7 +130,7 @@ const Signup: React.FC<SignupProps> = ({ setIsLoggedIn }) => {
             alt="Gruha Anvesh Logo"
             className="w-80 h-80 mb-6 animate-spin-slow"
           />
-          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Gruha Anvesh</h1>
+          <h1 className="text-4xl font-bold text-gray-900 tracking-tight">Gruha Anvesh</h1>
         </div>
         <div className="w-full sm:w-1/2 flex items-center justify-center p-4">
           <div className="max-w-md w-full animate-fade-in-up -mt-12">
