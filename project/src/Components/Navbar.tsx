@@ -185,11 +185,14 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
           {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>
       </div>
+      {isMenuOpen && (
+        <div className="fixed top-0 left-0 w-full h-1/2 bg-black z-[799] sm:hidden"></div>
+      )}
       <div
         ref={menuRef}
         className={`${
           isMenuOpen ? 'flex' : 'hidden'
-        } flex-col sm:flex sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 mt-4 sm:mt-0 w-4/5 sm:w-auto bg-black sm:bg-transparent fixed sm:static top-16 right-0 sm:top-auto sm:left-auto h-[calc(100vh-64px)] sm:h-auto px-4 sm:px-0 transition-transform duration-300 transform ${
+        } flex-col sm:flex sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6 mt-4 sm:mt-0 w-full sm:w-auto bg-white sm:bg-transparent fixed sm:static top-16 right-0 sm:top-auto sm:left-auto h-[calc(100vh-64px)] sm:h-auto px-4 sm:px-0 transition-transform duration-300 transform ${
           isMenuOpen ? 'translate-x-0' : 'translate-x-full'
         } sm:transform-none z-[800] sm:z-auto shadow-lg sm:shadow-none`}
       >
@@ -197,35 +200,35 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
           <>
             <Link
               to="/home"
-              className="text-white hover:text-blue-200 font-medium text-center"
+              className="text-black sm:text-white hover:text-blue-200 font-medium text-center"
               onClick={() => setIsMenuOpen(false)}
             >
               Home
             </Link>
             <Link
               to="/subscriptions"
-              className="text-white hover:text-blue-200 font-medium text-center"
+              className="text-black sm:text-white hover:text-blue-200 font-medium text-center"
               onClick={() => setIsMenuOpen(false)}
             >
               Subscriptions
             </Link>
             <Link
               to="/ContactUs"
-              className="text-white hover:text-blue-200 font-medium text-center"
+              className="text-black sm:text-white hover:text-blue-200 font-medium text-center"
               onClick={() => setIsMenuOpen(false)}
             >
               Contact Us
             </Link>
             <Link
               to="/upload"
-              className="text-white hover:text-blue-200 font-medium text-center"
+              className="text-black sm:text-white hover:text-blue-200 font-medium text-center"
               onClick={() => setIsMenuOpen(false)}
             >
               Upload
             </Link>
             <div className="relative" ref={profileRef}>
               <span
-                className="flex items-center text-white hover:text-blue-200 cursor-pointer font-medium"
+                className="flex items-center text-black sm:text-white hover:text-blue-200 cursor-pointer font-medium"
                 onClick={toggleProfileDropdown}
               >
                 Profile
@@ -234,7 +237,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
                 )}
               </span>
               <div
-                className={`absolute sm:right-0 mt-2 w-48 bg-black rounded-lg shadow-lg z-[1000] overflow-hidden transition-all duration-300 ease-in-out transform ${
+                className={`absolute left-1/2 -translate-x-1/2 sm:right-0 mt-2 w-48 bg-black rounded-lg shadow-lg z-[1000] overflow-hidden transition-all duration-300 ease-in-out transform ${
                   showProfileDropdown
                     ? 'opacity-100 translate-y-0'
                     : 'opacity-0 -translate-y-2 pointer-events-none'
@@ -296,14 +299,14 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
             </div>
             <div className="relative" ref={notificationsRef}>
               <Bell
-                className="h-6 w-6 text-white cursor-pointer hover:text-blue-200"
+                className="h-6 w-6 text-black sm:text-white cursor-pointer hover:text-blue-200"
                 onClick={toggleNotifications}
               />
               {unreadNotificationsCount > 0 && (
                 <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
               )}
               <div
-                className={`absolute sm:right-0 mt-2 w-80 bg-black rounded-lg shadow-lg z-[1000] overflow-hidden transition-all duration-300 ease-in-out transform ${
+                className={`absolute left-1/2 -translate-x-1/2 sm:right-0 mt-2 w-80 bg-black rounded-lg shadow-lg z-[1000] overflow-hidden transition-all duration-300 ease-in-out transform ${
                   showNotifications
                     ? 'opacity-100 translate-y-0'
                     : 'opacity-0 -translate-y-2 pointer-events-none'
@@ -371,14 +374,14 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
           <>
             <Link
               to="/"
-              className="text-white hover:text-blue-200 font-medium text-center"
+              className="text-black sm:text-white hover:text-blue-200 font-medium text-center"
               onClick={() => setIsMenuOpen(false)}
             >
-              login
+              Login
             </Link>
             <Link
               to="/signup"
-              className="text-white hover:text-blue-200 font-medium text-center"
+              className="text-black sm:text-white hover:text-blue-200 font-medium text-center"
               onClick={() => setIsMenuOpen(false)}
             >
               Sign Up
