@@ -60,7 +60,7 @@ const App: React.FC = () => {
     <Router>
       <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
       <Routes>
-        <Route path="/home" element={isLoggedIn ? <Home isLoggedIn={isLoggedIn} /> : <Navigate to="/" replace />} />
+        <Route path="/" element={isLoggedIn ? <Home isLoggedIn={isLoggedIn} /> : <Navigate to="/" replace />} />
         <Route path="/upload" element={isLoggedIn ? <Upload /> : <Navigate to="/" replace />} />
         <Route path="/profile/bookings" element={isLoggedIn ? <PreviousBookings /> : <Navigate to="/" replace />} />
         <Route path="/review/vacation/:propertyId" element={isLoggedIn ? <Review /> : <Navigate to="/" replace />} />
@@ -79,7 +79,7 @@ const App: React.FC = () => {
         <Route path="/profile/history" element={isLoggedIn ? <History /> : <Navigate to="/" replace />} />
         <Route path="/profile/edit" element={isLoggedIn ? <EditProfile /> : <Navigate to="/" replace />} />
         <Route path="/signup" element={<Signup setIsLoggedIn={setIsLoggedIn} />} />
-        <Route path="/" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
+        <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
       </Routes>
     </Router>
   );

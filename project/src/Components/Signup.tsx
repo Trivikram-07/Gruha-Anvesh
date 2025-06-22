@@ -83,7 +83,7 @@ const Signup: React.FC<SignupProps> = ({ setIsLoggedIn }) => {
       localStorage.setItem('token', data.token);
       localStorage.setItem('userId', data.user.id);
       setIsLoggedIn(true);
-      navigate('/home');
+      navigate('/');
     } catch (error) {
       console.error('Signup error:', error);
       setError(error instanceof Error ? error.message : 'An unknown error occurred');
