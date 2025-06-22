@@ -176,8 +176,8 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
   const latestNotification = notifications.length > 0 ? notifications[notifications.length - 1] : null;
 
   return (
-    <nav className="sticky top-0 z-[900] bg-black px-4 py-3 sm:px-6 flex flex-col sm:flex-row justify-between items-center">
-      <div className="flex items-center justify-between w-full sm:w-auto">
+    <nav className="sticky top-0 z-[1000] bg-black px-4 py-3 sm:px-6 flex flex-col sm:flex-row justify-between items-center">
+      <div className="flex items-center justify-between w-full sm:w-auto relative z-[1001]">
         <Link to={isLoggedIn ? '/home' : '/'} className="flex items-center">
           <img src={logo} alt="Gruha Anvesh Logo" className="h-11 w-auto mr-2" />
         </Link>
@@ -186,7 +186,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
         </button>
       </div>
       {isMenuOpen && (
-        <div className="fixed top-0 left-0 w-full h-1/2 bg-black z-[799] sm:hidden"></div>
+        <div className="fixed top-16 left-0 w-full h-1/2 bg-black z-[799] sm:hidden"></div>
       )}
       <div
         ref={menuRef}
