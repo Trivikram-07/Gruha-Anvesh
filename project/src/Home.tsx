@@ -919,4 +919,4 @@ export default function Home({ isLoggedIn }: HomeProps) {
       </footer>
     </div>
   );
-}
+} 
