@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
   Home as HomeIcon,
@@ -26,10 +26,10 @@ import {
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import Recommendations from './Components/Recommendations';
 import axios from 'axios';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
+import { FaTrophy, FaMedal } from 'react-icons/fa';
 
 // Fix for default marker icons in Leaflet
 // @ts-ignore
@@ -80,6 +80,7 @@ interface Property {
   isFavorited?: boolean;
   city?: string;
   state?: string;
+  score?: number;
 }
 
 interface Filters {
@@ -177,7 +178,7 @@ const amenityLabels: Record<PropertyType, string[]> = {
 const sharingOptions = ['single', 'twoSharing', 'threeSharing', 'fourSharing'];
 
 // ----------------------------- Image pools ---------------------------------
-// Unsplash curated images (houses, families, tourist spots) — free to use via source.unsplash.com
+// Unsplash curated images (houses, families, tourist spots)
 const heroImages: Record<PropertyType, { text: string; url: string }> = {
   pg: {
     text: 'Comfortable PGs — Community living, simplified.',
@@ -194,21 +195,21 @@ const heroImages: Record<PropertyType, { text: string; url: string }> = {
 };
 
 const sideImages = [
-  // houses
-  //'https://images.unsplash.com/photo-1572120360610-d971b9b3b3f8?auto=format&fit=crop&w=800&q=60',
+  'https://images.unsplash.com/photo-1572120360610-d971b9b3b3f8?auto=format&fit=crop&w=800&q=60',
   'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=60',
   'https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=800&q=60',
   'https://images.unsplash.com/photo-1505691723518-36a2a5a7db60?auto=format&fit=crop&w=800&q=60',
   'https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=800&q=60',
-  // families / lifestyle
-  
-  // tourist spots / vacation
+  'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=60',
+  'https://images.unsplash.com/photo-1544739313-6f6c7aa0f0e6?auto=format&fit=crop&w=800&q=60',
+  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=800&q=60',
+  'https://images.unsplash.com/photo-1519340333755-5d42f4b28f5f?auto=format&fit=crop&w=800&q=60',
+  'https://images.unsplash.com/photo-1532074205216-d0e1f8f8f4f8?auto=format&fit=crop&w=800&q=60',
   'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=60',
   'https://images.unsplash.com/photo-1491553895911-0055eca6402d?auto=format&fit=crop&w=800&q=60',
   'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=800&q=60',
   'https://images.unsplash.com/photo-1445019980597-93fa8acb246c?auto=format&fit=crop&w=800&q=60',
   'https://images.unsplash.com/photo-1503264116251-35a269479413?auto=format&fit=crop&w=800&q=60',
-  // mixed
   'https://images.unsplash.com/photo-1523217582562-09d0def993a6?auto=format&fit=crop&w=800&q=60',
   'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=60',
   'https://images.unsplash.com/photo-1505692794401-2c4f1b5f6b2d?auto=format&fit=crop&w=800&q=60',
@@ -318,9 +319,9 @@ export default function Home({ isLoggedIn }: HomeProps) {
   const listRef = useRef<HTMLDivElement | null>(null);
   const tickingRef = useRef(false);
 
-  // cycle side images every 10s
+  // cycle side images every 5s
   useEffect(() => {
-    const id = setInterval(() => setSideIndex((s) => (s + 1) % sideImages.length), 10000);
+    const id = setInterval(() => setSideIndex((s) => (s + 1) % sideImages.length), 5000);
     return () => clearInterval(id);
   }, []);
 
@@ -380,7 +381,7 @@ export default function Home({ isLoggedIn }: HomeProps) {
             baths: selectedType === 'bhk' ? item.bathrooms : undefined,
             sqft: item.squareFeet,
             amenities: Object.entries(
-              selectedType === 'pg' ? { ...item.sharingOptions, ...item.amenities } : item.amenities
+              selectedType === 'pg' ? { ...item.sharingOptions, ...item.amenities } : item.amenities || {}
             )
               .filter(([_, value]) => value === true)
               .map(([key]) => key),
@@ -388,7 +389,11 @@ export default function Home({ isLoggedIn }: HomeProps) {
             isFavorited: item.isFavorited || false,
             city: item.city,
             state: item.state,
+            score: typeof item.score === 'number' ? item.score : item.score ? Number(item.score) : 0,
           }));
+
+        // SORT BY SCORE DESC so top-rated appear first
+        mappedProperties.sort((a, b) => (b.score || 0) - (a.score || 0));
 
         setProperties(mappedProperties);
 
@@ -453,7 +458,7 @@ export default function Home({ isLoggedIn }: HomeProps) {
         { headers: { Authorization: `Bearer ${token}` } }
       );
     } catch (err) {
-      // swallow - non-critical
+      // non-critical
     }
   };
 
@@ -516,7 +521,10 @@ export default function Home({ isLoggedIn }: HomeProps) {
   const center: [number, number] = userPosition
     ? userPosition
     : properties.length > 0
-    ? [properties.reduce((sum, p) => sum + p.location[0], 0) / properties.length, properties.reduce((sum, p) => sum + p.location[1], 0) / properties.length]
+    ? [
+        properties.reduce((sum, p) => sum + p.location[0], 0) / properties.length,
+        properties.reduce((sum, p) => sum + p.location[1], 0) / properties.length,
+      ]
     : [19.0760, 72.8777];
 
   // ------------------ 3D scroll effect --------------------------------------
@@ -539,7 +547,6 @@ export default function Home({ isLoggedIn }: HomeProps) {
           const maxDist = window.innerHeight / 1.2;
           const ratio = Math.max(-1, Math.min(1, distance / maxDist));
 
-          // compute transforms
           const rotateX = ratio * 8; // tilt
           const translateZ = -Math.abs(ratio) * 40; // depth
           const translateY = -ratio * 8; // small lift
@@ -551,7 +558,6 @@ export default function Home({ isLoggedIn }: HomeProps) {
       });
     }
 
-    // initial call
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll);
@@ -578,12 +584,24 @@ export default function Home({ isLoggedIn }: HomeProps) {
     <div className="min-h-screen bg-gray-50 text-gray-800">
       {/* HERO */}
       <section className="relative overflow-hidden">
-        <div id="hero-bg" className="absolute inset-0 -z-10 transform-gpu transition-transform duration-300" style={{ background: `linear-gradient(135deg, rgba(99,102,241,0.12), rgba(14,165,233,0.06)), url(${heroImages[selectedType].url}) center/cover no-repeat` }} />
+        <div
+          id="hero-bg"
+          className="absolute inset-0 -z-10 transform-gpu transition-transform duration-300"
+          style={{
+            background: `linear-gradient(135deg, rgba(99,102,241,0.12), rgba(14,165,233,0.06)), url(${heroImages[selectedType].url}) center/cover no-repeat`,
+          }}
+        />
         <div className="container mx-auto px-6 py-12">
           <div className="flex items-center justify-between gap-6">
             <div>
               <h1 className="text-4xl md:text-5xl font-extrabold leading-tight">{heroImages[selectedType].text}</h1>
-              <p className="mt-3 text-lg text-gray-600 max-w-xl">{selectedType === 'pg' ? 'Affordable shared living with community support.' : selectedType === 'bhk' ? 'Roomy homes designed for families and comfort.' : 'Handpicked vacation homes close to nature and attractions.'}</p>
+              <p className="mt-3 text-lg text-gray-600 max-w-xl">
+                {selectedType === 'pg'
+                  ? 'Affordable shared living with community support.'
+                  : selectedType === 'bhk'
+                  ? 'Roomy homes designed for families and comfort.'
+                  : 'Handpicked vacation homes close to nature and attractions.'}
+              </p>
               <div className="mt-6 flex items-center gap-4">
                 <div className="rounded-full bg-gradient-to-r from-indigo-600 to-cyan-500 text-white px-4 py-2 shadow-md">Instant Booking</div>
                 <div className="rounded-full bg-white px-4 py-2 shadow-sm text-sm">Verified Listings</div>
@@ -737,7 +755,6 @@ export default function Home({ isLoggedIn }: HomeProps) {
                   </div>
                 </>
               )}
-
             </div>
 
             <div className="mt-6 flex justify-end gap-3">
@@ -790,14 +807,30 @@ export default function Home({ isLoggedIn }: HomeProps) {
             {/* LIST (right) */}
             <div className="col-span-2" ref={listRef}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {properties.map((property) => (
-                  <article key={property.id} className="property-card bg-white rounded-2xl overflow-hidden shadow-md transform transition-transform duration-300" onClick={() => handleClick(property.id, property.type)}>
+                {properties.map((property, idx) => (
+                  <article
+                    key={property.id}
+                    className="property-card bg-white rounded-2xl overflow-hidden shadow-md transform transition-transform duration-300"
+                    onClick={() => handleClick(property.id, property.type)}
+                  >
                     <div className="relative h-48 overflow-hidden">
                       <img src={property.image} alt={property.name} className="w-full h-full object-cover" />
-                      <button onClick={(e) => { e.stopPropagation(); toggleFavorite(property.id); }} className="absolute top-3 right-3 bg-white/90 p-2 rounded-full shadow"> 
+                      <div className="absolute left-3 top-3">
+                        {idx === 0 && <FaTrophy className="text-yellow-400 text-2xl drop-shadow" title="Top rated" />}
+                        {idx === 1 && <FaMedal className="text-yellow-400 text-2xl drop-shadow" title="2nd best" />}
+                      </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleFavorite(property.id); }}
+                        className="absolute top-3 right-3 bg-white/90 p-2 rounded-full shadow"
+                      >
                         <Heart className={`h-5 w-5 ${property.isFavorited ? 'text-red-500 fill-red-500' : 'text-gray-600'}`} />
                       </button>
+                      {/* score pill under image */}
+                      <div className="absolute bottom-3 left-3 bg-gradient-to-r from-yellow-400 to-yellow-300 text-slate-800 px-3 py-1 rounded-full text-sm font-semibold shadow">
+                        Score: {property.score ?? 0}
+                      </div>
                     </div>
+
                     <div className="p-6 flex flex-col gap-3">
                       <div className="flex items-start justify-between">
                         <div>
@@ -806,7 +839,7 @@ export default function Home({ isLoggedIn }: HomeProps) {
                         </div>
                         <div className="text-right">
                           <div className="text-2xl font-bold text-blue-600">{property.rent}</div>
-                          <div className="text-xs text-gray-500">/ month</div>
+                          <div className="text-xs text-gray-500">{selectedType === 'vacation' ? '/ day' : '/ month'}</div>
                         </div>
                       </div>
 
@@ -819,8 +852,11 @@ export default function Home({ isLoggedIn }: HomeProps) {
                       </div>
 
                       <div className="flex flex-wrap gap-2 mt-2">
-                        {property.amenities.map((amenity, idx) => (
-                          <span key={idx} className="px-2 py-1 rounded-full text-xs bg-gradient-to-r from-blue-400 to-cyan-400 text-white flex items-center gap-2">{getAmenityIcon(amenity)}{amenity.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase())}</span>
+                        {property.amenities.map((amenity, idx2) => (
+                          <span key={idx2} className="px-2 py-1 rounded-full text-xs bg-gradient-to-r from-blue-400 to-cyan-400 text-white flex items-center gap-2">
+                            {getAmenityIcon(amenity)}
+                            {amenity.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase())}
+                          </span>
                         ))}
                       </div>
 
@@ -838,9 +874,7 @@ export default function Home({ isLoggedIn }: HomeProps) {
                 ))}
               </div>
 
-              <div className="mt-12">
-                <Recommendations propertyType={selectedType} />
-              </div>
+              {/* recommendations removed per request */}
             </div>
           </div>
         )}
