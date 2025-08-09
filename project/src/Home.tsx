@@ -1,5 +1,6 @@
+// Home.tsx
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
   Home as HomeIcon,
@@ -26,34 +27,40 @@ import {
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import Recommendations from './Components/Recommendations';
 import axios from 'axios';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 
-// Fix for default marker icons in Leaflet
+// ---------- Leaflet default marker fix ----------
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-ignore
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+  iconRetinaUrl:
+    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+  iconUrl:
+    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+  shadowUrl:
+    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 });
 
-// Custom red icon for property markers
+// Custom icons
 const redIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+  iconUrl:
+    'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+  shadowUrl:
+    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
   shadowSize: [41, 41],
 });
 
-// Custom blue icon for user's location
 const blueIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+  iconUrl:
+    'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+  shadowUrl:
+    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
@@ -63,8 +70,40 @@ const blueIcon = new L.Icon({
 // ----------------------------- Types ----------------------------------------
 type PropertyType = 'pg' | 'bhk' | 'vacation';
 
+interface RawPropertyFromAPI {
+  _id: string;
+  propertyName?: string;
+  type?: PropertyType;
+  images?: string[];
+  monthlyRent?: number;
+  ratePerDay?: number;
+  contactNumber?: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  squareFeet?: number;
+  maxGuests?: number;
+  amenities?: Record<string, boolean>;
+  sharingOptions?: Record<string, boolean>;
+  description?: string;
+  city?: string;
+  state?: string;
+  deletedAt?: string | null;
+  isFavorited?: boolean;
+}
+
+interface RecommendationItem {
+  _id?: string;
+  propertyId?: string; // some APIs use propertyId
+  property_id?: string; // other naming
+  score?: number; // [0..1] expected
+  type?: PropertyType;
+}
+
 interface Property {
-  id: number | string;
+  id: string;
   type: PropertyType;
   name: string;
   image: string;
@@ -80,23 +119,7 @@ interface Property {
   isFavorited?: boolean;
   city?: string;
   state?: string;
-}
-
-interface Filters {
-  rentMin?: number;
-  rentMax?: number;
-  city?: string;
-  state?: string;
-  bedrooms?: number;
-  bathrooms?: number;
-  sqftMin?: number;
-  maxGuests?: number;
-  sharingOptions?: string[];
-  amenities?: string[];
-}
-
-interface HomeProps {
-  isLoggedIn: boolean;
+  score: number; // merged from recommendations (0..1)
 }
 
 // ----------------------------- UI helpers ----------------------------------
@@ -177,51 +200,50 @@ const amenityLabels: Record<PropertyType, string[]> = {
 const sharingOptions = ['single', 'twoSharing', 'threeSharing', 'fourSharing'];
 
 // ----------------------------- Image pools ---------------------------------
-// Unsplash curated images (houses, families, tourist spots) — free to use via source.unsplash.com
 const heroImages: Record<PropertyType, { text: string; url: string }> = {
   pg: {
     text: 'Comfortable PGs — Community living, simplified.',
-    url: 'https://images.unsplash.com/photo-1560185127-6a9f2d0f3f0a?auto=format&fit=crop&w=1400&q=80',
+    url:
+      'https://images.unsplash.com/photo-1560185127-6a9f2d0f3f0a?auto=format&fit=crop&w=1400&q=80',
   },
   bhk: {
     text: 'Spacious BHKs — Modern living for families.',
-    url: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1400&q=80',
+    url:
+      'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1400&q=80',
   },
   vacation: {
     text: 'Vacation homes & getaways — escape the ordinary.',
-    url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1400&q=80',
+    url:
+      'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1400&q=80',
   },
 };
 
 const sideImages = [
-  // houses
-  //'https://images.unsplash.com/photo-1572120360610-d971b9b3b3f8?auto=format&fit=crop&w=800&q=60',
   'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=60',
   'https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=800&q=60',
   'https://images.unsplash.com/photo-1505691723518-36a2a5a7db60?auto=format&fit=crop&w=800&q=60',
   'https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=800&q=60',
-  // families / lifestyle
-  
-  // tourist spots / vacation
   'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=60',
   'https://images.unsplash.com/photo-1491553895911-0055eca6402d?auto=format&fit=crop&w=800&q=60',
   'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=800&q=60',
   'https://images.unsplash.com/photo-1445019980597-93fa8acb246c?auto=format&fit=crop&w=800&q=60',
   'https://images.unsplash.com/photo-1503264116251-35a269479413?auto=format&fit=crop&w=800&q=60',
-  // mixed
-  
 ];
 
 // ----------------------------- UserLocationMarker ---------------------------
-const UserLocationMarker: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) => {
+const UserLocationMarker: React.FC<{ isLoggedIn: boolean; setUserPosition?: (pos: [number, number] | null) => void }> = ({
+  isLoggedIn,
+  setUserPosition,
+}) => {
   const map = useMap();
-  const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
+  const [userPositionLocal, setUserPositionLocal] = useState<[number, number] | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
 
   const requestLocation = useCallback(() => {
     if (!isLoggedIn) {
       setLocationError(null);
-      setUserPosition(null);
+      setUserPositionLocal(null);
+      setUserPosition?.(null);
       return;
     }
 
@@ -240,8 +262,10 @@ const UserLocationMarker: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) =
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-        setUserPosition([latitude, longitude]);
-        map.setView([latitude, longitude], 12);
+        const coords: [number, number] = [latitude, longitude];
+        setUserPositionLocal(coords);
+        setUserPosition?.(coords);
+        map.setView(coords, 12);
       },
       (error) => {
         switch (error.code) {
@@ -260,12 +284,12 @@ const UserLocationMarker: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) =
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
-  }, [isLoggedIn, map]);
+  }, [isLoggedIn, map, setUserPosition]);
 
   useEffect(() => {
     if (isLoggedIn) requestLocation();
     else {
-      setUserPosition(null);
+      setUserPositionLocal(null);
       setLocationError(null);
     }
   }, [isLoggedIn, requestLocation]);
@@ -285,8 +309,8 @@ const UserLocationMarker: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) =
           )}
         </div>
       )}
-      {userPosition && (
-        <Marker position={userPosition} icon={blueIcon} zIndexOffset={1000}>
+      {userPositionLocal && (
+        <Marker position={userPositionLocal} icon={blueIcon} zIndexOffset={1000}>
           <Popup>Your Current Location</Popup>
         </Marker>
       )}
@@ -295,6 +319,23 @@ const UserLocationMarker: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) =
 };
 
 // ----------------------------- Home Component --------------------------------
+interface Filters {
+  rentMin?: number;
+  rentMax?: number;
+  city?: string;
+  state?: string;
+  bedrooms?: number;
+  bathrooms?: number;
+  sqftMin?: number;
+  maxGuests?: number;
+  sharingOptions?: string[];
+  amenities?: string[];
+}
+
+interface HomeProps {
+  isLoggedIn: boolean;
+}
+
 export default function Home({ isLoggedIn }: HomeProps) {
   const [selectedType, setSelectedType] = useState<PropertyType>('pg');
   const [properties, setProperties] = useState<Property[]>([]);
@@ -320,72 +361,112 @@ export default function Home({ isLoggedIn }: HomeProps) {
     return () => clearInterval(id);
   }, []);
 
-  // ------------------ Fetch properties (keeps your backend calls intact) -----
+  // ------------------ Fetch properties & recommendations and merge scores -----
   useEffect(() => {
-    const fetchProperties = async () => {
+    let mounted = true;
+    const fetchAll = async () => {
       setLoading(true);
       setError(null);
-      const token = localStorage.getItem('token');
-
-      const queryParams = new URLSearchParams();
-      if (filters.rentMin && filters.rentMin > 0) queryParams.append('rentMin', filters.rentMin.toString());
-      if (filters.rentMax && filters.rentMax > 0) queryParams.append('rentMax', filters.rentMax.toString());
-      if (filters.city) queryParams.append('city', filters.city);
-      if (filters.state) queryParams.append('state', filters.state);
-
-      if (selectedType === 'pg') {
-        if (filters.sharingOptions?.length) queryParams.append('sharingOptions', filters.sharingOptions.join(','));
-        if (filters.amenities?.length) queryParams.append('amenities', filters.amenities.join(','));
-      } else if (selectedType === 'bhk') {
-        if (filters.bedrooms) queryParams.append('bedrooms', filters.bedrooms.toString());
-        if (filters.bathrooms) queryParams.append('bathrooms', filters.bathrooms.toString());
-        if (filters.sqftMin) queryParams.append('sqftMin', filters.sqftMin.toString());
-        if (filters.amenities?.length) queryParams.append('amenities', filters.amenities.join(','));
-      } else if (selectedType === 'vacation') {
-        if (filters.maxGuests) queryParams.append('maxGuests', filters.maxGuests.toString());
-        if (filters.amenities?.length) queryParams.append('amenities', filters.amenities.join(','));
-      }
-
       try {
-        const response = await fetch(`/api/properties/management/${selectedType}?${queryParams.toString()}`, {
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token && { Authorization: `Bearer ${token}` }),
-          },
-        });
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(
-            `Failed to fetch ${selectedType} properties: ${response.status} - ${errorData.message || response.statusText}`
-          );
+        const token = localStorage.getItem('token') || '';
+
+        // build query params same as before
+        const queryParams = new URLSearchParams();
+        if (filters.rentMin && filters.rentMin > 0) queryParams.append('rentMin', filters.rentMin.toString());
+        if (filters.rentMax && filters.rentMax > 0) queryParams.append('rentMax', filters.rentMax.toString());
+        if (filters.city) queryParams.append('city', filters.city);
+        if (filters.state) queryParams.append('state', filters.state);
+
+        if (selectedType === 'pg') {
+          if (filters.sharingOptions?.length) queryParams.append('sharingOptions', filters.sharingOptions.join(','));
+          if (filters.amenities?.length) queryParams.append('amenities', filters.amenities.join(','));
+        } else if (selectedType === 'bhk') {
+          if (filters.bedrooms) queryParams.append('bedrooms', filters.bedrooms.toString());
+          if (filters.bathrooms) queryParams.append('bathrooms', filters.bathrooms.toString());
+          if (filters.sqftMin) queryParams.append('sqftMin', filters.sqftMin.toString());
+          if (filters.amenities?.length) queryParams.append('amenities', filters.amenities.join(','));
+        } else if (selectedType === 'vacation') {
+          if (filters.maxGuests) queryParams.append('maxGuests', filters.maxGuests.toString());
+          if (filters.amenities?.length) queryParams.append('amenities', filters.amenities.join(','));
         }
-        const data = await response.json();
 
-        const mappedProperties: Property[] = data
-          .filter((item: any) => !item.deletedAt)
-          .map((item: any) => ({
-            id: item._id,
-            type: selectedType,
-            name: item.propertyName,
-            image: item.images && item.images.length > 0 ? item.images[0] : 'https://via.placeholder.com/600x400',
-            rent: selectedType === 'vacation' ? `₹${item.ratePerDay}/day` : `₹${item.monthlyRent}/month`,
-            phone: item.contactNumber,
-            area: item.address ? item.address.split(',')[0] : '',
-            location: [item.latitude || 19.0760, item.longitude || 72.8777],
-            beds: selectedType === 'bhk' ? item.bedrooms : item.maxGuests || undefined,
-            baths: selectedType === 'bhk' ? item.bathrooms : undefined,
-            sqft: item.squareFeet,
-            amenities: Object.entries(
-              selectedType === 'pg' ? { ...item.sharingOptions, ...item.amenities } : item.amenities
-            )
-              .filter(([_, value]) => value === true)
-              .map(([key]) => key),
-            description: item.description,
-            isFavorited: item.isFavorited || false,
-            city: item.city,
-            state: item.state,
-          }));
+        // fetch both endpoints in parallel:
+        const [propsRes, recsRes] = await Promise.all([
+          fetch(`/api/properties/management/${selectedType}?${queryParams.toString()}`, {
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token && { Authorization: `Bearer ${token}` }),
+            },
+          }),
+          axios.get('/api/properties/recommendations/recommendations', {
+            headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+          }),
+        ]);
 
+        // check properties response
+        if (!propsRes.ok) {
+          const err = await propsRes.json().catch(() => ({}));
+          throw new Error(`Failed to fetch ${selectedType} properties: ${propsRes.status} - ${err.message || propsRes.statusText}`);
+        }
+        const propsData: RawPropertyFromAPI[] = await propsRes.json();
+
+        // recommendations data may be array
+        const recsData: RecommendationItem[] = Array.isArray(recsRes.data) ? recsRes.data : (recsRes.data?.recommendations || []);
+
+        // build map from recs using multiple possible id keys
+        const recMap = new Map<string, RecommendationItem>();
+        recsData.forEach((r) => {
+          const idKeys = [r.propertyId, r.property_id, r._id].filter(Boolean) as string[];
+          idKeys.forEach((k) => recMap.set(k!, r));
+        });
+
+        // map properties, merge score (0..1) default 0
+        const mappedProperties: Property[] = propsData
+          .filter((item) => !item.deletedAt)
+          .map((item) => {
+            const id = item._id;
+            const rec = recMap.get(id);
+            const score = rec?.score ?? 0;
+
+            const mapped: Property = {
+              id,
+              type: (item.type as PropertyType) || selectedType,
+              name: item.propertyName || 'Unnamed Property',
+              image: item.images && item.images.length > 0 ? item.images[0] : 'https://via.placeholder.com/600x400',
+              rent:
+                selectedType === 'vacation'
+                  ? item.ratePerDay
+                    ? `₹${item.ratePerDay}/day`
+                    : 'Price N/A'
+                  : item.monthlyRent
+                  ? `₹${item.monthlyRent}/month`
+                  : 'Price N/A',
+              phone: item.contactNumber || 'N/A',
+              area: item.address ? item.address.split(',')[0] : '',
+              location: [item.latitude ?? 19.0760, item.longitude ?? 72.8777],
+              beds: selectedType === 'bhk' ? item.bedrooms : item.maxGuests || undefined,
+              baths: selectedType === 'bhk' ? item.bathrooms : undefined,
+              sqft: item.squareFeet,
+              amenities: Object.entries((selectedType === 'pg' ? { ...(item.sharingOptions || {}), ...(item.amenities || {}) } : item.amenities || {}))
+                .filter(([_, value]) => value === true)
+                .map(([key]) => key),
+              description: item.description || '',
+              isFavorited: item.isFavorited || false,
+              city: item.city,
+              state: item.state,
+              score: typeof score === 'number' ? score : 0,
+            };
+            return mapped;
+          });
+
+        // sort by score desc (then fallback to name to keep deterministic)
+        mappedProperties.sort((a, b) => {
+          const delta = b.score - a.score;
+          if (Math.abs(delta) > 1e-6) return delta;
+          return a.name.localeCompare(b.name);
+        });
+
+        if (!mounted) return;
         setProperties(mappedProperties);
 
         const uniqueCities = [...new Set(mappedProperties.map((p) => p.city).filter(Boolean))] as string[];
@@ -395,13 +476,17 @@ export default function Home({ isLoggedIn }: HomeProps) {
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Something went wrong');
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     };
 
-    fetchProperties();
+    fetchAll();
+    return () => {
+      mounted = false;
+    };
   }, [selectedType, filters]);
 
+  // reset PG filters when switching away
   useEffect(() => {
     if (selectedType !== 'pg') {
       setFilters({});
@@ -410,8 +495,8 @@ export default function Home({ isLoggedIn }: HomeProps) {
     }
   }, [selectedType]);
 
-  // ------------------ Favorite toggle (unchanged intentions) -----------------
-  const toggleFavorite = async (propertyId: number | string) => {
+  // ------------------ Favorite toggle ---------------------------------------
+  const toggleFavorite = async (propertyId: string) => {
     const property = properties.find((p) => p.id === propertyId);
     if (!property) return;
 
@@ -433,13 +518,14 @@ export default function Home({ isLoggedIn }: HomeProps) {
       const data = await response.json();
       if (!response.ok) throw new Error(`Failed to update favorite: ${response.status} - ${data.message}`);
     } catch (err) {
+      // rollback
       setProperties((prev) => prev.map((p) => (p.id === propertyId ? { ...p, isFavorited: !newFavoriteStatus } : p)));
       setError(err instanceof Error ? err.message : 'Failed to update favorite');
     }
   };
 
   // ------------------ Click tracking preserved --------------------------------
-  const handleClick = async (propertyId: number | string, propertyType: PropertyType) => {
+  const handleClick = async (propertyId: string, propertyType: PropertyType) => {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
@@ -448,7 +534,7 @@ export default function Home({ isLoggedIn }: HomeProps) {
         { propertyType },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-    } catch (err) {
+    } catch {
       // swallow - non-critical
     }
   };
@@ -486,7 +572,9 @@ export default function Home({ isLoggedIn }: HomeProps) {
       const currentAmenities = prev.amenities || [];
       return {
         ...prev,
-        amenities: currentAmenities.includes(amenity) ? currentAmenities.filter((a) => a !== amenity) : [...currentAmenities, amenity],
+        amenities: currentAmenities.includes(amenity)
+          ? currentAmenities.filter((a) => a !== amenity)
+          : [...currentAmenities, amenity],
       };
     });
   };
@@ -512,7 +600,10 @@ export default function Home({ isLoggedIn }: HomeProps) {
   const center: [number, number] = userPosition
     ? userPosition
     : properties.length > 0
-    ? [properties.reduce((sum, p) => sum + p.location[0], 0) / properties.length, properties.reduce((sum, p) => sum + p.location[1], 0) / properties.length]
+    ? [
+        properties.reduce((sum, p) => sum + p.location[0], 0) / properties.length,
+        properties.reduce((sum, p) => sum + p.location[1], 0) / properties.length,
+      ]
     : [19.0760, 72.8777];
 
   // ------------------ 3D scroll effect --------------------------------------
@@ -574,12 +665,24 @@ export default function Home({ isLoggedIn }: HomeProps) {
     <div className="min-h-screen bg-gray-50 text-gray-800">
       {/* HERO */}
       <section className="relative overflow-hidden">
-        <div id="hero-bg" className="absolute inset-0 -z-10 transform-gpu transition-transform duration-300" style={{ background: `linear-gradient(135deg, rgba(99,102,241,0.12), rgba(14,165,233,0.06)), url(${heroImages[selectedType].url}) center/cover no-repeat` }} />
+        <div
+          id="hero-bg"
+          className="absolute inset-0 -z-10 transform-gpu transition-transform duration-300"
+          style={{
+            background: `linear-gradient(135deg, rgba(99,102,241,0.12), rgba(14,165,233,0.06)), url(${heroImages[selectedType].url}) center/cover no-repeat`,
+          }}
+        />
         <div className="container mx-auto px-6 py-12">
           <div className="flex items-center justify-between gap-6">
             <div>
               <h1 className="text-4xl md:text-5xl font-extrabold leading-tight">{heroImages[selectedType].text}</h1>
-              <p className="mt-3 text-lg text-gray-600 max-w-xl">{selectedType === 'pg' ? 'Affordable shared living with community support.' : selectedType === 'bhk' ? 'Roomy homes designed for families and comfort.' : 'Handpicked vacation homes close to nature and attractions.'}</p>
+              <p className="mt-3 text-lg text-gray-600 max-w-xl">
+                {selectedType === 'pg'
+                  ? 'Affordable shared living with community support.'
+                  : selectedType === 'bhk'
+                  ? 'Roomy homes designed for families and comfort.'
+                  : 'Handpicked vacation homes close to nature and attractions.'}
+              </p>
               <div className="mt-6 flex items-center gap-4">
                 <div className="rounded-full bg-gradient-to-r from-indigo-600 to-cyan-500 text-white px-4 py-2 shadow-md">Instant Booking</div>
                 <div className="rounded-full bg-white px-4 py-2 shadow-sm text-sm">Verified Listings</div>
@@ -733,7 +836,6 @@ export default function Home({ isLoggedIn }: HomeProps) {
                   </div>
                 </>
               )}
-
             </div>
 
             <div className="mt-6 flex justify-end gap-3">
@@ -767,7 +869,7 @@ export default function Home({ isLoggedIn }: HomeProps) {
             <div className="col-span-1 lg:col-span-1 bg-white rounded-xl shadow-md overflow-hidden sticky top-24 h-[70vh]">
               <MapContainer center={center} zoom={userPosition ? 12 : 10} style={{ height: '100%', width: '100%' }}>
                 <TileLayer attribution='© OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                <UserLocationMarker isLoggedIn={isLoggedIn} />
+                <UserLocationMarker isLoggedIn={isLoggedIn} setUserPosition={setUserPosition} />
                 {properties.map((property) => (
                   <Marker key={property.id} position={[property.location[0], property.location[1]]} icon={redIcon}>
                     <Popup>
@@ -787,10 +889,25 @@ export default function Home({ isLoggedIn }: HomeProps) {
             <div className="col-span-2" ref={listRef}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {properties.map((property) => (
-                  <article key={property.id} className="property-card bg-white rounded-2xl overflow-hidden shadow-md transform transition-transform duration-300" onClick={() => handleClick(property.id, property.type)}>
+                  <article
+                    key={property.id}
+                    className="property-card bg-white rounded-2xl overflow-hidden shadow-md transform transition-transform duration-300 cursor-pointer"
+                    onClick={() => handleClick(property.id, property.type)}
+                  >
                     <div className="relative h-48 overflow-hidden">
                       <img src={property.image} alt={property.name} className="w-full h-full object-cover" />
-                      <button onClick={(e) => { e.stopPropagation(); toggleFavorite(property.id); }} className="absolute top-3 right-3 bg-white/90 p-2 rounded-full shadow"> 
+                      {/* Score badge under image */}
+                      <div className="absolute left-3 bottom-3 bg-white/90 px-3 py-1 rounded-full text-sm font-medium text-gray-800 shadow">
+                        Score: {(property.score * 100).toFixed(1)}%
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFavorite(property.id);
+                        }}
+                        className="absolute top-3 right-3 bg-white/90 p-2 rounded-full shadow"
+                        aria-label={property.isFavorited ? 'Unfavorite' : 'Favorite'}
+                      >
                         <Heart className={`h-5 w-5 ${property.isFavorited ? 'text-red-500 fill-red-500' : 'text-gray-600'}`} />
                       </button>
                     </div>
@@ -802,7 +919,7 @@ export default function Home({ isLoggedIn }: HomeProps) {
                         </div>
                         <div className="text-right">
                           <div className="text-2xl font-bold text-blue-600">{property.rent}</div>
-                          <div className="text-xs text-gray-500">/ month</div>
+                          <div className="text-xs text-gray-500">{selectedType === 'vacation' ? '' : '/ month'}</div>
                         </div>
                       </div>
 
@@ -816,7 +933,10 @@ export default function Home({ isLoggedIn }: HomeProps) {
 
                       <div className="flex flex-wrap gap-2 mt-2">
                         {property.amenities.map((amenity, idx) => (
-                          <span key={idx} className="px-2 py-1 rounded-full text-xs bg-gradient-to-r from-blue-400 to-cyan-400 text-white flex items-center gap-2">{getAmenityIcon(amenity)}{amenity.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase())}</span>
+                          <span key={idx} className="px-2 py-1 rounded-full text-xs bg-gradient-to-r from-blue-400 to-cyan-400 text-white flex items-center gap-2">
+                            {getAmenityIcon(amenity)}
+                            {amenity.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase())}
+                          </span>
                         ))}
                       </div>
 
@@ -826,7 +946,16 @@ export default function Home({ isLoggedIn }: HomeProps) {
                         </div>
 
                         <div className="flex items-center gap-2">
-                          <Link to={`/booking/${property.type}/${property.id}`} onClick={(e) => { e.stopPropagation(); handleClick(property.id, property.type); }} className="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg">View Details</Link>
+                          <Link
+                            to={`/booking/${property.type}/${property.id}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleClick(property.id, property.type);
+                            }}
+                            className="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg"
+                          >
+                            View Details
+                          </Link>
                         </div>
                       </div>
                     </div>
@@ -834,9 +963,7 @@ export default function Home({ isLoggedIn }: HomeProps) {
                 ))}
               </div>
 
-              <div className="mt-12">
-                <Recommendations propertyType={selectedType} />
-              </div>
+              {/* Removed separate Recommendations section - recommendations merged into properties */}
             </div>
           </div>
         )}
