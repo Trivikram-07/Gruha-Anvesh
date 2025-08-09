@@ -28,9 +28,6 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import Recommendations from './Components/Recommendations';
 import axios from 'axios';
-import { AnimatePresence } from 'framer-motion';
-import Skeleton from 'react-loading-skeleton';
-import 'react-loading-skeleton/dist/skeleton.css';
 
 // Fix for default marker icons in Leaflet
 // @ts-ignore
@@ -268,9 +265,7 @@ export default function Home({ isLoggedIn }: HomeProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<Filters>({});
   const [cities, setCities] = useState<string[]>([]);
-  const [states, setStates] = useState<string[]>([]);
   const [filterError, setFilterError] = useState<string | null>(null);
-  const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
 
   // Refs for 3D scroll effect
   const listRef = useRef<HTMLDivElement | null>(null);
@@ -345,9 +340,7 @@ export default function Home({ isLoggedIn }: HomeProps) {
         setProperties(mappedProperties);
 
         const uniqueCities = [...new Set(mappedProperties.map((p) => p.city).filter(Boolean))] as string[];
-        const uniqueStates = [...new Set(mappedProperties.map((p) => p.state).filter(Boolean))] as string[];
         setCities(uniqueCities);
-        setStates(uniqueStates);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Something went wrong');
       } finally {
@@ -465,9 +458,7 @@ export default function Home({ isLoggedIn }: HomeProps) {
   const isApplyDisabled = !!filterError;
 
   // Map center computed from properties or fallback
-  const center: [number, number] = userPosition
-    ? userPosition
-    : properties.length > 0
+  const center: [number, number] = properties.length > 0
     ? [properties.reduce((sum, p) => sum + p.location[0], 0) / properties.length, properties.reduce((sum, p) => sum + p.location[1], 0) / properties.length]
     : [19.0760, 72.8777];
 
@@ -553,7 +544,6 @@ export default function Home({ isLoggedIn }: HomeProps) {
       <div className="container mx-auto px-6 -mt-8">
         <div className="relative bg-white rounded-full shadow-md p-1 max-w-lg mx-auto flex justify-between">
           {(['pg', 'bhk', 'vacation'] as PropertyType[]).map((t) => {
-            const idx = t === 'pg' ? 0 : t === 'bhk' ? 1 : 2;
             const active = selectedType === t;
             return (
               <button
@@ -710,7 +700,7 @@ export default function Home({ isLoggedIn }: HomeProps) {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* MAP (left) */}
             <div className="col-span-1 lg:col-span-1 bg-white rounded-xl shadow-md overflow-hidden sticky top-24 h-[70vh]">
-              <MapContainer center={center} zoom={userPosition ? 12 : 10} style={{ height: '100%', width: '100%' }}>
+              <MapContainer center={center} zoom={10} style={{ height: '100%', width: '100%' }}>
                 <TileLayer attribution='© OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                 <UserLocationMarker isLoggedIn={isLoggedIn} />
                 {properties.map((property) => (
