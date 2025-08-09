@@ -8,7 +8,6 @@
     "dev": "nodemon app.js",
     "build": "echo 'No build step needed for backend'",
     "postinstall": "cd project && npm install"
-
   },
   "keywords": [],
   "author": "",
@@ -30,6 +29,7 @@
     "multer-gridfs-storage": "^5.0.2",
     "multer-storage-cloudinary": "^4.0.0",
     "node-cron": "^3.0.3",
+    "react-icons": "^5.5.0",
     "socket.io": "^4.7.5"
   },
   "devDependencies": {
