@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
   Home as HomeIcon,
@@ -28,6 +28,8 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import Recommendations from './Components/Recommendations';
 import axios from 'axios';
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
 
 // Fix for default marker icons in Leaflet
 // @ts-ignore
@@ -174,6 +176,50 @@ const amenityLabels: Record<PropertyType, string[]> = {
 
 const sharingOptions = ['single', 'twoSharing', 'threeSharing', 'fourSharing'];
 
+// ----------------------------- Image pools ---------------------------------
+// Unsplash curated images (houses, families, tourist spots) — free to use via source.unsplash.com
+const heroImages: Record<PropertyType, { text: string; url: string }> = {
+  pg: {
+    text: 'Comfortable PGs — Community living, simplified.',
+    url: 'https://images.unsplash.com/photo-1560185127-6a9f2d0f3f0a?auto=format&fit=crop&w=1400&q=80',
+  },
+  bhk: {
+    text: 'Spacious BHKs — Modern living for families.',
+    url: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1400&q=80',
+  },
+  vacation: {
+    text: 'Vacation homes & getaways — escape the ordinary.',
+    url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1400&q=80',
+  },
+};
+
+const sideImages = [
+  // houses
+  'https://images.unsplash.com/photo-1572120360610-d971b9b3b3f8?auto=format&fit=crop&w=800&q=60',
+  'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=60',
+  'https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=800&q=60',
+  'https://images.unsplash.com/photo-1505691723518-36a2a5a7db60?auto=format&fit=crop&w=800&q=60',
+  'https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=800&q=60',
+  // families / lifestyle
+  'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=60',
+  'https://images.unsplash.com/photo-1544739313-6f6c7aa0f0e6?auto=format&fit=crop&w=800&q=60',
+  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=800&q=60',
+  'https://images.unsplash.com/photo-1519340333755-5d42f4b28f5f?auto=format&fit=crop&w=800&q=60',
+  'https://images.unsplash.com/photo-1532074205216-d0e1f8f8f4f8?auto=format&fit=crop&w=800&q=60',
+  // tourist spots / vacation
+  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=60',
+  'https://images.unsplash.com/photo-1491553895911-0055eca6402d?auto=format&fit=crop&w=800&q=60',
+  'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=800&q=60',
+  'https://images.unsplash.com/photo-1445019980597-93fa8acb246c?auto=format&fit=crop&w=800&q=60',
+  'https://images.unsplash.com/photo-1503264116251-35a269479413?auto=format&fit=crop&w=800&q=60',
+  // mixed
+  'https://images.unsplash.com/photo-1523217582562-09d0def993a6?auto=format&fit=crop&w=800&q=60',
+  'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=60',
+  'https://images.unsplash.com/photo-1505692794401-2c4f1b5f6b2d?auto=format&fit=crop&w=800&q=60',
+  'https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=800&q=60',
+  'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&fit=crop&w=800&q=60',
+];
+
 // ----------------------------- UserLocationMarker ---------------------------
 const UserLocationMarker: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) => {
   const map = useMap();
@@ -265,11 +311,22 @@ export default function Home({ isLoggedIn }: HomeProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<Filters>({});
   const [cities, setCities] = useState<string[]>([]);
+  const [states, setStates] = useState<string[]>([]);
   const [filterError, setFilterError] = useState<string | null>(null);
+  const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
+
+  // side image index for carousel
+  const [sideIndex, setSideIndex] = useState(0);
 
   // Refs for 3D scroll effect
   const listRef = useRef<HTMLDivElement | null>(null);
   const tickingRef = useRef(false);
+
+  // cycle side images every 5s
+  useEffect(() => {
+    const id = setInterval(() => setSideIndex((s) => (s + 1) % sideImages.length), 5000);
+    return () => clearInterval(id);
+  }, []);
 
   // ------------------ Fetch properties (keeps your backend calls intact) -----
   useEffect(() => {
@@ -340,7 +397,9 @@ export default function Home({ isLoggedIn }: HomeProps) {
         setProperties(mappedProperties);
 
         const uniqueCities = [...new Set(mappedProperties.map((p) => p.city).filter(Boolean))] as string[];
+        const uniqueStates = [...new Set(mappedProperties.map((p) => p.state).filter(Boolean))] as string[];
         setCities(uniqueCities);
+        setStates(uniqueStates);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Something went wrong');
       } finally {
@@ -458,7 +517,9 @@ export default function Home({ isLoggedIn }: HomeProps) {
   const isApplyDisabled = !!filterError;
 
   // Map center computed from properties or fallback
-  const center: [number, number] = properties.length > 0
+  const center: [number, number] = userPosition
+    ? userPosition
+    : properties.length > 0
     ? [properties.reduce((sum, p) => sum + p.location[0], 0) / properties.length, properties.reduce((sum, p) => sum + p.location[1], 0) / properties.length]
     : [19.0760, 72.8777];
 
@@ -521,20 +582,21 @@ export default function Home({ isLoggedIn }: HomeProps) {
     <div className="min-h-screen bg-gray-50 text-gray-800">
       {/* HERO */}
       <section className="relative overflow-hidden">
-        <div id="hero-bg" className="absolute inset-0 -z-10 transform-gpu transition-transform duration-300" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.12), rgba(14,165,233,0.06))' }} />
+        <div id="hero-bg" className="absolute inset-0 -z-10 transform-gpu transition-transform duration-300" style={{ background: `linear-gradient(135deg, rgba(99,102,241,0.12), rgba(14,165,233,0.06)), url(${heroImages[selectedType].url}) center/cover no-repeat` }} />
         <div className="container mx-auto px-6 py-12">
           <div className="flex items-center justify-between gap-6">
             <div>
-              <h1 className="text-4xl md:text-5xl font-extrabold leading-tight">Find beautiful places to stay — fast.</h1>
-              <p className="mt-3 text-lg text-gray-600 max-w-xl">PGs, BHKs and Vacation homes — curated, verified and easy to book.</p>
+              <h1 className="text-4xl md:text-5xl font-extrabold leading-tight">{heroImages[selectedType].text}</h1>
+              <p className="mt-3 text-lg text-gray-600 max-w-xl">{selectedType === 'pg' ? 'Affordable shared living with community support.' : selectedType === 'bhk' ? 'Roomy homes designed for families and comfort.' : 'Handpicked vacation homes close to nature and attractions.'}</p>
               <div className="mt-6 flex items-center gap-4">
                 <div className="rounded-full bg-gradient-to-r from-indigo-600 to-cyan-500 text-white px-4 py-2 shadow-md">Instant Booking</div>
                 <div className="rounded-full bg-white px-4 py-2 shadow-sm text-sm">Verified Listings</div>
               </div>
             </div>
 
-            <div className="hidden md:block w-80 h-44 rounded-2xl bg-white shadow-lg overflow-hidden">
-              <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=800&q=60" alt="hero" className="w-full h-full object-cover" />
+            <div className="hidden md:block w-80 h-44 rounded-2xl bg-white shadow-lg overflow-hidden relative">
+              <img src={sideImages[sideIndex]} alt="side" className="w-full h-full object-cover transition-transform duration-700" />
+              <div className="absolute bottom-2 left-2 bg-black/40 text-white text-xs px-2 py-1 rounded">Explore</div>
             </div>
           </div>
         </div>
@@ -693,14 +755,25 @@ export default function Home({ isLoggedIn }: HomeProps) {
       {/* MAP + LIST */}
       <div className="container mx-auto px-6 py-10">
         {loading ? (
-          <div className="text-center py-16">Loading properties...</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="bg-white rounded-xl p-4 shadow">
+                <Skeleton height={180} />
+                <div className="mt-3">
+                  <Skeleton width={`60%`} />
+                  <Skeleton width={`40%`} />
+                  <Skeleton count={2} />
+                </div>
+              </div>
+            ))}
+          </div>
         ) : error ? (
           <div className="text-center py-16 text-red-500">{error}</div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* MAP (left) */}
             <div className="col-span-1 lg:col-span-1 bg-white rounded-xl shadow-md overflow-hidden sticky top-24 h-[70vh]">
-              <MapContainer center={center} zoom={10} style={{ height: '100%', width: '100%' }}>
+              <MapContainer center={center} zoom={userPosition ? 12 : 10} style={{ height: '100%', width: '100%' }}>
                 <TileLayer attribution='© OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                 <UserLocationMarker isLoggedIn={isLoggedIn} />
                 {properties.map((property) => (
