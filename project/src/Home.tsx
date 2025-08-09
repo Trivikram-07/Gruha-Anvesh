@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
@@ -29,17 +29,21 @@ import 'leaflet/dist/leaflet.css';
 import Recommendations from './Components/Recommendations';
 import axios from 'axios';
 
-// Fix for default marker icons in Leaflet
+// -----------------------------------------------------------------------------
+// Leaflet icon fixes (keeps your backend map functionality the same)
+// -----------------------------------------------------------------------------
+// @ts-ignore
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+  iconRetinaUrl:
+    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 });
 
-// Custom red icon for property markers
 const redIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+  iconUrl:
+    'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
   iconSize: [25, 41],
   iconAnchor: [12, 41],
@@ -47,9 +51,9 @@ const redIcon = new L.Icon({
   shadowSize: [41, 41],
 });
 
-// Custom blue icon for user's location
 const blueIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+  iconUrl:
+    'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
   iconSize: [25, 41],
   iconAnchor: [12, 41],
@@ -57,6 +61,7 @@ const blueIcon = new L.Icon({
   shadowSize: [41, 41],
 });
 
+// ----------------------------- Types ----------------------------------------
 type PropertyType = 'pg' | 'bhk' | 'vacation';
 
 interface Property {
@@ -95,10 +100,11 @@ interface HomeProps {
   isLoggedIn: boolean;
 }
 
+// ----------------------------- UI helpers ----------------------------------
 const categoryColors = {
-  pg: 'from-purple-500 to-pink-500',
-  bhk: 'from-blue-500 to-teal-500',
-  vacation: 'from-orange-500 to-yellow-500',
+  pg: 'from-purple-600 to-pink-500',
+  bhk: 'from-blue-600 to-cyan-500',
+  vacation: 'from-orange-500 to-yellow-400',
 };
 
 const getAmenityIcon = (amenity: string) => {
@@ -171,51 +177,41 @@ const amenityLabels: Record<PropertyType, string[]> = {
 
 const sharingOptions = ['single', 'twoSharing', 'threeSharing', 'fourSharing'];
 
-// Component to handle user's location
+// ----------------------------- UserLocationMarker ---------------------------
 const UserLocationMarker: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) => {
   const map = useMap();
   const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
 
   const requestLocation = useCallback(() => {
-    console.log('requestLocation called, isLoggedIn:', isLoggedIn);
     if (!isLoggedIn) {
-      console.log('Skipping geolocation: User not logged in');
       setLocationError(null);
       setUserPosition(null);
       return;
     }
 
     if (!navigator.geolocation) {
-      console.error('Geolocation not supported');
       setLocationError('Geolocation is not supported by your browser.');
       return;
     }
 
     const isSecure = window.location.protocol === 'https:' || window.location.hostname === 'localhost';
-    console.log('Secure context:', isSecure, 'URL:', window.location.href);
     if (!isSecure) {
-      console.error('Non-secure context detected');
-      setLocationError('Location access requires a secure connection (HTTPS or localhost).');
+      setLocationError('Location access requires HTTPS or localhost.');
       return;
     }
 
-    console.log('Requesting geolocation permission');
     setLocationError(null);
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-        console.log('Geolocation success:', { latitude, longitude });
         setUserPosition([latitude, longitude]);
-        console.log('Setting map view to:', [latitude, longitude], 'Zoom: 12');
         map.setView([latitude, longitude], 12);
-        console.log('Current map view:', { center: map.getCenter(), zoom: map.getZoom() });
       },
       (error) => {
-        console.error('Geolocation error:', error.message, 'Code:', error.code);
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            setLocationError('Location permission denied. Please enable location access in your browser settings.');
+            setLocationError('Location permission denied. Please enable location access.');
             break;
           case error.POSITION_UNAVAILABLE:
             setLocationError('Location information is unavailable.');
@@ -227,30 +223,17 @@ const UserLocationMarker: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) =
             setLocationError('An error occurred while retrieving your location.');
         }
       },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
-      }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
-  }, [map, isLoggedIn]);
+  }, [isLoggedIn, map]);
 
   useEffect(() => {
-    console.log('UserLocationMarker useEffect, isLoggedIn:', isLoggedIn, 'userPosition:', userPosition);
-    if (isLoggedIn) {
-      requestLocation();
-    } else {
-      console.log('Clearing user position: Not logged in');
+    if (isLoggedIn) requestLocation();
+    else {
       setUserPosition(null);
       setLocationError(null);
     }
   }, [isLoggedIn, requestLocation]);
-
-  useEffect(() => {
-    if (userPosition) {
-      console.log('userPosition updated:', userPosition, 'Rendering marker');
-    }
-  }, [userPosition]);
 
   return (
     <>
@@ -259,10 +242,7 @@ const UserLocationMarker: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) =
           <span>{locationError}</span>
           {locationError.includes('denied') && (
             <button
-              onClick={() => {
-                console.log('Retry button clicked');
-                requestLocation();
-              }}
+              onClick={() => requestLocation()}
               className="bg-white text-red-500 px-3 py-1 rounded hover:bg-gray-100"
             >
               Retry
@@ -279,7 +259,8 @@ const UserLocationMarker: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) =
   );
 };
 
-function Home({ isLoggedIn }: HomeProps) {
+// ----------------------------- Home Component --------------------------------
+export default function Home({ isLoggedIn }: HomeProps) {
   const [selectedType, setSelectedType] = useState<PropertyType>('pg');
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
@@ -291,12 +272,16 @@ function Home({ isLoggedIn }: HomeProps) {
   const [filterError, setFilterError] = useState<string | null>(null);
   const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
 
+  // Refs for 3D scroll effect
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const tickingRef = useRef(false);
+
+  // ------------------ Fetch properties (keeps your backend calls intact) -----
   useEffect(() => {
     const fetchProperties = async () => {
       setLoading(true);
       setError(null);
       const token = localStorage.getItem('token');
-      console.log('Fetching properties with Token:', token);
 
       const queryParams = new URLSearchParams();
       if (filters.rentMin && filters.rentMin > 0) queryParams.append('rentMin', filters.rentMin.toString());
@@ -326,13 +311,11 @@ function Home({ isLoggedIn }: HomeProps) {
         });
         if (!response.ok) {
           const errorData = await response.json();
-          console.error('Fetch error response:', errorData);
           throw new Error(
             `Failed to fetch ${selectedType} properties: ${response.status} - ${errorData.message || response.statusText}`
           );
         }
         const data = await response.json();
-        console.log('Raw server response:', data);
 
         const mappedProperties: Property[] = data
           .filter((item: any) => !item.deletedAt)
@@ -340,10 +323,10 @@ function Home({ isLoggedIn }: HomeProps) {
             id: item._id,
             type: selectedType,
             name: item.propertyName,
-            image: item.images && item.images.length > 0 ? item.images[0] : 'https://via.placeholder.com/300',
+            image: item.images && item.images.length > 0 ? item.images[0] : 'https://via.placeholder.com/600x400',
             rent: selectedType === 'vacation' ? `₹${item.ratePerDay}/day` : `₹${item.monthlyRent}/month`,
             phone: item.contactNumber,
-            area: item.address.split(',')[0],
+            area: item.address ? item.address.split(',')[0] : '',
             location: [item.latitude || 19.0760, item.longitude || 72.8777],
             beds: selectedType === 'bhk' ? item.bedrooms : item.maxGuests || undefined,
             baths: selectedType === 'bhk' ? item.bathrooms : undefined,
@@ -359,7 +342,6 @@ function Home({ isLoggedIn }: HomeProps) {
             state: item.state,
           }));
 
-        console.log('Mapped properties:', mappedProperties);
         setProperties(mappedProperties);
 
         const uniqueCities = [...new Set(mappedProperties.map((p) => p.city).filter(Boolean))] as string[];
@@ -367,7 +349,6 @@ function Home({ isLoggedIn }: HomeProps) {
         setCities(uniqueCities);
         setStates(uniqueStates);
       } catch (err) {
-        console.error('Fetch error:', err);
         setError(err instanceof Error ? err.message : 'Something went wrong');
       } finally {
         setLoading(false);
@@ -385,73 +366,50 @@ function Home({ isLoggedIn }: HomeProps) {
     }
   }, [selectedType]);
 
+  // ------------------ Favorite toggle (unchanged intentions) -----------------
   const toggleFavorite = async (propertyId: number | string) => {
     const property = properties.find((p) => p.id === propertyId);
     if (!property) return;
 
     const token = localStorage.getItem('token');
     if (!token) {
-      console.error('No token found - please log in');
       setError('Please log in to favorite properties');
       return;
     }
 
     const newFavoriteStatus = !property.isFavorited;
-    console.log('Toggling favorite:', { propertyId, newFavoriteStatus });
-
-    setProperties((prev) =>
-      prev.map((p) => (p.id === propertyId ? { ...p, isFavorited: newFavoriteStatus } : p))
-    );
+    setProperties((prev) => prev.map((p) => (p.id === propertyId ? { ...p, isFavorited: newFavoriteStatus } : p)));
 
     try {
       const response = await fetch(`/api/properties/favorites/${propertyId}/favorite`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ isFavorited: newFavoriteStatus, propertyType: property.type }),
       });
-
       const data = await response.json();
-      console.log('Server response:', { status: response.status, data });
-
-      if (!response.ok) {
-        throw new Error(`Failed to update favorite: ${response.status} - ${data.message || 'Unknown error'}`);
-      }
+      if (!response.ok) throw new Error(`Failed to update favorite: ${response.status} - ${data.message}`);
     } catch (err) {
-      console.error('Favorite toggle error:', err);
-      setProperties((prev) =>
-        prev.map((p) => (p.id === propertyId ? { ...p, isFavorited: !newFavoriteStatus } : p))
-      );
+      setProperties((prev) => prev.map((p) => (p.id === propertyId ? { ...p, isFavorited: !newFavoriteStatus } : p)));
       setError(err instanceof Error ? err.message : 'Failed to update favorite');
     }
   };
 
+  // ------------------ Click tracking preserved --------------------------------
   const handleClick = async (propertyId: number | string, propertyType: PropertyType) => {
     const token = localStorage.getItem('token');
-    if (!token) {
-      console.log('No token - skipping click tracking');
-      return;
-    }
-
-    console.log('Sending click:', { propertyId, propertyType });
+    if (!token) return;
     try {
-      const response = await axios.post(
+      await axios.post(
         `/api/properties/actions/click/${propertyId}`,
         { propertyType },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      console.log('Property clicked:', propertyId, 'Response:', response.data);
     } catch (err) {
-      console.error('Click tracking failed:', {
-        status: axios.isAxiosError(err) ? err.response?.status : undefined,
-        data: axios.isAxiosError(err) ? err.response?.data : null,
-        message: err instanceof Error ? err.message : 'Unknown error',
-      });
+      // swallow - non-critical
     }
   };
 
+  // ------------------ Filters helpers ----------------------------------------
   const handleFilterChange = (key: keyof Filters, value: any) => {
     setFilterError(null);
     setFilters((prev) => {
@@ -484,9 +442,7 @@ function Home({ isLoggedIn }: HomeProps) {
       const currentAmenities = prev.amenities || [];
       return {
         ...prev,
-        amenities: currentAmenities.includes(amenity)
-          ? currentAmenities.filter((a) => a !== amenity)
-          : [...currentAmenities, amenity],
+        amenities: currentAmenities.includes(amenity) ? currentAmenities.filter((a) => a !== amenity) : [...currentAmenities, amenity],
       };
     });
   };
@@ -496,9 +452,7 @@ function Home({ isLoggedIn }: HomeProps) {
       const currentOptions = prev.sharingOptions || [];
       return {
         ...prev,
-        sharingOptions: currentOptions.includes(option)
-          ? currentOptions.filter((o) => o !== option)
-          : [...currentOptions, option],
+        sharingOptions: currentOptions.includes(option) ? currentOptions.filter((o) => o !== option) : [...currentOptions, option],
       };
     });
   };
@@ -510,434 +464,339 @@ function Home({ isLoggedIn }: HomeProps) {
 
   const isApplyDisabled = !!filterError;
 
+  // Map center computed from properties or fallback
   const center: [number, number] = userPosition
     ? userPosition
     : properties.length > 0
-      ? [
-          properties.reduce((sum, p) => sum + p.location[0], 0) / properties.length,
-          properties.reduce((sum, p) => sum + p.location[1], 0) / properties.length,
-        ]
-      : [19.0760, 72.8777];
+    ? [properties.reduce((sum, p) => sum + p.location[0], 0) / properties.length, properties.reduce((sum, p) => sum + p.location[1], 0) / properties.length]
+    : [19.0760, 72.8777];
 
-  console.log('Map center:', center);
+  // ------------------ 3D scroll effect --------------------------------------
+  useEffect(() => {
+    const container = listRef.current;
+    if (!container) return;
 
-  const buttons = [
-    {
-      type: 'pg' as PropertyType,
-      label: 'PG',
-      icon: <HomeIcon className="inline-block mr-2 h-5 w-5" />,
-      gradient: 'from-purple-500 to-pink-500',
-    },
-    {
-      type: 'bhk' as PropertyType,
-      label: 'BHK',
-      icon: <Building2 className="inline-block mr-2 h-5 w-5" />,
-      gradient: 'from-blue-500 to-teal-500',
-    },
-    {
-      type: 'vacation' as PropertyType,
-      label: 'Vacation',
-      icon: <Palmtree className="inline-block mr-2 h-5 w-5" />,
-      gradient: 'from-orange-500 to-yellow-500',
-    },
-  ];
+    const cards = () => Array.from(container.querySelectorAll('.property-card')) as HTMLElement[];
 
-  const selectedIndex = buttons.findIndex((button) => button.type === selectedType);
+    function onScroll() {
+      if (tickingRef.current) return;
+      tickingRef.current = true;
+      requestAnimationFrame(() => {
+        const cardElems = cards();
+        const viewportCenter = window.innerHeight / 2;
+        cardElems.forEach((card) => {
+          const rect = card.getBoundingClientRect();
+          const cardCenter = rect.top + rect.height / 2;
+          const distance = cardCenter - viewportCenter; // positive when below center
+          const maxDist = window.innerHeight / 1.2;
+          const ratio = Math.max(-1, Math.min(1, distance / maxDist));
 
+          // compute transforms
+          const rotateX = ratio * 8; // tilt
+          const translateZ = -Math.abs(ratio) * 40; // depth
+          const translateY = -ratio * 8; // small lift
+
+          card.style.transform = `perspective(1200px) translateZ(${translateZ}px) translateY(${translateY}px) rotateX(${rotateX}deg)`;
+          card.style.boxShadow = `${Math.abs(ratio) * 20}px ${Math.abs(ratio) * 12}px ${20 + Math.abs(ratio) * 20}px rgba(10,20,40,0.08)`;
+        });
+        tickingRef.current = false;
+      });
+    }
+
+    // initial call
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
+  }, [properties]);
+
+  // small parallax for header background
+  useEffect(() => {
+    function onScroll() {
+      const el = document.getElementById('hero-bg');
+      if (!el) return;
+      const scrolled = window.scrollY;
+      el.style.transform = `translateY(${scrolled * -0.12}px)`;
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // --------------------------------------------------------------------------
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        <div className="relative bg-gray-200 rounded-full shadow-md p-1 max-w-md mx-auto flex justify-between">
+    <div className="min-h-screen bg-gray-50 text-gray-800">
+      {/* HERO */}
+      <section className="relative overflow-hidden">
+        <div id="hero-bg" className="absolute inset-0 -z-10 transform-gpu transition-transform duration-300" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.12), rgba(14,165,233,0.06))' }} />
+        <div className="container mx-auto px-6 py-12">
+          <div className="flex items-center justify-between gap-6">
+            <div>
+              <h1 className="text-4xl md:text-5xl font-extrabold leading-tight">Find beautiful places to stay — fast.</h1>
+              <p className="mt-3 text-lg text-gray-600 max-w-xl">PGs, BHKs and Vacation homes — curated, verified and easy to book.</p>
+              <div className="mt-6 flex items-center gap-4">
+                <div className="rounded-full bg-gradient-to-r from-indigo-600 to-cyan-500 text-white px-4 py-2 shadow-md">Instant Booking</div>
+                <div className="rounded-full bg-white px-4 py-2 shadow-sm text-sm">Verified Listings</div>
+              </div>
+            </div>
+
+            <div className="hidden md:block w-80 h-44 rounded-2xl bg-white shadow-lg overflow-hidden">
+              <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=800&q=60" alt="hero" className="w-full h-full object-cover" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Category switcher */}
+      <div className="container mx-auto px-6 -mt-8">
+        <div className="relative bg-white rounded-full shadow-md p-1 max-w-lg mx-auto flex justify-between">
+          {(['pg', 'bhk', 'vacation'] as PropertyType[]).map((t) => {
+            const idx = t === 'pg' ? 0 : t === 'bhk' ? 1 : 2;
+            const active = selectedType === t;
+            return (
+              <button
+                key={t}
+                onClick={() => setSelectedType(t)}
+                className={`flex-1 py-3 px-4 rounded-full text-sm font-medium transition-all z-10 ${active ? 'text-white' : 'text-gray-600'}`}
+                aria-pressed={active}
+              >
+                <span className="inline-flex items-center gap-2">
+                  {t === 'pg' && <HomeIcon className="h-5 w-5" />}
+                  {t === 'bhk' && <Building2 className="h-5 w-5" />}
+                  {t === 'vacation' && <Palmtree className="h-5 w-5" />}
+                  <span className="capitalize">{t}</span>
+                </span>
+              </button>
+            );
+          })}
+          {/* animated active background */}
           <motion.div
-            className={`absolute top-1 bottom-1 rounded-full bg-gradient-to-r ${buttons[selectedIndex].gradient}`}
-            style={{ width: `${100 / buttons.length}%`, left: `${(selectedIndex * 100) / buttons.length}%` }}
+            className={`absolute top-1 bottom-1 rounded-full bg-gradient-to-r ${categoryColors[selectedType]} shadow-md`}
+            layout
             initial={false}
-            animate={{
-              left: `${(selectedIndex * 100) / buttons.length}%`,
-              background: `linear-gradient(to right, ${buttons[selectedIndex].gradient.split(' ')[0]}, ${buttons[selectedIndex].gradient.split(' ')[2]})`,
-            }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            animate={{ left: selectedType === 'pg' ? '0%' : selectedType === 'bhk' ? '33.33%' : '66.66%', width: '33.33%' }}
+            transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+            style={{ zIndex: 1 }}
           />
-          {buttons.map((button) => (
-            <button
-              key={button.type}
-              onClick={() => setSelectedType(button.type)}
-              className={`relative flex-1 py-2 px-4 rounded-full text-center transition-colors z-10 ${
-                selectedType === button.type ? 'text-white font-semibold' : 'text-gray-600'
-              }`}
-            >
-              {button.icon}
-              {button.label}
-            </button>
-          ))}
         </div>
       </div>
 
-      <div className="container mx-auto px-4 mb-4">
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <Sliders className="h-5 w-5 mr-2" />
-          {showFilters ? 'Hide Filters' : 'Show Filters'}
-        </button>
-      </div>
-
-      {showFilters && (
-        <div className="container mx-auto px-4 mb-8 bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-xl font-semibold mb-4">Filter Properties</h3>
-          {filterError && <div className="mb-4 text-red-500 text-sm">{filterError}</div>}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Min Rent (₹)</label>
-              <input
-                type="number"
-                min="1"
-                value={filters.rentMin || ''}
-                onChange={(e) => handleFilterChange('rentMin', parseInt(e.target.value) || undefined)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
-                placeholder="Min rent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Max Rent (₹)</label>
-              <input
-                type="number"
-                min="1"
-                value={filters.rentMax || ''}
-                onChange={(e) => handleFilterChange('rentMax', parseInt(e.target.value) || undefined)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
-                placeholder="Max rent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">City</label>
-              <select
-                value={filters.city || ''}
-                onChange={(e) => handleFilterChange('city', e.target.value || undefined)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
-              >
-                <option value="">All Cities</option>
-                {cities.map((city) => (
-                  <option key={city} value={city}>{city}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">State</label>
-              <select
-                value={filters.state || ''}
-                onChange={(e) => handleFilterChange('state', e.target.value || undefined)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
-              >
-                <option value="">All States</option>
-                {states.map((state) => (
-                  <option key={state} value={state}>{state}</option>
-                ))}
-              </select>
-            </div>
-            {selectedType === 'pg' && (
-              <>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Sharing Options</label>
-                  <div className="mt-2 space-y-2">
-                    {sharingOptions.map((option) => (
-                      <div key={option} className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={filters.sharingOptions?.includes(option) || false}
-                          onChange={() => toggleSharingOption(option)}
-                          className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
-                        />
-                        <label className="ml-2 text-sm text-gray-600">
-                          {option.charAt(0).toUpperCase() + option.slice(1).replace('Sharing', ' Sharing')}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Amenities</label>
-                  <div className="mt-2 space-y-2">
-                    {amenityLabels.pg.map((amenity) => (
-                      <div key={amenity} className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={filters.amenities?.includes(amenity) || false}
-                          onChange={() => toggleAmenity(amenity)}
-                          className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
-                        />
-                        <label className="ml-2 text-sm text-gray-600">
-                          {amenity.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase())}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-            {selectedType === 'bhk' && (
-              <>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Bedrooms</label>
-                  <select
-                    value={filters.bedrooms || ''}
-                    onChange={(e) => handleFilterChange('bedrooms', parseInt(e.target.value) || undefined)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
-                  >
-                    <option value="">Any</option>
-                    {[1, 2, 3, 4, 5].map((num) => (
-                      <option key={num} value={num}>{num}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Bathrooms</label>
-                  <select
-                    value={filters.bathrooms || ''}
-                    onChange={(e) => handleFilterChange('bathrooms', parseInt(e.target.value) || undefined)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
-                  >
-                    <option value="">Any</option>
-                    {[1, 2, 3, 4].map((num) => (
-                      <option key={num} value={num}>{num}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Min Sq.Ft</label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={filters.sqftMin || ''}
-                    onChange={(e) => handleFilterChange('sqftMin', parseInt(e.target.value) || undefined)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
-                    placeholder="Min sq.ft"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Amenities</label>
-                  <div className="mt-2 space-y-2">
-                    {amenityLabels.bhk.map((amenity) => (
-                      <div key={amenity} className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={filters.amenities?.includes(amenity) || false}
-                          onChange={() => toggleAmenity(amenity)}
-                          className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
-                        />
-                        <label className="ml-2 text-sm text-gray-600">
-                          {amenity.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase())}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-            {selectedType === 'vacation' && (
-              <>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Max Guests</label>
-                  <select
-                    value={filters.maxGuests || ''}
-                    onChange={(e) => handleFilterChange('maxGuests', parseInt(e.target.value) || undefined)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
-                  >
-                    <option value="">Any</option>
-                    {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
-                      <option key={num} value={num}>{num}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Amenities</label>
-                  <div className="mt-2 space-y-2">
-                    {amenityLabels.vacation.map((amenity) => (
-                      <div key={amenity} className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={filters.amenities?.includes(amenity) || false}
-                          onChange={() => toggleAmenity(amenity)}
-                          className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
-                        />
-                        <label className="ml-2 text-sm text-gray-600">
-                          {amenity.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase())}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-          <div className="mt-6 flex justify-end space-x-4">
-            <button
-              onClick={clearFilters}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-            >
-              Clear Filters
+      {/* Filters toggle & Filters panel */}
+      <div className="container mx-auto px-6 mt-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setShowFilters((s) => !s)} className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm">
+              <Sliders className="h-5 w-5" />
+              <span>{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
             </button>
-            <button
-              onClick={() => setShowFilters(false)}
-              disabled={isApplyDisabled}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                isApplyDisabled ? 'bg-gray-400 text-gray-200 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'
-              }`}
-            >
-              Apply Filters
-            </button>
+            <div className="text-sm text-gray-500">Showing <span className="font-medium">{properties.length}</span> results</div>
           </div>
+          <div className="text-sm text-gray-500">Pro-level search & filtering</div>
         </div>
-      )}
 
-      {loading ? (
-        <div className="text-center py-8">Loading properties...</div>
-      ) : error ? (
-        <div className="text-center py-8 text-red-500">{error}</div>
-      ) : (
-        <>
-          <div className="w-full h-[400px] mb-8 relative">
-            <MapContainer center={center} zoom={userPosition ? 12 : 10} style={{ height: '100%', width: '100%' }}>
-              <TileLayer
-                attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              <UserLocationMarker
-                isLoggedIn={isLoggedIn}
-              />
-              {properties.map((property) => (
-                <Marker
-                  key={property.id}
-                  position={[property.location[0], property.location[1]]}
-                  icon={redIcon}
-                >
-                  <Popup>
-                    <div className="w-48 p-2">
-                      <img
-                        src={property.image}
-                        alt={property.name}
-                        className="w-full h-24 object-cover rounded-md mb-2"
-                      />
-                      <h3 className="font-semibold text-base">{property.name}</h3>
-                      <p className="text-sm font-semibold text-blue-600">{property.rent}</p>
-                      <Link
-                        to={`/booking/${property.type}/${property.id}`}
-                        className="mt-2 inline-block bg-blue-300 text-black text-xs px-3 py-1 rounded-md hover:bg-blue-400 transition-colors"
-                        onClick={() => handleClick(property.id, property.type)}
-                      >
-                        View
-                      </Link>
-                    </div>
-                  </Popup>
-                </Marker>
-              ))}
-            </MapContainer>
-          </div>
+        {showFilters && (
+          <div className="mt-4 bg-white rounded-lg shadow-sm p-6">
+            {filterError && <div className="mb-4 text-red-500">{filterError}</div>}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Min Rent (₹)</label>
+                <input type="number" min="1" value={filters.rentMin || ''} onChange={(e) => handleFilterChange('rentMin', parseInt(e.target.value) || undefined)} className="mt-1 block w-full rounded-md border-gray-200 shadow-sm p-2" placeholder="Min" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Max Rent (₹)</label>
+                <input type="number" min="1" value={filters.rentMax || ''} onChange={(e) => handleFilterChange('rentMax', parseInt(e.target.value) || undefined)} className="mt-1 block w-full rounded-md border-gray-200 shadow-sm p-2" placeholder="Max" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">City</label>
+                <select value={filters.city || ''} onChange={(e) => handleFilterChange('city', e.target.value || undefined)} className="mt-1 block w-full rounded-md border-gray-200 shadow-sm p-2">
+                  <option value="">All Cities</option>
+                  {cities.map((c) => (<option key={c} value={c}>{c}</option>))}
+                </select>
+              </div>
 
-          <div className="container mx-auto px-4 py-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {properties.map((property) => (
-                <div
-                  key={property.id}
-                  className="bg-white rounded-xl shadow-lg overflow-hidden transform transition-transform hover:scale-105"
-                  onClick={() => handleClick(property.id, property.type)}
-                >
-                  <div className="relative">
-                    <img src={property.image} alt={property.name} className="w-full h-48 object-cover" />
-                    <motion.button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleFavorite(property.id);
-                      }}
-                      className="absolute top-2 right-2 p-2 rounded-full bg-white/80 hover:bg-white transition-colors"
-                      whileTap={{ scale: 0.9 }}
-                    >
-                      <motion.div
-                        initial={false}
-                        animate={{ scale: property.isFavorited ? [1, 1.3, 1] : 1 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <Heart
-                          className={`h-5 w-5 ${property.isFavorited ? 'text-red-500 fill-red-500' : 'text-gray-600'}`}
-                        />
-                      </motion.div>
-                    </motion.button>
-                  </div>
-                  <div className="p-6 flex flex-col">
-                    <h3 className="text-xl font-semibold mb-2">{property.name}</h3>
-                    <p className="text-gray-600 mb-2">{property.area}</p>
-                    <p className="text-gray-600 mb-4 text-sm">{property.description}</p>
-                    <div className="flex items-center gap-4 mb-4 text-gray-600">
-                      {property.beds && (
-                        <div className="flex items-center">
-                          <Bed className="h-4 w-4 mr-1" />
-                          <span>{property.beds} {property.beds === 1 ? 'Bed' : 'Beds'}</span>
+              {/* dynamic fields per type */}
+              {selectedType === 'pg' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Sharing Options</label>
+                    <div className="mt-2 space-y-2">
+                      {sharingOptions.map((option) => (
+                        <div key={option} className="flex items-center">
+                          <input type="checkbox" checked={filters.sharingOptions?.includes(option) || false} onChange={() => toggleSharingOption(option)} className="h-4 w-4 text-blue-600" />
+                          <label className="ml-2 text-sm text-gray-600">{option}</label>
                         </div>
-                      )}
-                      {property.baths && (
-                        <div className="flex items-center">
-                          <Bath className="h-4 w-4 mr-1" />
-                          <span>{property.baths} {property.baths === 1 ? 'Bath' : 'Baths'}</span>
-                        </div>
-                      )}
-                      {property.sqft && (
-                        <div className="flex items-center">
-                          <Square className="h-4 w-4 mr-1" />
-                          <span>{property.sqft} sq.ft</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-2xl font-bold text-blue-600">{property.rent}</span>
-                      <Link
-                        to={`/booking/${property.type}/${property.id}`}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleClick(property.id, property.type);
-                        }}
-                      >
-                        View Details
-                      </Link>
-                    </div>
-                    <div className="flex items-center text-gray-600 mb-4">
-                      <Phone className="h-4 w-4 mr-2" />
-                      {property.phone}
-                    </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      {property.amenities.map((amenity, index) => (
-                        <span
-                          key={index}
-                          className="bg-gradient-to-r from-blue-500 to-teal-500 text-white text-xs font-semibold px-2 py-1 rounded-full flex items-center justify-center gap-1 shadow-md"
-                        >
-                          {getAmenityIcon(amenity)}
-                          {amenity.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase())}
-                        </span>
                       ))}
                     </div>
                   </div>
-                </div>
-              ))}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Amenities</label>
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      {amenityLabels.pg.map((amenity) => (
+                        <label key={amenity} className="inline-flex items-center gap-2 text-sm">
+                          <input type="checkbox" checked={filters.amenities?.includes(amenity) || false} onChange={() => toggleAmenity(amenity)} />
+                          <span className="capitalize">{amenity.replace(/([A-Z])/g, ' $1').trim()}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {selectedType === 'bhk' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Bedrooms</label>
+                    <select value={filters.bedrooms || ''} onChange={(e) => handleFilterChange('bedrooms', parseInt(e.target.value) || undefined)} className="mt-1 block w-full rounded-md border-gray-200 shadow-sm p-2">
+                      <option value="">Any</option>
+                      {[1, 2, 3, 4, 5].map((n) => (<option key={n} value={n}>{n}</option>))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Bathrooms</label>
+                    <select value={filters.bathrooms || ''} onChange={(e) => handleFilterChange('bathrooms', parseInt(e.target.value) || undefined)} className="mt-1 block w-full rounded-md border-gray-200 shadow-sm p-2">
+                      <option value="">Any</option>
+                      {[1, 2, 3, 4].map((n) => (<option key={n} value={n}>{n}</option>))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Min Sq.Ft</label>
+                    <input type="number" min="1" value={filters.sqftMin || ''} onChange={(e) => handleFilterChange('sqftMin', parseInt(e.target.value) || undefined)} className="mt-1 block w-full rounded-md border-gray-200 shadow-sm p-2" placeholder="Min sq.ft" />
+                  </div>
+                </>
+              )}
+
+              {selectedType === 'vacation' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Max Guests</label>
+                    <select value={filters.maxGuests || ''} onChange={(e) => handleFilterChange('maxGuests', parseInt(e.target.value) || undefined)} className="mt-1 block w-full rounded-md border-gray-200 shadow-sm p-2">
+                      <option value="">Any</option>
+                      {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (<option key={n} value={n}>{n}</option>))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Amenities</label>
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      {amenityLabels.vacation.map((amenity) => (
+                        <label key={amenity} className="inline-flex items-center gap-2 text-sm">
+                          <input type="checkbox" checked={filters.amenities?.includes(amenity) || false} onChange={() => toggleAmenity(amenity)} />
+                          <span className="capitalize">{amenity.replace(/([A-Z])/g, ' $1').trim()}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+
             </div>
-            <div className="mt-12">
-              <Recommendations propertyType={selectedType} />
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button onClick={clearFilters} className="px-4 py-2 bg-gray-100 rounded-md">Clear</button>
+              <button onClick={() => setShowFilters(false)} disabled={isApplyDisabled} className={`px-4 py-2 rounded-md ${isApplyDisabled ? 'bg-gray-300 text-gray-500' : 'bg-blue-600 text-white'}`}>Apply</button>
             </div>
           </div>
-        </>
-      )}
+        )}
+      </div>
 
-      <footer
-        className={`bg-gradient-to-r ${categoryColors[selectedType] || 'from-gray-500 to-gray-700'} text-white mt-16`}
-      >
-        <div className="container mx-auto px-4 py-12">
+      {/* MAP + LIST */}
+      <div className="container mx-auto px-6 py-10">
+        {loading ? (
+          <div className="text-center py-16">Loading properties...</div>
+        ) : error ? (
+          <div className="text-center py-16 text-red-500">{error}</div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* MAP (left) */}
+            <div className="col-span-1 lg:col-span-1 bg-white rounded-xl shadow-md overflow-hidden sticky top-24 h-[70vh]">
+              <MapContainer center={center} zoom={userPosition ? 12 : 10} style={{ height: '100%', width: '100%' }}>
+                <TileLayer attribution='© OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                <UserLocationMarker isLoggedIn={isLoggedIn} />
+                {properties.map((property) => (
+                  <Marker key={property.id} position={[property.location[0], property.location[1]]} icon={redIcon}>
+                    <Popup>
+                      <div className="w-56 p-2">
+                        <img src={property.image} alt={property.name} className="w-full h-28 object-cover rounded-md mb-2" />
+                        <h3 className="font-semibold text-base">{property.name}</h3>
+                        <p className="text-sm font-semibold text-blue-600">{property.rent}</p>
+                        <Link to={`/booking/${property.type}/${property.id}`} className="mt-2 inline-block bg-blue-300 text-black text-xs px-3 py-1 rounded-md" onClick={() => handleClick(property.id, property.type)}>View</Link>
+                      </div>
+                    </Popup>
+                  </Marker>
+                ))}
+              </MapContainer>
+            </div>
+
+            {/* LIST (right) */}
+            <div className="col-span-2" ref={listRef}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {properties.map((property) => (
+                  <article key={property.id} className="property-card bg-white rounded-2xl overflow-hidden shadow-md transform transition-transform duration-300" onClick={() => handleClick(property.id, property.type)}>
+                    <div className="relative h-48 overflow-hidden">
+                      <img src={property.image} alt={property.name} className="w-full h-full object-cover" />
+                      <button onClick={(e) => { e.stopPropagation(); toggleFavorite(property.id); }} className="absolute top-3 right-3 bg-white/90 p-2 rounded-full shadow"> 
+                        <Heart className={`h-5 w-5 ${property.isFavorited ? 'text-red-500 fill-red-500' : 'text-gray-600'}`} />
+                      </button>
+                    </div>
+                    <div className="p-6 flex flex-col gap-3">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="text-xl font-semibold">{property.name}</h3>
+                          <p className="text-sm text-gray-500">{property.area} • {property.city}</p>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-blue-600">{property.rent}</div>
+                          <div className="text-xs text-gray-500">/ month</div>
+                        </div>
+                      </div>
+
+                      <p className="text-sm text-gray-600 line-clamp-3">{property.description}</p>
+
+                      <div className="flex items-center gap-4 text-gray-600">
+                        {property.beds && <div className="flex items-center gap-1"><Bed className="h-4 w-4" />{property.beds}</div>}
+                        {property.baths && <div className="flex items-center gap-1"><Bath className="h-4 w-4" />{property.baths}</div>}
+                        {property.sqft && <div className="flex items-center gap-1"><Square className="h-4 w-4" />{property.sqft} sqft</div>}
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {property.amenities.map((amenity, idx) => (
+                          <span key={idx} className="px-2 py-1 rounded-full text-xs bg-gradient-to-r from-blue-400 to-cyan-400 text-white flex items-center gap-2">{getAmenityIcon(amenity)}{amenity.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase())}</span>
+                        ))}
+                      </div>
+
+                      <div className="mt-3 flex items-center justify-between">
+                        <div className="flex items-center gap-3 text-sm text-gray-700">
+                          <Phone className="h-4 w-4" />{property.phone}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <Link to={`/booking/${property.type}/${property.id}`} onClick={(e) => { e.stopPropagation(); handleClick(property.id, property.type); }} className="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg">View Details</Link>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+
+              <div className="mt-12">
+                <Recommendations propertyType={selectedType} />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* FOOTER */}
+      <footer className={`bg-gradient-to-r ${categoryColors[selectedType] || 'from-gray-600 to-gray-800'} text-white mt-16`}>
+        <div className="container mx-auto px-6 py-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-              <h3 className="text-2xl font-bold mb-4">Gruha Anvesh</h3>
+              <h3 className="text-2xl font-bold mb-3">Gruha Anvesh</h3>
               <p className="text-white/80">Find your perfect living space with ease.</p>
             </div>
             <div>
-              <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
+              <h4 className="text-lg font-semibold mb-3">Quick Links</h4>
               <ul className="space-y-2">
                 <li><a href="#" className="hover:text-white/80">About Us</a></li>
                 <li><a href="#" className="hover:text-white/80">Properties</a></li>
@@ -946,14 +805,14 @@ function Home({ isLoggedIn }: HomeProps) {
               </ul>
             </div>
             <div>
-              <h4 className="text-lg font-semibold mb-4">Contact Us</h4>
+              <h4 className="text-lg font-semibold mb-3">Contact Us</h4>
               <ul className="space-y-2">
                 <li className="flex items-center"><Phone className="h-4 w-4 mr-2" />+91 9876543210</li>
                 <li className="flex items-center"><Mail className="h-4 w-4 mr-2" />sudhakarreddyvikram@gmail.com</li>
               </ul>
             </div>
             <div>
-              <h4 className="text-lg font-semibold mb-4">Follow Us</h4>
+              <h4 className="text-lg font-semibold mb-3">Follow Us</h4>
               <div className="flex space-x-4">
                 <a href="#" className="hover:text-white/80"><Instagram className="h-6 w-6" /></a>
                 <a href="#" className="hover:text-white/80"><Facebook className="h-6 w-6" /></a>
@@ -961,13 +820,10 @@ function Home({ isLoggedIn }: HomeProps) {
               </div>
             </div>
           </div>
-          <div className="border-t border-white/20 mt-8 pt-8 text-center text-white/60">
-            © 2024 Gruha Anvesh. All rights reserved.
-          </div>
+
+          <div className="border-t border-white/20 mt-8 pt-8 text-center text-white/60">© 2024 Gruha Anvesh. All rights reserved.</div>
         </div>
       </footer>
     </div>
   );
 }
-
-export default Home;
