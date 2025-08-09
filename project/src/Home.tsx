@@ -195,17 +195,13 @@ const heroImages: Record<PropertyType, { text: string; url: string }> = {
 
 const sideImages = [
   // houses
-  'https://images.unsplash.com/photo-1572120360610-d971b9b3b3f8?auto=format&fit=crop&w=800&q=60',
+  //'https://images.unsplash.com/photo-1572120360610-d971b9b3b3f8?auto=format&fit=crop&w=800&q=60',
   'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=60',
   'https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=800&q=60',
   'https://images.unsplash.com/photo-1505691723518-36a2a5a7db60?auto=format&fit=crop&w=800&q=60',
   'https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=800&q=60',
   // families / lifestyle
-  'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=60',
-  'https://images.unsplash.com/photo-1544739313-6f6c7aa0f0e6?auto=format&fit=crop&w=800&q=60',
-  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=800&q=60',
-  'https://images.unsplash.com/photo-1519340333755-5d42f4b28f5f?auto=format&fit=crop&w=800&q=60',
-  'https://images.unsplash.com/photo-1532074205216-d0e1f8f8f4f8?auto=format&fit=crop&w=800&q=60',
+  
   // tourist spots / vacation
   'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=60',
   'https://images.unsplash.com/photo-1491553895911-0055eca6402d?auto=format&fit=crop&w=800&q=60',
@@ -322,9 +318,9 @@ export default function Home({ isLoggedIn }: HomeProps) {
   const listRef = useRef<HTMLDivElement | null>(null);
   const tickingRef = useRef(false);
 
-  // cycle side images every 5s
+  // cycle side images every 10s
   useEffect(() => {
-    const id = setInterval(() => setSideIndex((s) => (s + 1) % sideImages.length), 5000);
+    const id = setInterval(() => setSideIndex((s) => (s + 1) % sideImages.length), 10000);
     return () => clearInterval(id);
   }, []);
 
