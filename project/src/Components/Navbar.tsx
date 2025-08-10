@@ -33,12 +33,10 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
   const [unreadMessages, setUnreadMessages] = useState<number>(0);
   const [username, setUsername] = useState<string>('');
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [notifAlignRight, setNotifAlignRight] = useState(false);
 
   const navigate = useNavigate();
   const profileRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
-  const notifDropdownRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -153,19 +151,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
   };
 
   const toggleNotifications = () => {
-    setShowNotifications((prev) => {
-      const nextState = !prev;
-      if (nextState) {
-        requestAnimationFrame(() => {
-          if (notifDropdownRef.current) {
-            const rect = notifDropdownRef.current.getBoundingClientRect();
-            const overflowRight = rect.right > window.innerWidth;
-            setNotifAlignRight(overflowRight);
-          }
-        });
-      }
-      return nextState;
-    });
+    setShowNotifications((prev) => !prev);
     setShowProfileDropdown(false);
   };
 
@@ -188,7 +174,6 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
 
   return (
     <nav className="sticky top-0 z-[1000] bg-black px-4 py-3 sm:px-6 flex flex-col sm:flex-row justify-between items-center">
-      {/* Logo + Menu Button */}
       <div className="flex items-center justify-between w-full sm:w-auto relative z-[1001]">
         <Link to={isLoggedIn ? '/home' : '/'} className="flex items-center">
           <img src={logo} alt="Gruha Anvesh Logo" className="h-11 w-auto mr-2" />
@@ -198,7 +183,6 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
         </button>
       </div>
 
-      {/* Menu Items */}
       <div
         ref={menuRef}
         className={`${isMenuOpen ? 'flex' : 'hidden'} flex-col sm:flex sm:flex-row justify-center items-center 
@@ -215,7 +199,6 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
             <Link to="/ContactUs" className="text-black sm:text-white hover:text-blue-200 font-medium" onClick={() => setIsMenuOpen(false)}>Contact Us</Link>
             <Link to="/upload" className="text-black sm:text-white hover:text-blue-200 font-medium" onClick={() => setIsMenuOpen(false)}>Upload</Link>
 
-            {/* Profile Dropdown */}
             <div className="relative" ref={profileRef}>
               <span className="flex items-center text-black sm:text-white hover:text-blue-200 cursor-pointer font-medium" onClick={toggleProfileDropdown}>
                 Profile {unreadMessages > 0 && <span className="ml-2 h-2 w-2 bg-red-500 rounded-full"></span>}
@@ -232,14 +215,11 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
               </div>
             </div>
 
-            {/* Notifications Dropdown */}
             <div className="relative" ref={notificationsRef}>
               <Bell className="h-6 w-6 text-black sm:text-white cursor-pointer hover:text-blue-200" onClick={toggleNotifications} />
               {unreadNotificationsCount > 0 && <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>}
               <div
-                ref={notifDropdownRef}
-                className={`absolute ${notifAlignRight ? 'right-0' : 'left-1/2 -translate-x-1/2'} 
-                sm:right-0 mt-2 w-80 bg-black rounded-lg shadow-lg z-[1000] overflow-hidden 
+                className={`absolute left-0 mt-2 w-80 bg-black rounded-lg shadow-lg z-[1000] overflow-hidden 
                 transition-all duration-300 ease-in-out transform 
                 ${showNotifications ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'}`}
               >
