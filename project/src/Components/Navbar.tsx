@@ -38,6 +38,12 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
   const notificationsRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // NEW: ref for the bell icon so we can compute dropdown position
+  const bellRef = useRef<HTMLSpanElement | null>(null);
+
+  // NEW: inline style for dropdown positioning
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties | undefined>(undefined);
+
   useEffect(() => {
     if (!isLoggedIn) {
       setUsername('');
@@ -138,6 +144,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
         setShowProfileDropdown(false);
         setShowNotifications(false);
         setIsMenuOpen(false);
+        setDropdownStyle(undefined);
       }
     };
 
@@ -147,13 +154,77 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
     };
   }, []);
 
+  // recompute dropdown position on window resize while open
+  useEffect(() => {
+    const onResize = () => {
+      if (showNotifications) {
+        computeAndSetDropdownStyle();
+      }
+    };
+    window.addEventListener('resize', onResize);
+    window.addEventListener('scroll', onResize, true);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('scroll', onResize, true);
+    };
+  }, [showNotifications, notificationsRef.current, bellRef.current]);
+
   const toggleProfileDropdown = () => {
     setShowProfileDropdown((prev) => !prev);
     setShowNotifications(false);
+    setDropdownStyle(undefined);
+  };
+
+  const computeAndSetDropdownStyle = () => {
+    // compute a fixed-positioned dropdown so it won't overflow
+    const bellEl = bellRef.current;
+    if (!bellEl) {
+      setDropdownStyle(undefined);
+      return;
+    }
+    const rect = bellEl.getBoundingClientRect();
+    const dropdownWidth = 320; // approx w-80 in px
+    const padding = 8;
+    const top = rect.bottom + window.scrollY + 8;
+    // On small screens, make it full width with small side padding
+    if (window.innerWidth <= 640) {
+      setDropdownStyle({
+        position: 'fixed',
+        left: padding,
+        right: padding,
+        top,
+        width: Math.max(0, window.innerWidth - padding * 2),
+        zIndex: 1000,
+      });
+      return;
+    }
+    // prefer to align the left edge of dropdown with bell's left
+    let left = rect.left + window.scrollX;
+    // clamp so dropdown fits inside viewport
+    if (left + dropdownWidth + padding > window.innerWidth) {
+      left = window.innerWidth - dropdownWidth - padding;
+    }
+    if (left < padding) left = padding;
+    setDropdownStyle({
+      position: 'fixed',
+      left,
+      top,
+      width: dropdownWidth,
+      zIndex: 1000,
+    });
   };
 
   const toggleNotifications = () => {
-    setShowNotifications((prev) => !prev);
+    setShowNotifications((prev) => {
+      const newState = !prev;
+      if (newState) {
+        // opening -> compute position
+        setTimeout(() => computeAndSetDropdownStyle(), 0);
+      } else {
+        setDropdownStyle(undefined);
+      }
+      return newState;
+    });
     setShowProfileDropdown(false);
   };
 
@@ -161,6 +232,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
     setIsMenuOpen((prev) => !prev);
     setShowProfileDropdown(false);
     setShowNotifications(false);
+    setDropdownStyle(undefined);
   };
 
   const handleLogout = () => {
@@ -170,6 +242,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
     setIsLoggedIn(false);
     navigate('/');
     setIsMenuOpen(false);
+    setDropdownStyle(undefined);
   };
 
   const unreadNotificationsCount = notifications.filter((n) => !n.isRead).length;
@@ -185,9 +258,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
           {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>
       </div>
-      {isMenuOpen && (
-        <div className="fixed top-16 left-0 w-full h-1/2 bg-black z-[799] sm:hidden"></div>
-      )}
+      {isMenuOpen && <div className="fixed top-16 left-0 w-full h-1/2 bg-black z-[799] sm:hidden"></div>}
       <div
         ref={menuRef}
         className={`${
@@ -232,15 +303,11 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
                 onClick={toggleProfileDropdown}
               >
                 Profile
-                {unreadMessages > 0 && (
-                  <span className="ml-2 h-2 w-2 bg-red-500 rounded-full"></span>
-                )}
+                {unreadMessages > 0 && <span className="ml-2 h-2 w-2 bg-red-500 rounded-full"></span>}
               </span>
               <div
                 className={`absolute left-1/2 -translate-x-1/2 sm:right-0 mt-2 w-48 bg-black rounded-lg shadow-lg z-[1000] overflow-hidden transition-all duration-300 ease-in-out transform ${
-                  showProfileDropdown
-                    ? 'opacity-100 translate-y-0'
-                    : 'opacity-0 -translate-y-2 pointer-events-none'
+                  showProfileDropdown ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'
                 }`}
               >
                 <div className="text-white font-semibold text-lg px-4 py-2 border-b border-gray-900">
@@ -297,19 +364,25 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
                 </button>
               </div>
             </div>
+
             <div className="relative" ref={notificationsRef}>
-              <Bell
-                className="h-6 w-6 text-black sm:text-white cursor-pointer hover:text-blue-200"
-                onClick={toggleNotifications}
-              />
+              {/* wrap Bell in a span so we can get boundingClientRect */}
+              <span ref={bellRef} aria-hidden>
+                <Bell
+                  className="h-6 w-6 text-black sm:text-white cursor-pointer hover:text-blue-200"
+                  onClick={toggleNotifications}
+                />
+              </span>
+
               {unreadNotificationsCount > 0 && (
                 <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
               )}
+
+              {/* Use fixed positioning via dropdownStyle to prevent overflow */}
               <div
-                className={`absolute left-1/2 -translate-x-1/2 sm:right-0 mt-2 w-80 bg-black rounded-lg shadow-lg z-[1000] overflow-hidden transition-all duration-300 ease-in-out transform ${
-                  showNotifications
-                    ? 'opacity-100 translate-y-0'
-                    : 'opacity-0 -translate-y-2 pointer-events-none'
+                style={dropdownStyle}
+                className={`bg-black rounded-lg shadow-lg overflow-hidden transition-all duration-300 ease-in-out transform ${
+                  showNotifications ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'
                 }`}
               >
                 {latestNotification ? (
@@ -327,6 +400,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
                         );
                         setShowNotifications(false);
                         setIsMenuOpen(false);
+                        setDropdownStyle(undefined);
                       }}
                     >
                       {latestNotification.type === 'success' ? (
@@ -346,6 +420,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
                         navigate('/notifications');
                         setShowNotifications(false);
                         setIsMenuOpen(false);
+                        setDropdownStyle(undefined);
                       }}
                       className="w-full text-center text-white bg-blue-600 hover:bg-blue-700 py-2 rounded-b-lg"
                     >
@@ -360,6 +435,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
                         navigate('/notifications');
                         setShowNotifications(false);
                         setIsMenuOpen(false);
+                        setDropdownStyle(undefined);
                       }}
                       className="w-full text-center text-white bg-blue-600 hover:bg-blue-700 py-2 rounded-b-lg"
                     >
