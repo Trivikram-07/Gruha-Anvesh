@@ -254,7 +254,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, setIsLoggedIn }) => {
                     setIsMenuOpen(false);
                   }}
                 >
-                  History
+                  Upload History
                 </Link>
                 <Link
                   to="/profile/bookings"
