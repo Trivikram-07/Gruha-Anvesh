@@ -138,7 +138,7 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
               <div className="mb-5 bg-indigo-50 border border-indigo-200 rounded-lg p-4 text-center">
                 <p className="text-sm font-medium text-gray-700 mb-1">You can use the testing account:</p>
                 <p className="text-sm text-gray-800">
-                  <span className="font-semibold">Username:</span> testUsers
+                  <span className="font-semibold">Username:</span> testuser2@gmail.com"
                 </p>
                 <p className="text-sm text-gray-800">
                   <span className="font-semibold">Password:</span> Testuser@123
