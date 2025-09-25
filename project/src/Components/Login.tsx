@@ -105,6 +105,8 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
               <h2 className="text-3xl font-bold text-center text-gray-800 mb-2">Welcome to Gruha Anvesh</h2>
               <h3 className="text-xl text-center text-gray-600 mb-6">Login to Your Account</h3>
               {error && <p className="text-red-500 text-center mb-6 font-medium">{error}</p>}
+              
+              {/* Email Field */}
               <div className="mb-5">
                 <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
                 <input
@@ -117,6 +119,8 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
                   className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors hover:border-indigo-400"
                 />
               </div>
+
+              {/* Password Field */}
               <div className="mb-5">
                 <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
                 <input
@@ -129,6 +133,19 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
                   className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors hover:border-indigo-400"
                 />
               </div>
+
+              {/* Test Account Box */}
+              <div className="mb-5 bg-indigo-50 border border-indigo-200 rounded-lg p-4 text-center">
+                <p className="text-sm font-medium text-gray-700 mb-1">You can use the testing account:</p>
+                <p className="text-sm text-gray-800">
+                  <span className="font-semibold">Username:</span> TestUsers
+                </p>
+                <p className="text-sm text-gray-800">
+                  <span className="font-semibold">Password:</span> Test@user123
+                </p>
+              </div>
+
+              {/* Login Button */}
               <div className="mb-5">
                 <button
                   type="submit"
@@ -138,12 +155,15 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
                   Login
                 </button>
               </div>
+
+              {/* Signup Link */}
               <div className="text-center">
                 <p className="text-gray-600">
                   Don't have an account?{' '}
                   <Link to="/signup" className="text-indigo-600 hover:underline font-medium">Sign Up</Link>
                 </p>
               </div>
+
             </div>
           </div>
         </div>
