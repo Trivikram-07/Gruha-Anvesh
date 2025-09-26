@@ -136,7 +136,7 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
 
               {/* Test Account Box */}
               <div className="mb-5 bg-indigo-50 border border-indigo-200 rounded-lg p-4 text-center">
-                <p className="text-sm font-medium text-gray-700 mb-1">You can use the testing account:</p>
+                <p className="text-sm font-medium text-gray-700 mb-1">If you don't have an account but want to have a look at the website ,you can use the testing account or signup:</p>
                 <p className="text-sm text-gray-800">
                   <span className="font-semibold">Username:</span> testuser2@gmail.com"
                 </p>
